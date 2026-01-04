@@ -74,18 +74,23 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
-// RESTORED: Batch delete for checkboxes
+// BATCH DELETE (For Checkboxes)
 window.db_batchDelete = async function(user, entryIds) {
     if(!user || !db || entryIds.length === 0) return;
-    const batch = writeBatch(db);
-    entryIds.forEach(id => {
-        const ref = doc(db, 'users', user.uid, 'entries', id);
-        batch.delete(ref);
-    });
-    await batch.commit();
+    try {
+        const batch = writeBatch(db);
+        entryIds.forEach(id => {
+            const ref = doc(db, 'users', user.uid, 'entries', id);
+            batch.delete(ref);
+        });
+        await batch.commit();
+    } catch(e) {
+        console.error("Batch delete failed", e);
+        alert("Failed to delete items. Check connection.");
+    }
 };
 
-// RESTORED: Wipe all entries logic
+// WIPE ALL (For Clear All Data)
 window.db_wipeAllEntries = async function(user) {
     if(!user || !db) return;
     try {
