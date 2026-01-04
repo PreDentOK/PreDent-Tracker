@@ -1,6 +1,6 @@
 // --- MAIN APP LOGIC ---
 const STORAGE_KEY = 'pd_tracker_data_v2'; 
-let entries = []; // Now volatile, populated on load
+let entries = []; 
 let currentFilter = 'All';
 let entryToDeleteId = null; 
 let editingEntryId = null;
@@ -38,6 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
 window.refreshApp = async function(user) {
     appUser = user;
     await loadData();
+};
+
+window.refreshAppPage = function() {
+    window.location.href = 'https://predent.net/#app';
+    window.location.reload();
 };
 
 async function loadData() {
@@ -216,21 +221,15 @@ function skipProfileSetup() {
 function updateProfileName() {
     const nameInput = document.getElementById('user-display-name');
     const name = nameInput.value.trim();
-    
-    // If empty, do nothing
     if(!name && !localStorage.getItem('pd_username')) return; 
-
-    // If name exists, validate
     if(name) {
         const lowerName = name.toLowerCase();
         const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
         if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; nameInput.value = ''; return; }
         localStorage.setItem('pd_username', name);
     }
-
     const savedName = localStorage.getItem('pd_username');
     if(savedName) document.getElementById('dropdown-name').textContent = savedName;
-    
     localStorage.setItem('pd_profile_setup_done', 'true');
     document.getElementById('lb-profile-box').classList.add('pd-hidden');
     if(window.syncToCloud) window.syncToCloud();
@@ -245,7 +244,6 @@ function switchTab(tabName) {
     
     if(tabName === 'tracker') { 
         btns[0].classList.add('active'); 
-        // Force recalc type on tab switch
         handleTypeChange(); 
     }
     else if (tabName === 'stats') { 
@@ -254,7 +252,6 @@ function switchTab(tabName) {
     }
     else { 
         btns[2].classList.add('active'); 
-        // Ensure name is consistent when opening leaderboard
         if(localStorage.getItem('pd_username')) {
             document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username');
         }
