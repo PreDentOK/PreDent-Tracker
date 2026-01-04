@@ -24,7 +24,7 @@
         </div>
         
         <div class="pd-tabs-container">
-            <button class="pd-tab-btn active" onclick="switchTab('tracker')">Tracker</button>
+            <button class="pd-tab-btn active" onclick="switchTab('tracker')">Log</button>
             <button class="pd-tab-btn" onclick="switchTab('stats')">Stats</button>
             <button class="pd-tab-btn" onclick="switchTab('leaderboard')">Ranking</button>
         </div>
@@ -37,9 +37,12 @@
                 </button>
                 <div id="user-profile" class="pd-user-profile hidden">
                     <div class="pd-nav-rank" id="nav-rank-badge">#--</div>
-                    <img id="user-avatar" src="" alt="Profile" class="pd-avatar-img" onclick="toggleProfileMenu()">
+                    <button class="pd-profile-btn" onclick="toggleProfileMenu()">
+                        <img id="user-avatar" src="" alt="Profile" class="pd-avatar-img">
+                    </button>
                     <div id="profile-dropdown" class="pd-dropdown" style="width: 150px;">
-                        <div class="pd-menu-item" style="cursor:default; opacity:0.7; font-size:0.8rem;" id="dropdown-name">User</div>
+                        <div class="pd-menu-item header-item" id="dropdown-name">User</div>
+                        <button class="pd-menu-item" onclick="openEditNameModal()">Edit Name</button>
                         <button class="pd-menu-item pd-menu-danger" onclick="googleLogout()">Sign Out</button>
                     </div>
                 </div>
@@ -188,15 +191,7 @@
                 <p>Sign in with Google to see how you rank against other PreDental students!</p>
                 <button class="pd-btn pd-btn-primary" onclick="googleLogin()">Sign In Now</button>
             </div>
-            <div class="pd-lb-profile pd-hidden" id="lb-profile-box">
-                <h4>Leaderboard Profile</h4>
-                <p>Your Google name is used by default. Enter a display name below to override it.</p>
-                <div class="pd-lb-input-row">
-                    <input type="text" id="user-display-name" class="pd-input" placeholder="Display Name">
-                    <button class="pd-btn pd-btn-primary" onclick="updateProfileName()" style="width: auto;">Update</button>
-                    <button class="pd-btn pd-btn-cancel" onclick="skipProfileSetup()" style="width: auto; margin-right:0;">Skip</button>
-                </div>
-            </div>
+            
             <div class="pd-leaderboard-card pd-hidden" id="lb-card-main">
                 <div class="pd-lb-header"><div>Rank</div><div>Name</div><div>Shadow</div><div>Volunteer</div></div>
                 <div id="leaderboard-list">
@@ -226,6 +221,18 @@
             <div style="display:flex; justify-content:center; gap:10px;">
                 <button class="pd-btn pd-btn-cancel" onclick="closeDeleteModal()">No, Keep it</button>
                 <button class="pd-btn pd-btn-danger" onclick="confirmDeleteEntry()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-name-modal" class="pd-modal-overlay">
+        <div class="pd-modal">
+            <h3>EDIT DISPLAY NAME</h3>
+            <p style="margin-bottom:1rem;">This is the name others see on the leaderboard.</p>
+            <input type="text" id="edit-name-input" class="pd-input" placeholder="Enter new name" style="margin-bottom:1rem;">
+            <div style="display:flex; justify-content:center; gap:10px;">
+                <button class="pd-btn pd-btn-cancel" onclick="closeEditNameModal()">Cancel</button>
+                <button class="pd-btn pd-btn-primary" onclick="saveNewName()">Save Name</button>
             </div>
         </div>
     </div>
@@ -299,8 +306,7 @@
                 <span class="pd-view-val" id="view-loc">--</span>
             </div>
             
-            <div id="view-notes-container" class="pd-view-notes">
-                </div>
+            <div id="view-notes-container" class="pd-view-notes"></div>
 
             <div style="display:flex; justify-content:center; margin-top:2rem;">
                 <button class="pd-btn pd-btn-primary" onclick="document.getElementById('view-modal').style.display='none'">Close</button>
