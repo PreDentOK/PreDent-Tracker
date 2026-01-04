@@ -62,9 +62,9 @@ async function saveData() {
     }
 }
 
-// --- ADD ENTRY WITH STRICT VALIDATION ---
+// --- ADD ENTRY ---
 async function addEntry() {
-    // 1. Clear previous errors
+    // 1. Clear previous error styling
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
     
     // 2. Grab values
@@ -76,34 +76,33 @@ async function addEntry() {
     let hoursInput = document.getElementById('entry-hours').value;
     const notes = document.getElementById('entry-notes').value;
     
-    // 3. Strict Validation Checks
+    // 3. Strict Validation
     let hasError = false;
 
-    // Check Type (Rarely empty, but safe to check)
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
-    
-    // Check Date
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
-    
-    // Check Subtype
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
     
-    // Check Hours
-    if (!hoursInput || parseFloat(hoursInput) <= 0) { 
+    // Validate Hours (Must be number)
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
         document.getElementById('entry-hours').parentNode.classList.add('error'); 
         hasError = true; 
     }
     
-    // Check Doctor
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     
-    // Check Location
-    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+    // VALIDATE LOCATION (Required)
+    if (!loc) { 
+        document.getElementById('entry-loc').parentNode.classList.add('error'); 
+        hasError = true; 
+    }
 
-    // Stop if errors found
-    if (hasError) return;
+    if (hasError) {
+        alert("Please fill out all required fields marked with *");
+        return;
+    }
     
-    // 4. Process Data
+    // 4. Round Hours Logic (Decimal -> Nearest Integer)
     let hours = Math.round(parseFloat(hoursInput));
     
     const newEntry = { 
@@ -111,30 +110,33 @@ async function addEntry() {
         type, subtype, date, location: loc, doctor, hours, notes 
     };
     
-    if (appUser) {
-        await window.db_addEntry(appUser, newEntry);
-        entries.push(newEntry);
-    } else {
-        entries.push(newEntry);
+    // 5. Save Logic
+    try {
+        if (appUser) {
+            await window.db_addEntry(appUser, newEntry);
+            entries.push(newEntry);
+        } else {
+            entries.push(newEntry);
+        }
+        
+        // 6. Reset Form ONLY if successful
+        document.getElementById('entry-loc').value = ''; 
+        document.getElementById('entry-doctor').value = ''; 
+        document.getElementById('entry-hours').value = ''; 
+        document.getElementById('entry-notes').value = ''; 
+        
+        saveData(); 
+        render();
+    } catch (e) {
+        console.error("Error adding entry:", e);
+        alert("There was an error saving your entry. Please check your connection.");
     }
-    
-    // 5. Reset Form
-    document.getElementById('entry-loc').value = ''; 
-    document.getElementById('entry-doctor').value = ''; 
-    document.getElementById('entry-hours').value = ''; 
-    document.getElementById('entry-notes').value = ''; 
-    
-    saveData(); render();
 }
 
-// --- EDIT ENTRY WITH STRICT VALIDATION ---
+// --- EDIT ENTRY ---
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
-    // 1. Clear previous errors in modal
-    document.querySelectorAll('#edit-modal .pd-input-wrapper').forEach(el => el.classList.remove('error'));
-
-    // 2. Grab values
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -143,16 +145,12 @@ async function saveEditEntry() {
     const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
 
-    // 3. Strict Validation Checks (Manual styling for modal fields if needed, or rely on wrapper class)
-    // Note: The modal HTML didn't explicitly have pd-input-wrapper on all fields in previous versions,
-    // assuming they are wrapped. If validation fails visually, ensure the HTML structure in index.html matches.
-    // For now, we alert simply to ensure data integrity if UI wrappers missing.
-    
     if (!type || !subtype || !date || !loc || !doctor || !hoursInput) {
         alert("Please fill out all required fields.");
         return;
     }
 
+    // Round Hours
     const hours = Math.round(parseFloat(hoursInput));
 
     const updatedEntry = { 
@@ -160,17 +158,22 @@ async function saveEditEntry() {
         type, subtype, date, location: loc, doctor, hours, notes 
     };
 
-    if (appUser) {
-        await window.db_addEntry(appUser, updatedEntry); 
-        const idx = entries.findIndex(e => e.id === editingEntryId);
-        if(idx !== -1) entries[idx] = updatedEntry;
-    } else {
-        const idx = entries.findIndex(e => e.id === editingEntryId);
-        if (idx !== -1) entries[idx] = updatedEntry;
+    try {
+        if (appUser) {
+            await window.db_addEntry(appUser, updatedEntry); 
+            const idx = entries.findIndex(e => e.id === editingEntryId);
+            if(idx !== -1) entries[idx] = updatedEntry;
+        } else {
+            const idx = entries.findIndex(e => e.id === editingEntryId);
+            if (idx !== -1) entries[idx] = updatedEntry;
+        }
+        
+        saveData(); render(); 
+        closeEditModal();
+    } catch (e) {
+        console.error("Error editing entry:", e);
+        alert("Error saving changes.");
     }
-    
-    saveData(); render(); 
-    closeEditModal();
 }
 
 async function confirmDeleteEntry() {
