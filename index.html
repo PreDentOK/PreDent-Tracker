@@ -27,7 +27,20 @@
 
         <div class="pd-actions-group">
             
-            <div id="nav-rank-badge" class="pd-nav-rank hidden">Rank: #--</div>
+            <div id="auth-section">
+                <button id="btn-google-login" class="pd-auth-btn" onclick="googleLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
+                    Sign In
+                </button>
+                <div id="user-profile" class="pd-user-profile hidden">
+                    <div class="pd-nav-rank" id="nav-rank-badge">#--</div>
+                    <img id="user-avatar" src="" alt="Profile" class="pd-avatar-img" onclick="toggleProfileMenu()">
+                    <div id="profile-dropdown" class="pd-dropdown" style="width: 150px;">
+                        <div class="pd-menu-item" style="cursor:default; opacity:0.7; font-size:0.8rem;" id="dropdown-name">User</div>
+                        <button class="pd-menu-item pd-menu-danger" onclick="googleLogout()">Sign Out</button>
+                    </div>
+                </div>
+            </div>
 
             <div class="pd-menu-container" id="pd-filter-container">
                 <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle">
@@ -156,12 +169,17 @@
         <div id="view-leaderboard" class="pd-view">
             <h2 class="pd-section-title">Community Leaderboard</h2>
             
-            <div class="pd-lb-profile" id="lb-profile-box">
-                <h4>Join the Leaderboard</h4>
-                <p>Enter a display name to unlock community rankings (your private notes are never shared).</p>
+            <div id="signin-promo" style="text-align:center; padding:2rem; background:rgba(255,255,255,0.05); border-radius:12px;">
+                <p>Sign in with Google to see how you rank against other PreDental students!</p>
+                <button class="pd-btn pd-btn-primary" onclick="googleLogin()">Sign In Now</button>
+            </div>
+
+            <div class="pd-lb-profile pd-hidden" id="lb-profile-box">
+                <h4>Leaderboard Profile</h4>
+                <p>Your Google name is used by default. Enter a display name below to override it.</p>
                 <div class="pd-lb-input-row">
-                    <input type="text" id="user-display-name" class="pd-input" placeholder="e.g. Jane D.">
-                    <button class="pd-btn pd-btn-primary" onclick="updateProfileName()" style="width: auto;">Unlock</button>
+                    <input type="text" id="user-display-name" class="pd-input" placeholder="Display Name">
+                    <button class="pd-btn pd-btn-primary" onclick="updateProfileName()" style="width: auto;">Update</button>
                 </div>
             </div>
 
@@ -170,10 +188,6 @@
                 <div id="leaderboard-list">
                     <div style="padding:2rem; text-align:center; color:#cbd5e1;">Syncing scores...</div>
                 </div>
-            </div>
-            
-            <div id="lb-locked-message" style="text-align:center; color:#64748b; font-style:italic; padding:2rem;">
-                Enter a name above to see how you rank against other PreDental students.
             </div>
         </div>
 
