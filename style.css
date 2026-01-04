@@ -1,19 +1,25 @@
 /* --- 1. DARK THEME LAYOUT (FULL SCREEN APP MODE) --- */
-html, body { 
+html {
+    background-color: #030D4A; /* Cover any potential bounce area */
+    overscroll-behavior: none; /* Prevent "bounce" effect at edges */
+}
+
+body { 
     margin: 0; 
     padding: 0; 
     background-color: #030D4A; 
-    /* PREVENT WHOLE PAGE SCROLL/BOUNCE */
-    height: 100%;
-    width: 100%;
+    /* Lock the body size to the dynamic screen size */
+    height: 100dvh; 
+    width: 100vw;
     overflow: hidden; 
     position: fixed; 
+    overscroll-behavior: none;
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; 
 }
 
 .pd-tracker-wrapper {
     width: 100%; 
-    height: 100%; /* Fill fixed body */
+    height: 100%; 
     font-family: 'Inter', sans-serif; 
     color: #F0F4F8; 
     background-color: #030D4A; 
@@ -31,7 +37,7 @@ html, body {
     align-items: center; 
     flex-wrap: wrap; 
     gap: 1rem;
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0; 
     z-index: 100;
 }
 
@@ -121,8 +127,9 @@ html, body {
     padding-bottom: 4rem; 
     flex: 1; /* Takes remaining space */
     overflow-y: auto; /* Internal Scroll */
-    overflow-x: hidden; /* No Horizontal Scroll */
-    -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
+    overflow-x: hidden; 
+    overscroll-behavior-y: contain; /* Prevent parent bounce */
+    -webkit-overflow-scrolling: touch; 
 }
 
 /* SHARED STATS */
@@ -201,21 +208,27 @@ html, body {
 .pd-input-wrapper.error .pd-error-asterisk { display: block; }
 .pd-input-wrapper.error .pd-input, .pd-input-wrapper.error .pd-select { border-color: #ff6b6b; }
 
-/* UNIFIED INPUT STYLES (Same Size for Date, Select, Text) */
+/* UNIFIED INPUT STYLES (STRICT MOBILE SIZING) */
 .pd-input, .pd-select, .pd-textarea {
     width: 100%; 
-    height: 50px; /* FIXED HEIGHT FOR UNIFORMITY */
-    padding: 0 0.8rem; /* Horizontal padding only, height handles vertical */
+    height: 50px !important; /* Force Height */
+    min-height: 50px !important; /* Prevent Collapse */
+    max-height: 50px !important; /* Prevent Expansion (iOS Date fix) */
+    padding: 0 0.8rem; 
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.95rem;
+    border-radius: 8px; 
+    font-family: 'Inter', sans-serif; font-size: 0.95rem;
     background-color: rgba(0, 0, 0, 0.4); color: #FFFFFF;
     outline: none; transition: border-color 0.2s; box-sizing: border-box;
     color-scheme: dark;
+    
+    /* IOS RESET */
+    -webkit-appearance: none;
+    appearance: none;
 }
-.pd-textarea { resize: vertical; min-height: 80px; height: auto; padding-top: 0.8rem; } /* Textarea needs auto height */
+.pd-textarea { resize: vertical; min-height: 80px !important; max-height: none !important; height: auto !important; padding-top: 0.8rem; }
 
 .pd-select {
-    -webkit-appearance: none; appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat; background-position: right 1rem center; background-size: 1.2em; padding-right: 2.5rem; cursor: pointer;
 }
@@ -286,7 +299,7 @@ html, body {
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* PREVENT HORIZONTAL SCROLL: Scale down stats circles safely */
+    /* Prevent circles from making page scroll sideways */
     .pd-stats-container { 
         display: flex;
         flex-wrap: nowrap; /* Force single row */
