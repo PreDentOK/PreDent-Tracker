@@ -36,7 +36,89 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- NEW: TOGGLE SELECTION MODE ---
+// --- CSV IMPORT LOGIC ---
+window.triggerImport = function() {
+    document.getElementById('import-file-input').click();
+    closeAllMenus();
+};
+
+window.handleCSVImport = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        await processCSV(text);
+        input.value = ''; 
+    };
+    reader.readAsText(file);
+};
+
+async function processCSV(csvText) {
+    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
+    if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
+
+    const headerRow = rows[0].toUpperCase();
+    let isShadowingSheet = false;
+    let isVolunteeringSheet = false;
+
+    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
+    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
+
+    if (!isShadowingSheet && !isVolunteeringSheet) {
+        alert("Could not identify sheet type."); return;
+    }
+
+    const dataLines = rows.slice(1);
+    let importedCount = 0;
+
+    for (let line of dataLines) {
+        if (!line.trim()) continue; 
+        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
+        const rawDate = cols[0];
+        if(!rawDate) continue;
+
+        let formattedDate = rawDate;
+        if(rawDate.includes('/')) {
+            const parts = rawDate.split('/');
+            if(parts.length === 3) {
+                const m = parts[0].padStart(2, '0');
+                const d = parts[1].padStart(2, '0');
+                let y = parts[2];
+                if (y.length === 2) y = '20' + y;
+                formattedDate = `${y}-${m}-${d}`;
+            }
+        }
+
+        let type, subtype, doctor, location;
+        if (isShadowingSheet) {
+            type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3];
+        } else {
+            type = "Volunteering"; doctor = cols[1]; location = cols[2];
+            const rawRel = (cols[3] || "").toLowerCase();
+            if (rawRel.includes("yes") || rawRel.includes("true")) subtype = "Dental Related";
+            else if (rawRel.includes("no") || rawRel.includes("false")) subtype = "Non-Dental Related";
+            else subtype = "Dental Related"; 
+        }
+
+        let hrs = Math.round(parseFloat(cols[4]));
+        if(isNaN(hrs) || hrs <= 0) hrs = 0;
+        
+        const entry = {
+            id: String(Date.now()) + Math.random().toString(16).slice(2),
+            date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' 
+        };
+
+        if(entry.date && entry.hours > 0) {
+             if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } 
+             else { entries.push(entry); }
+             importedCount++;
+        }
+    }
+    saveData(); render();
+    alert(`Successfully imported ${importedCount} entries.`);
+}
+
 window.toggleSelectionMode = function() {
     isSelectionMode = !isSelectionMode;
     const list = document.getElementById('log-list');
@@ -51,53 +133,25 @@ window.toggleSelectionMode = function() {
         list.classList.remove('selection-mode');
         delBtn.style.display = 'none';
         selectBtn.textContent = 'Select Entries';
-        // Uncheck all
         document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false);
     }
 };
 
-window.closeSignInPrompt = function() {
-    localStorage.setItem('pd_signin_prompt_seen', 'true');
-    document.getElementById('signin-prompt-modal').style.display = 'none';
-};
-
-window.googleLoginFromPrompt = function() {
-    window.closeSignInPrompt();
-    window.googleLogin(); 
-};
-
-window.refreshApp = async function(user) {
-    appUser = user;
-    await loadData();
-};
-
-window.refreshAppPage = function() {
-    window.location.href = 'https://predent.net/#app';
-    window.location.reload();
-};
+window.refreshApp = async function(user) { appUser = user; await loadData(); };
+window.refreshAppPage = function() { window.location.href = 'https://predent.net/#app'; window.location.reload(); };
 
 async function loadData() {
-    if (appUser) {
-        entries = await window.db_loadEntries(appUser);
-    } else {
-        entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    }
+    if (appUser) { entries = await window.db_loadEntries(appUser); } 
+    else { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     render();
 }
 
 async function saveData() {
     if (appUser) {
         let sTotal = 0, vTotal = 0;
-        entries.forEach(e => { 
-            const h = parseInt(e.hours, 10) || 0; 
-            if (e.type === 'Shadowing') sTotal += h; else vTotal += h; 
-        });
-        if(window.updateLeaderboardStats) {
-            await window.updateLeaderboardStats(appUser, sTotal, vTotal);
-        }
-    } else {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-    }
+        entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
+        if(window.updateLeaderboardStats) { await window.updateLeaderboardStats(appUser, sTotal, vTotal); }
+    } else { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
     updateDatalists();
 }
 
@@ -112,7 +166,6 @@ function updateDatalists() {
 
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
-    
     const type = document.getElementById('entry-type').value;
     const subtype = document.getElementById('entry-subtype').value;
     const date = document.getElementById('entry-date').value;
@@ -122,47 +175,32 @@ async function addEntry() {
     const notes = document.getElementById('entry-notes').value;
     
     let hasError = false;
-
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    
     if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
-        document.getElementById('entry-hours').parentNode.classList.add('error'); 
-        hasError = true; 
+        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
     }
-    
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
 
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
-    
     const newEntry = { 
         id: String(Date.now()) + Math.random().toString(16).slice(2), 
         type, subtype, date, location: loc, doctor, hours, notes 
     };
     
     try {
-        if (appUser) {
-            await window.db_addEntry(appUser, newEntry);
-            entries.push(newEntry);
-        } else {
-            entries.push(newEntry);
-        }
-        
+        if (appUser) { await window.db_addEntry(appUser, newEntry); entries.push(newEntry); } 
+        else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; 
         document.getElementById('entry-doctor').value = ''; 
         document.getElementById('entry-hours').value = ''; 
         document.getElementById('entry-notes').value = ''; 
-        
-        saveData(); 
-        render();
-    } catch (e) {
-        console.error("Error adding entry:", e);
-        alert("Connection error. Please try again.");
-    }
+        saveData(); render();
+    } catch (e) { console.error("Error adding entry:", e); alert("Connection error."); }
 }
 
 async function saveEditEntry() {
@@ -184,22 +222,16 @@ async function saveEditEntry() {
         if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); }
         hasError = true;
     };
-
     if (!type) markError('edit-entry-type');
     if (!subtype) markError('edit-entry-subtype');
     if (!date) markError('edit-entry-date');
     if (!loc) markError('edit-entry-loc');
     if (!doctor) markError('edit-entry-doctor');
     if (!hoursInput) markError('edit-entry-hours');
-
     if (hasError) return; 
 
     const hours = Math.round(parseFloat(hoursInput));
-
-    const updatedEntry = { 
-        id: editingEntryId, 
-        type, subtype, date, location: loc, doctor, hours, notes 
-    };
+    const updatedEntry = { id: editingEntryId, type, subtype, date, location: loc, doctor, hours, notes };
 
     try {
         if (appUser) {
@@ -210,48 +242,22 @@ async function saveEditEntry() {
             const idx = entries.findIndex(e => e.id === editingEntryId);
             if (idx !== -1) entries[idx] = updatedEntry;
         }
-        
-        saveData(); render(); 
-        closeEditModal();
-    } catch (e) {
-        console.error("Error editing entry:", e);
-        alert("Error saving changes.");
-    }
+        saveData(); render(); closeEditModal();
+    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
-// --- BATCH DELETE LOGIC ---
 async function deleteSelectedEntries() {
     const checkboxes = document.querySelectorAll('.pd-checkbox:checked');
     if(checkboxes.length === 0) return;
-
     const idsToDelete = Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
-    
-    if(appUser) {
-        await window.db_batchDelete(appUser, idsToDelete);
-    }
-    
+    if(appUser) { await window.db_batchDelete(appUser, idsToDelete); }
     entries = entries.filter(e => !idsToDelete.includes(e.id));
-    saveData();
-    render();
-    
-    // Exit selection mode after delete
-    toggleSelectionMode();
+    saveData(); render(); toggleSelectionMode();
 }
 
 async function confirmReset() {
-    if(appUser) {
-        try {
-            await window.db_wipeAllEntries(appUser);
-        } catch(e) {
-            console.error("Wipe failed", e);
-            closeResetModal();
-            return;
-        }
-    }
-    entries = []; 
-    saveData(); 
-    render(); 
-    closeResetModal(); 
+    if(appUser) { try { await window.db_wipeAllEntries(appUser); } catch(e) { console.error("Wipe failed", e); closeResetModal(); return; } }
+    entries = []; saveData(); render(); closeResetModal(); 
 }
 
 async function confirmDeleteEntry() {
@@ -268,16 +274,13 @@ async function confirmDeleteEntry() {
 }
 
 window.viewEntry = function(id) {
-    // If in selection mode, toggle checkbox instead of viewing details
     if(isSelectionMode) {
         const cb = document.querySelector(`.pd-checkbox[data-id="${id}"]`);
         if(cb) cb.checked = !cb.checked;
         return;
     }
-
     const entry = entries.find(e => e.id === String(id));
     if(!entry) return;
-
     document.getElementById('view-type-title').textContent = entry.type;
     document.getElementById('view-type-title').style.color = entry.type === 'Shadowing' ? '#4da6ff' : '#ffd700';
     document.getElementById('view-subtype').textContent = entry.subtype;
@@ -293,25 +296,8 @@ window.viewEntry = function(id) {
     document.getElementById('view-modal').style.display = 'flex';
 };
 
-window.toggleFilterMenu = (e) => { 
-    e.stopPropagation(); 
-    const btn = document.getElementById('btn-filter-toggle');
-    const menu = document.getElementById('pd-filter-dropdown');
-    document.getElementById('pd-options-dropdown').classList.remove('active');
-    document.getElementById('btn-options-toggle').classList.remove('active');
-    menu.classList.toggle('active');
-    btn.classList.toggle('active');
-};
-
-window.toggleOptionsMenu = (e) => { 
-    e.stopPropagation(); 
-    const btn = document.getElementById('btn-options-toggle');
-    const menu = document.getElementById('pd-options-dropdown');
-    document.getElementById('pd-filter-dropdown').classList.remove('active');
-    document.getElementById('btn-filter-toggle').classList.remove('active');
-    menu.classList.toggle('active');
-    btn.classList.toggle('active');
-};
+window.toggleFilterMenu = (e) => { e.stopPropagation(); document.getElementById('pd-filter-dropdown').classList.toggle('active'); };
+window.toggleOptionsMenu = (e) => { e.stopPropagation(); document.getElementById('pd-options-dropdown').classList.toggle('active'); };
 
 window.setFilter = setFilter;
 window.openResetModal = openResetModal;
@@ -339,9 +325,7 @@ function checkResetInput() {
 
 function closeAllMenus() {
     document.getElementById('pd-filter-dropdown').classList.remove('active');
-    document.getElementById('btn-filter-toggle').classList.remove('active');
     document.getElementById('pd-options-dropdown').classList.remove('active');
-    document.getElementById('btn-options-toggle').classList.remove('active');
     document.getElementById('profile-dropdown').classList.remove('active');
 }
 
@@ -428,7 +412,6 @@ function render() {
         list.appendChild(li);
     });
     
-    // Maintain selection mode visual state
     if(isSelectionMode) {
         document.getElementById('log-list').classList.add('selection-mode');
         document.getElementById('btn-delete-selected').style.display = 'block';
@@ -460,85 +443,19 @@ function updateCircleStats(ringId, textId, hours) {
     if(text) text.innerText = hours;
 }
 
-// --- CSV IMPORT LOGIC (RESTORED) ---
-window.triggerImport = function() {
-    document.getElementById('import-file-input').click();
-    closeAllMenus();
-};
+function setFilter(type) {
+    currentFilter = type; const badge = document.getElementById('filter-badge'); badge.style.display = type !== 'All' ? 'inline-block' : 'none';
+    if(type !== 'All') badge.innerText = type.toUpperCase();
+    document.querySelectorAll('#pd-filter-dropdown .pd-menu-item').forEach(btn => { if(btn.innerText.includes(type)) btn.classList.add('selected'); else btn.classList.remove('selected'); });
+    render(); document.getElementById('pd-filter-dropdown').classList.remove('active');
+    document.getElementById('btn-filter-toggle').classList.remove('active'); 
+}
 
-window.handleCSVImport = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const text = e.target.result;
-        await processCSV(text);
-        input.value = ''; 
-    };
-    reader.readAsText(file);
-};
-
-async function processCSV(csvText) {
-    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
-    if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
-
-    const headerRow = rows[0].toUpperCase();
-    let isShadowingSheet = false;
-    let isVolunteeringSheet = false;
-
-    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
-    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
-
-    if (!isShadowingSheet && !isVolunteeringSheet) {
-        alert("Could not identify sheet type."); return;
-    }
-
-    const dataLines = rows.slice(1);
-    let importedCount = 0;
-
-    for (let line of dataLines) {
-        if (!line.trim()) continue; 
-        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
-        const rawDate = cols[0];
-        if(!rawDate) continue;
-
-        let formattedDate = rawDate;
-        if(rawDate.includes('/')) {
-            const parts = rawDate.split('/');
-            if(parts.length === 3) {
-                const m = parts[0].padStart(2, '0');
-                const d = parts[1].padStart(2, '0');
-                let y = parts[2];
-                if (y.length === 2) y = '20' + y;
-                formattedDate = `${y}-${m}-${d}`;
-            }
-        }
-
-        let type, subtype, doctor, location;
-        if (isShadowingSheet) {
-            type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3];
-        } else {
-            type = "Volunteering"; doctor = cols[1]; location = cols[2];
-            const rawRel = (cols[3] || "").toLowerCase();
-            if (rawRel.includes("yes") || rawRel.includes("true")) subtype = "Dental Related";
-            else if (rawRel.includes("no") || rawRel.includes("false")) subtype = "Non-Dental Related";
-            else subtype = "Dental Related"; 
-        }
-
-        let hrs = Math.round(parseFloat(cols[4]));
-        if(isNaN(hrs) || hrs <= 0) hrs = 0;
-        
-        const entry = {
-            id: String(Date.now()) + Math.random().toString(16).slice(2),
-            date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' 
-        };
-
-        if(entry.date && entry.hours > 0) {
-             if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } 
-             else { entries.push(entry); }
-             importedCount++;
-        }
-    }
-    saveData(); render();
-    alert(`Successfully imported ${importedCount} entries.`);
+function exportData() {
+    if(entries.length === 0) { alert("No data to export!"); return; }
+    let csv = "Date,Activity Type,Subtype,Doctor/Supervisor,Location,Hours,Notes\n";
+    entries.forEach(e => { const sl = `"${e.location.replace(/"/g, '""')}"`; const sd = `"${(e.doctor || '').replace(/"/g, '""')}"`; const sn = `"${(e.notes || '').replace(/"/g, '""')}"`; csv += `${e.date},"${e.type}","${e.subtype}",${sd},${sl},${e.hours},${sn}\n`; });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'PreDent_Activity_Log.csv'; a.click();
 }
