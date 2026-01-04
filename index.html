@@ -220,7 +220,6 @@
     <div id="edit-modal" class="pd-modal-overlay">
         <div class="pd-modal" style="width: 100%; max-width: 500px; padding: 1.5rem;">
             <h3 style="color:#4da6ff; margin-bottom: 1rem;">EDIT ENTRY</h3>
-            
             <div style="text-align:left; margin-bottom: 1rem;">
                 <div style="margin-bottom: 1rem;">
                     <label style="color:#cbd5e1; font-size:0.8rem;">Type</label>
@@ -258,10 +257,40 @@
                     <input type="text" id="edit-entry-notes" class="pd-input">
                 </div>
             </div>
-
             <div style="display:flex; justify-content:center; gap:10px;">
                 <button class="pd-btn pd-btn-cancel" onclick="closeEditModal()">Cancel</button>
                 <button class="pd-btn pd-btn-primary" onclick="saveEditEntry()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-modal" class="pd-modal-overlay">
+        <div class="pd-modal" style="width: 100%; max-width: 450px; padding: 2rem;">
+            <h3 id="view-type-title" style="color:#4da6ff; margin-bottom: 0.5rem; text-transform:uppercase;">ENTRY DETAILS</h3>
+            <p id="view-subtype" style="margin-bottom:1.5rem; opacity:0.8;"></p>
+            
+            <div class="pd-view-row">
+                <span class="pd-view-label">Date</span>
+                <span class="pd-view-val" id="view-date">--</span>
+            </div>
+            <div class="pd-view-row">
+                <span class="pd-view-label">Hours</span>
+                <span class="pd-view-val" id="view-hours">--</span>
+            </div>
+            <div class="pd-view-row">
+                <span class="pd-view-label">Doctor/Supervisor</span>
+                <span class="pd-view-val" id="view-doc">--</span>
+            </div>
+            <div class="pd-view-row">
+                <span class="pd-view-label">Location</span>
+                <span class="pd-view-val" id="view-loc">--</span>
+            </div>
+            
+            <div id="view-notes-container" class="pd-view-notes">
+                </div>
+
+            <div style="display:flex; justify-content:center; margin-top:2rem;">
+                <button class="pd-btn pd-btn-primary" onclick="document.getElementById('view-modal').style.display='none'">Close</button>
             </div>
         </div>
     </div>
