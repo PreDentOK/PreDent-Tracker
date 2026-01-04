@@ -1,5 +1,14 @@
 /* --- 1. DARK THEME LAYOUT (FULL SCREEN) --- */
-body { margin: 0; padding: 0; background-color: #030D4A; }
+body { 
+    margin: 0; 
+    padding: 0; 
+    background-color: #030D4A; 
+    /* Disable Text Selection */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+}
 
 .pd-tracker-wrapper {
     width: 100%;
@@ -18,9 +27,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 .pd-header-banner {
     background-color: #0f1c5e; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 0.8rem 1.5rem; /* Slightly tighter padding */
-    
-    /* Layout: Flexbox allows precise control */
+    padding: 0.8rem 1.5rem;
     display: flex;
     align-items: center;
     flex-wrap: wrap; 
@@ -38,7 +45,6 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     align-items: center;
     gap: 6px;
     white-space: nowrap;
-    margin-right: auto; /* Pushes everything else to the right if space allows, but overridden by specific grouping */
 }
 .brand-prefix { color: #4da6ff; } 
 .brand-main { color: #FFFFFF; }    
@@ -59,7 +65,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     background: rgba(0, 0, 0, 0.2);
     padding: 4px;
     border-radius: 50px;
-    /* On desktop, this helps centering logic */
+    /* Desktop: Absolute Center */
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -91,8 +97,8 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-left: auto; /* CRITICAL: Forces this group to the far right */
-    z-index: 50; /* Ensure it sits above tabs if overlap occurs */
+    margin-left: auto; /* Force right alignment */
+    z-index: 50; 
 }
 
 /* --- DROPDOWNS & MENUS --- */
@@ -104,10 +110,6 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 }
 .pd-menu-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; }
 .pd-menu-btn.active { background: rgba(255, 255, 255, 0.15); color: #4da6ff; }
-
-/* ARROW ROTATION */
-.arrow-icon { transition: transform 0.2s ease; }
-.active .arrow-icon, .pd-menu-btn.active .arrow-icon { transform: rotate(180deg); }
 
 .pd-dropdown {
     position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
@@ -213,12 +215,18 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     color-scheme: dark; min-height: 45px; 
 }
 .pd-textarea { resize: vertical; min-height: 80px; }
+
+/* SELECT BOX ARROW FLIP ON FOCUS */
 .pd-select {
     -webkit-appearance: none; appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat; background-position: right 1rem center; background-size: 1.2em; padding-right: 2.5rem; cursor: pointer;
 }
-.pd-select:focus { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='18 15 12 9 6 15'%3e%3c/polyline%3e%3c/svg%3e"); }
+/* Flip the arrow image when focused */
+.pd-select:focus { 
+    border-color: #4da6ff; background-color: rgba(0, 0, 0, 0.6);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='18 15 12 9 6 15'%3e%3c/polyline%3e%3c/svg%3e");
+}
 .pd-select option { background-color: #030D4A; color: #FFFFFF; }
 .pd-input:focus, .pd-select:focus, .pd-textarea:focus { border-color: #4da6ff; background-color: rgba(0, 0, 0, 0.6); }
 
@@ -231,23 +239,33 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 
 /* List */
 .pd-list { width: 100%; } .pd-list ul { list-style: none; padding: 0; margin: 0; }
-.swipeout { position: relative; overflow: hidden; margin-bottom: 1rem; border-radius: 8px; height: 90px; }
-.swipeout-actions-right { position: absolute; top: 0; right: 0; bottom: 0; display: flex; z-index: 0; }
-.swipeout-btn { display: flex; align-items: center; justify-content: center; width: 70px; height: 100%; cursor: pointer; text-decoration: none; }
-.swipeout-edit { background: #4da6ff; color: #030D4A; }
-.swipeout-delete { background: #ff6b6b; color: white; }
-.pd-action-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
-.swipeout-content {
-    position: relative; z-index: 10; width: 100%; height: 100%; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.1);
-    border-left: 4px solid #cbd5e1; border-radius: 8px; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between;
-    box-sizing: border-box; transition: transform 0.2s ease-out; cursor: grab;
+/* Modified List Item to show buttons always */
+.pd-entry-item { 
+    background: #0f1c5e; 
+    border: 1px solid rgba(255,255,255,0.1);
+    border-left: 4px solid #cbd5e1; 
+    border-radius: 8px; 
+    padding: 1rem; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    margin-bottom: 1rem;
 }
-.swipeout-content.type-shadow { border-left-color: #4da6ff; }
-.swipeout-content.type-volunteer { border-left-color: #ffd700; }
-.pd-log-info { flex: 1; overflow: hidden; }
-.pd-log-info h4 { margin: 0 0 0.2rem 0; font-size: 1rem; font-weight: 700; color: #fff; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pd-log-meta { font-size: 0.85rem; color: #cbd5e1; text-align: left; display: block; }
-.pd-log-hours { background: rgba(0,0,0,0.3); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); color: #fff; white-space: nowrap; margin-left: 10px; }
+.pd-entry-item.type-shadow { border-left-color: #4da6ff; }
+.pd-entry-item.type-volunteer { border-left-color: #ffd700; }
+
+.pd-entry-content { flex: 1; overflow: hidden; margin-right: 10px; }
+.pd-entry-title { font-size: 1rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+.pd-entry-meta { font-size: 0.85rem; color: #cbd5e1; }
+.pd-entry-actions { display: flex; gap: 8px; }
+.pd-entry-btn { 
+    background: rgba(255,255,255,0.1); border: none; width: 36px; height: 36px; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: #cbd5e1; transition: background 0.2s;
+}
+.pd-entry-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.pd-entry-btn.edit { color: #4da6ff; }
+.pd-entry-btn.delete { color: #ff6b6b; }
+
 .pd-filter-badge { background: #4da6ff; color: #030D4A; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 10px; display: none; }
 
 /* Modal & Footer */
@@ -268,22 +286,33 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 /* --- MOBILE SPECIFIC FIXES --- */
 @media (max-width: 700px) { 
     .pd-header-banner { 
+        /* Reset layout for stacking */
         justify-content: space-between;
     }
     
-    .pd-logo-text { width: auto; margin-right: 0; }
+    .pd-logo-text { 
+        order: 1; 
+        width: auto; 
+    }
+    
+    .pd-actions-group { 
+        order: 2; 
+    }
+    
     .pd-tabs-container { 
-        position: static; /* Remove absolute centering on mobile */
+        position: static; 
         transform: none;
         order: 3; 
         width: 100%; 
-        justify-content: center; 
+        justify-content: flex-start; /* Aligns "under PREDENT" */
         margin-top: 1rem; 
+        padding-left: 0; /* Remove default padding centering */
     }
 
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
+    /* Force side-by-side circles on mobile */
     .pd-stats-container {
         flex-wrap: nowrap; 
         gap: 0px; 
