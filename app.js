@@ -35,6 +35,107 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
+// --- CSV IMPORT LOGIC ---
+window.triggerImport = function() {
+    document.getElementById('import-file-input').click();
+    closeAllMenus();
+};
+
+window.handleCSVImport = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        await processCSV(text);
+        input.value = ''; 
+    };
+    reader.readAsText(file);
+};
+
+async function processCSV(csvText) {
+    const lines = csvText.split(/\r\n|\n/); // Handle Windows/Mac line breaks
+    if (lines.length < 2) {
+        alert("CSV appears empty or missing header.");
+        return;
+    }
+
+    // Skip Row 1 (Header), start at Row 2
+    const dataLines = lines.slice(1);
+    let importedCount = 0;
+
+    for (let line of dataLines) {
+        if (!line.trim()) continue; 
+        
+        // Split by comma, respecting quotes
+        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
+        
+        // MAPPING YOUR TEMPLATE:
+        // Col A [0] = DATE
+        // Col B [1] = DOCTOR(S)
+        // Col C [2] = SPECIALTY (Subtype)
+        // Col D [3] = LOCATION
+        // Col E [4] = HOURS
+        // Col F [5] = COMMENTS
+
+        // 1. Format Date (Attempts to convert MM/DD/YYYY to YYYY-MM-DD)
+        const rawDate = cols[0];
+        let formattedDate = rawDate;
+        // Simple check if date is M/D/YYYY format
+        if(rawDate.includes('/')) {
+            const parts = rawDate.split('/');
+            if(parts.length === 3) {
+                // Pad with 0 (e.g., 1 -> 01)
+                const m = parts[0].padStart(2, '0');
+                const d = parts[1].padStart(2, '0');
+                const y = parts[2];
+                formattedDate = `${y}-${m}-${d}`;
+            }
+        }
+
+        // 2. Determine Type based on Specialty (Col C)
+        const rawSubtype = cols[2];
+        let type = "Shadowing"; // Default
+        // If subtype matches a volunteer category OR contains the word "volunteer" (case insensitive)
+        if (SUBTYPES_VOLUNTEER.includes(rawSubtype) || rawSubtype.toLowerCase().includes("volunteer")) {
+            type = "Volunteering";
+        }
+
+        // 3. Process Hours (Round to nearest int)
+        let hrs = Math.round(parseFloat(cols[4]));
+        if(isNaN(hrs) || hrs <= 0) hrs = 0;
+
+        const entry = {
+            id: String(Date.now()) + Math.random().toString(16).slice(2),
+            date: formattedDate,
+            type: type,
+            subtype: rawSubtype || (type === "Shadowing" ? "General Dentistry" : "Dental Related"),
+            doctor: cols[1],
+            location: cols[3],
+            hours: hrs,
+            notes: cols[5] || '' 
+        };
+
+        // Basic validation: Needs Date, Hours > 0, and Location
+        if(entry.date && entry.hours > 0 && entry.location) {
+             if (appUser) {
+                await window.db_addEntry(appUser, entry);
+                entries.push(entry);
+            } else {
+                entries.push(entry);
+            }
+            importedCount++;
+        }
+    }
+
+    saveData();
+    render();
+    alert(`Successfully imported ${importedCount} entries.`);
+}
+
+// --- STANDARD APP LOGIC ---
+
 window.refreshApp = async function(user) {
     appUser = user;
     await loadData();
@@ -56,14 +157,11 @@ async function loadData() {
 
 async function saveData() {
     if (appUser) {
-        // Calculate Totals for Leaderboard Sync
         let sTotal = 0, vTotal = 0;
         entries.forEach(e => { 
             const h = parseInt(e.hours, 10) || 0; 
             if (e.type === 'Shadowing') sTotal += h; else vTotal += h; 
         });
-        
-        // Push stats to Firebase Leaderboard
         if(window.updateLeaderboardStats) {
             await window.updateLeaderboardStats(appUser, sTotal, vTotal);
         }
@@ -72,7 +170,6 @@ async function saveData() {
     }
 }
 
-// --- ADD ENTRY ---
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
     
@@ -96,11 +193,7 @@ async function addEntry() {
     }
     
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
-    
-    if (!loc) { 
-        document.getElementById('entry-loc').parentNode.classList.add('error'); 
-        hasError = true; 
-    }
+    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
 
     if (hasError) return;
     
@@ -132,7 +225,6 @@ async function addEntry() {
     }
 }
 
-// --- EDIT ENTRY ---
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
@@ -201,6 +293,22 @@ async function confirmDeleteEntry() {
     closeDeleteModal();
 }
 
+async function confirmReset() {
+    if(appUser) {
+        try {
+            await window.db_wipeAllEntries(appUser);
+        } catch(e) {
+            console.error("Wipe failed", e);
+            closeResetModal();
+            return;
+        }
+    }
+    entries = []; 
+    saveData(); 
+    render(); 
+    closeResetModal(); 
+}
+
 window.viewEntry = function(id) {
     const entry = entries.find(e => e.id === String(id));
     if(!entry) return;
@@ -245,6 +353,10 @@ window.toggleOptionsMenu = (e) => {
 };
 
 window.setFilter = setFilter;
+window.openResetModal = openResetModal;
+window.closeResetModal = closeResetModal;
+window.checkResetInput = checkResetInput;
+window.confirmReset = confirmReset;
 window.addEntry = addEntry;
 window.exportData = exportData;
 window.deleteEntry = (id) => { entryToDeleteId = String(id); document.getElementById('delete-modal').style.display = 'flex'; };
@@ -257,6 +369,11 @@ window.switchTab = switchTab;
 window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = () => document.getElementById('profile-dropdown').classList.toggle('active');
+
+function checkResetInput() {
+    const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase();
+    document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE');
+}
 
 function closeAllMenus() {
     document.getElementById('pd-filter-dropdown').classList.remove('active');
@@ -341,6 +458,7 @@ function closeEditModal() { document.getElementById('edit-modal').style.display 
 function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; entryToDeleteId = null; }
 function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
+function confirmReset() { entries = []; saveData(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function render() {
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
