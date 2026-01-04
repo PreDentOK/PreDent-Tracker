@@ -62,6 +62,7 @@ body {
     background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 50px;
     position: absolute; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 320px; 
+    z-index: 10; /* Ensure clickable */
 }
 
 .pd-tab-btn {
@@ -91,14 +92,17 @@ body {
 .pd-dropdown {
     position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
     border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 200px; display: none; flex-direction: column; 
-    z-index: 1000; /* HIGH Z-INDEX TO FLOAT OVER EVERYTHING */
-    overflow: hidden; opacity: 1;
+    z-index: 1000; overflow: hidden; opacity: 1;
+    text-align: center; /* Force Center */
+    align-items: center; /* Force Center Flex Items */
 }
 .pd-dropdown.active { display: flex; }
 .pd-menu-item {
     padding: 14px 16px; color: #F0F4F8; background: transparent; border: none;
-    text-align: center; cursor: pointer; font-size: 0.9rem; font-family: 'Inter', sans-serif;
+    text-align: center; /* Center Text */
+    cursor: pointer; font-size: 0.9rem; font-family: 'Inter', sans-serif;
     border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%;
+    display: block; /* Ensure full width block */
 }
 .pd-menu-item.header-item {
     cursor: default; opacity: 0.5; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
@@ -119,7 +123,6 @@ body {
 .pd-user-profile { display: flex; align-items: center; gap: 10px; position: relative; }
 .pd-user-profile.hidden { display: none; }
 
-/* FIX PROFILE CLICK: Wrap img in button */
 .pd-profile-btn {
     background: transparent; border: none; padding: 0; cursor: pointer; 
     display: flex; align-items: center; justify-content: center;
@@ -171,6 +174,29 @@ body {
 .pd-fill-dental { background: #51cf66; height: 100%; transition: width 0.5s ease; } 
 .pd-fill-non { background: #ff6b6b; height: 100%; transition: width 0.5s ease; } 
 
+/* --- NEW ACTIVITY CHART --- */
+.pd-chart-container {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    height: 180px; padding: 10px 0; margin-top: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.pd-chart-col {
+    display: flex; flex-direction: column; align-items: center; flex: 1; margin: 0 2px;
+}
+.pd-chart-bar-bg {
+    width: 12px; height: 100%; background: rgba(255,255,255,0.05); border-radius: 6px;
+    position: relative; display: flex; flex-direction: column-reverse; /* Stack from bottom */
+    overflow: hidden;
+}
+/* Stacked bar segments */
+.pd-bar-fill-vol { width: 100%; background: #ffd700; transition: height 0.5s ease; }
+.pd-bar-fill-shadow { width: 100%; background: #4da6ff; transition: height 0.5s ease; }
+
+.pd-chart-label {
+    font-size: 0.65rem; color: #cbd5e1; margin-top: 8px; font-weight: 500;
+    text-transform: uppercase;
+}
+
 /* --- LEADERBOARD & PROFILE --- */
 .pd-lb-profile { background: rgba(77, 166, 255, 0.1); border: 1px solid #4da6ff; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; text-align: center; }
 .pd-lb-profile h4 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #fff; }
@@ -183,18 +209,16 @@ body {
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
     grid-template-columns: 50px 1fr 100px 100px;
-    padding: 1rem 0.5rem; align-items: center; text-align: center;
+    padding: 1rem 0.5rem; align-items: center; 
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
     font-weight: 700; color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
+    text-align: center;
 }
-/* Force Left Align for Name Header */
 .pd-lb-header div:nth-child(2) { text-align: left; padding-left: 10px; }
-
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; text-align: center; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
-
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; margin: 0 auto; 
@@ -202,7 +226,6 @@ body {
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
 .rank-3 { background: #cd7f32; color: #030D4A; }
-
 .pd-lb-name { 
     font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: left; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; padding-left: 10px;
