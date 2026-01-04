@@ -62,7 +62,7 @@ body {
     background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 50px;
     position: absolute; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 320px; 
-    z-index: 10; /* Ensure clickable */
+    z-index: 10;
 }
 
 .pd-tab-btn {
@@ -93,16 +93,13 @@ body {
     position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
     border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 200px; display: none; flex-direction: column; 
     z-index: 1000; overflow: hidden; opacity: 1;
-    text-align: center; /* Force Center */
-    align-items: center; /* Force Center Flex Items */
+    text-align: center; align-items: center;
 }
 .pd-dropdown.active { display: flex; }
 .pd-menu-item {
     padding: 14px 16px; color: #F0F4F8; background: transparent; border: none;
-    text-align: center; /* Center Text */
-    cursor: pointer; font-size: 0.9rem; font-family: 'Inter', sans-serif;
-    border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%;
-    display: block; /* Ensure full width block */
+    text-align: center; cursor: pointer; font-size: 0.9rem; font-family: 'Inter', sans-serif;
+    border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; display: block;
 }
 .pd-menu-item.header-item {
     cursor: default; opacity: 0.5; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
@@ -174,27 +171,16 @@ body {
 .pd-fill-dental { background: #51cf66; height: 100%; transition: width 0.5s ease; } 
 .pd-fill-non { background: #ff6b6b; height: 100%; transition: width 0.5s ease; } 
 
-/* --- NEW ACTIVITY CHART --- */
-.pd-chart-container {
-    display: flex; justify-content: space-between; align-items: flex-end;
-    height: 180px; padding: 10px 0; margin-top: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+/* NEW CHART STYLES (CANVAS) */
+.pd-chart-wrapper {
+    width: 100%;
+    height: 250px; /* Fixed Height for Graph */
+    position: relative;
+    padding-top: 10px;
 }
-.pd-chart-col {
-    display: flex; flex-direction: column; align-items: center; flex: 1; margin: 0 2px;
-}
-.pd-chart-bar-bg {
-    width: 12px; height: 100%; background: rgba(255,255,255,0.05); border-radius: 6px;
-    position: relative; display: flex; flex-direction: column-reverse; /* Stack from bottom */
-    overflow: hidden;
-}
-/* Stacked bar segments */
-.pd-bar-fill-vol { width: 100%; background: #ffd700; transition: height 0.5s ease; }
-.pd-bar-fill-shadow { width: 100%; background: #4da6ff; transition: height 0.5s ease; }
-
-.pd-chart-label {
-    font-size: 0.65rem; color: #cbd5e1; margin-top: 8px; font-weight: 500;
-    text-transform: uppercase;
+canvas#activity-canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* --- LEADERBOARD & PROFILE --- */
@@ -343,7 +329,17 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     .pd-nav-rank { font-size: 0.65rem; padding: 2px 6px; height: 24px; }
     .pd-avatar-img, .pd-menu-btn { width: 30px; height: 30px; }
     
-    .pd-tabs-container { position: static; transform: none; order: 3; width: 100%; justify-content: flex-start; margin-top: 0.5rem; padding-left: 0; max-width: 100%; }
+    /* FORCE TABS TO NEW ROW UNDERNEATH */
+    .pd-tabs-container { 
+        position: static; 
+        transform: none; 
+        order: 3; 
+        width: 100%; 
+        justify-content: flex-start; 
+        margin-top: 0.5rem; 
+        padding-left: 0; 
+        max-width: 100%; 
+    }
     
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
