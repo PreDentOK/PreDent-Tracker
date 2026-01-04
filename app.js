@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.cancelEdit = cancelEdit;
     window.switchTab = switchTab;
     window.updateProfileName = updateProfileName;
+    window.skipProfileSetup = skipProfileSetup; // Export Skip function
 
     handleTypeChange(); 
     render();
@@ -105,6 +106,13 @@ window.toggleProfileMenu = function() {
     document.getElementById('profile-dropdown').classList.toggle('active');
 };
 
+function skipProfileSetup() {
+    // Mark setup as done forever
+    localStorage.setItem('pd_profile_setup_done', 'true');
+    // Hide the box
+    document.getElementById('lb-profile-box').classList.add('pd-hidden');
+}
+
 function updateProfileName() {
     const nameInput = document.getElementById('user-display-name');
     const name = nameInput.value.trim();
@@ -125,8 +133,11 @@ function updateProfileName() {
     // Force a re-render of the auth UI to update the name in the dropdown immediately
     const dropdownName = document.getElementById('dropdown-name');
     if(dropdownName) dropdownName.textContent = name;
+
+    // Mark setup as done forever since they updated it
+    localStorage.setItem('pd_profile_setup_done', 'true');
+    document.getElementById('lb-profile-box').classList.add('pd-hidden');
     
-    alert("Display name updated!"); // Friendly feedback
     if(window.syncToCloud) window.syncToCloud();
 }
 
