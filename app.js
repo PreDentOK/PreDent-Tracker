@@ -10,6 +10,9 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
 
+// Basic filter list (expand as needed)
+const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("year").textContent = new Date().getFullYear();
     const savedName = localStorage.getItem('pd_username');
@@ -61,12 +64,24 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateProfileName() {
-    const name = document.getElementById('user-display-name').value.trim();
-    if(name) {
-        localStorage.setItem('pd_username', name);
-        updateLeaderboardVisibility();
-        if(window.syncToCloud) window.syncToCloud();
+    const nameInput = document.getElementById('user-display-name');
+    const name = nameInput.value.trim();
+    
+    if(!name) return;
+
+    // PROFANITY FILTER CHECK
+    const lowerName = name.toLowerCase();
+    const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
+
+    if (hasProfanity) {
+        document.getElementById('warning-modal').style.display = 'flex';
+        nameInput.value = ''; // Clear the input
+        return;
     }
+
+    localStorage.setItem('pd_username', name);
+    updateLeaderboardVisibility();
+    if(window.syncToCloud) window.syncToCloud();
 }
 
 function updateLeaderboardVisibility() {
@@ -99,7 +114,9 @@ function handleTypeChange() {
     subSelect.innerHTML = '';
     const options = mainType === 'Shadowing' ? SUBTYPES_SHADOW : SUBTYPES_VOLUNTEER;
     options.forEach(opt => { const el = document.createElement('option'); el.value = opt; el.textContent = opt; subSelect.appendChild(el); });
-    docInput.placeholder = mainType === 'Shadowing' ? "Doctor(s) *" : "Organization / Supervisor *";
+    
+    // UPDATED: Removed asterisks from placeholders
+    docInput.placeholder = mainType === 'Shadowing' ? "Doctor(s)" : "Organization / Supervisor";
 }
 
 function addEntry() {
