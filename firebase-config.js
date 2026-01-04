@@ -74,34 +74,6 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
-// NEW: ROBUST WIPE FUNCTION
-window.db_wipeAllEntries = async function(user) {
-    if(!user || !db) return;
-    
-    try {
-        const colRef = collection(db, 'users', user.uid, 'entries');
-        const snapshot = await getDocs(colRef);
-        
-        // 1. Delete all entries individually (Promise.all ensures all complete)
-        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        
-        // 2. Force Leaderboard Reset immediately
-        const userRef = doc(db, 'leaderboard', user.uid);
-        await setDoc(userRef, {
-            shadow: 0,
-            vol: 0,
-            total: 0
-        }, { merge: true }); // Merge ensures we keep the Name/Photo
-        
-        console.log("Wipe complete & Leaderboard reset.");
-    } catch (e) {
-        console.error("Wipe Error:", e);
-        alert("Error wiping data. Please try again.");
-        throw e; // Stop app.js from clearing local if DB failed
-    }
-};
-
 window.updateLeaderboardStats = async function(user, shadowTotal, volTotal) {
     if(!user || !db) return;
     try {
@@ -199,7 +171,6 @@ window.syncToCloud = async function() {
         else vTotal += parseInt(e.hours);
     });
 
-    // Use direct update function
     window.updateLeaderboardStats(currentUser, sTotal, vTotal);
 };
 
