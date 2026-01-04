@@ -157,8 +157,11 @@
             </div>
 
             <div class="pd-list-controls">
-                <button id="btn-select-mode" onclick="toggleSelectionMode()">Select Entries</button>
-                <button id="btn-delete-selected" onclick="deleteSelectedEntries()">Delete Selected</button>
+                <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
+                <div style="display:flex; gap:5px;">
+                    <button id="btn-select-mode" onclick="toggleSelectionMode()">Select Entries</button>
+                    <button id="btn-delete-selected" onclick="deleteSelectedEntries()">Delete</button>
+                </div>
             </div>
 
             <div id="log-list" class="pd-list">
@@ -206,7 +209,7 @@
     <footer class="pd-footer">© <span id="year"></span> PreDent Connect. All rights reserved.</footer>
 
     <div id="reset-modal" class="pd-modal-overlay">
-        <div class="pd-modal">
+        <div class="pd-modal pd-modal-danger">
             <h3>RESET ALL DATA?</h3>
             <p>This cannot be undone.</p>
             <p style="margin-bottom:1rem;">Type <strong>DELETE</strong> below:</p>
@@ -216,8 +219,8 @@
     </div>
 
     <div id="delete-modal" class="pd-modal-overlay">
-        <div class="pd-modal">
-            <h3 style="color:#ff6b6b;">DELETE ENTRY?</h3>
+        <div class="pd-modal pd-modal-danger">
+            <h3>DELETE ENTRY?</h3>
             <p style="margin-bottom:1.5rem;">Are you sure you want to remove this log entry? This cannot be undone.</p>
             <div style="display:flex; justify-content:center; gap:10px;">
                 <button class="pd-btn pd-btn-cancel" onclick="closeDeleteModal()">No, Keep it</button>
