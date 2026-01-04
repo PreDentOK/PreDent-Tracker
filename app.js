@@ -133,14 +133,10 @@ async function addEntry() {
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
-    // 1. Clear previous errors in modal (Assuming wrappers exist, if not we fall back to logic)
-    // Note: If you want visual red outlines in the modal, ensure the HTML input/selects are wrapped in <div class="pd-input-wrapper">
-    // The current logic assumes your HTML structure supports this class.
+    // 1. Clear previous errors in modal
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
-    if(modalWrappers.length > 0) {
-        modalWrappers.forEach(el => el.classList.remove('error'));
-    }
-
+    // Ensure wrapping logic works if class is present (current HTML doesn't strictly wrap all in pd-input-wrapper but parent logic below handles fallback if needed)
+    
     // 2. Grab values
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
@@ -155,8 +151,13 @@ async function saveEditEntry() {
     // Visual Validation Helper
     const markError = (id) => {
         const el = document.getElementById(id);
-        if(el && el.parentNode.classList.contains('pd-input-wrapper')) {
-            el.parentNode.classList.add('error');
+        // We look for parent, if it doesn't have class pd-input-wrapper, we might apply style directly or assume parent is the wrapper
+        // Based on the provided HTML, most inputs are inside div.pd-input-wrapper or just a div.
+        // We will apply a border style directly if class check fails for simplicity in modal
+        if(el) {
+            el.style.borderColor = "#ff6b6b";
+            // Add a listener to remove red on input
+            el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true});
         }
         hasError = true;
     };
@@ -254,7 +255,7 @@ window.toggleOptionsMenu = (e) => {
 window.setFilter = setFilter;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
-window.checkResetInput = checkResetInput;
+window.checkResetInput = checkResetInput; // Updated below
 window.confirmReset = confirmReset;
 window.addEntry = addEntry;
 window.exportData = exportData;
@@ -268,6 +269,12 @@ window.switchTab = switchTab;
 window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = () => document.getElementById('profile-dropdown').classList.toggle('active');
+
+// Reset Input Check - Case Insensitive
+function checkResetInput() {
+    const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase();
+    document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE');
+}
 
 function closeAllMenus() {
     document.getElementById('pd-filter-dropdown').classList.remove('active');
@@ -352,7 +359,6 @@ function closeEditModal() { document.getElementById('edit-modal').style.display 
 function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; entryToDeleteId = null; }
 function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
-function checkResetInput() { document.getElementById('reset-confirm-btn').disabled = (document.getElementById('reset-confirm-input').value !== 'DELETE'); }
 function confirmReset() { entries = []; saveData(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function render() {
