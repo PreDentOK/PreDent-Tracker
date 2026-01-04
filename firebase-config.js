@@ -1,7 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ADDED: setPersistence, browserLocalPersistence to imports
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCz0-dUukvFHUG6DZR9hGdgduUzTcobt0M",
@@ -20,23 +21,32 @@ try {
     analytics = getAnalytics(app); 
     db = getFirestore(app);
     auth = getAuth(app);
-    
-    onAuthStateChanged(auth, async (user) => {
-        currentUser = user;
-        updateAuthUI(user);
-        
-        if (window.refreshApp) window.refreshApp(user);
 
-        if (user) {
-            await migrateLocalToCloud(user);
-            const savedName = localStorage.getItem('pd_username');
-            if(!savedName && user.displayName) {
-                localStorage.setItem('pd_username', user.displayName);
-            }
-            window.syncToCloud(); 
-        }
-        window.fetchLeaderboard();
-    });
+    // --- NEW: FORCE PERSISTENCE ---
+    // This ensures the user stays logged in even if the tab/browser is closed
+    setPersistence(auth, browserLocalPersistence)
+        .then(() => {
+            // Persistence set, now listen for changes
+            onAuthStateChanged(auth, async (user) => {
+                currentUser = user;
+                updateAuthUI(user);
+                
+                if (window.refreshApp) window.refreshApp(user);
+
+                if (user) {
+                    await migrateLocalToCloud(user);
+                    const savedName = localStorage.getItem('pd_username');
+                    if(!savedName && user.displayName) {
+                        localStorage.setItem('pd_username', user.displayName);
+                    }
+                    window.syncToCloud(); 
+                }
+                window.fetchLeaderboard();
+            });
+        })
+        .catch((error) => {
+            console.error("Auth Persistence Error:", error);
+        });
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
@@ -80,6 +90,7 @@ async function migrateLocalToCloud(user) {
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try {
+        // Persistence is already set on init, so we just sign in
         await signInWithPopup(auth, provider);
     } catch (error) {
         console.error("Login Failed", error);
@@ -152,7 +163,7 @@ window.syncToCloud = async function() {
                 vol: vTotal,
                 total: sTotal + vTotal,
                 photo: currentUser.photoURL,
-                uid: currentUser.uid // IMPORTANT: Save UID for accurate rank checking
+                uid: currentUser.uid 
             }, { merge: true });
             window.fetchLeaderboard();
         } catch(e) { console.error("Sync error:", e); }
@@ -168,7 +179,6 @@ window.fetchLeaderboard = async function() {
     try {
         const snapshot = await getDocs(lbRef);
         const users = [];
-        // Capture Document ID as UID for robust comparison
         snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
         users.sort((a,b) => b.total - a.total);
         
@@ -188,7 +198,6 @@ window.fetchLeaderboard = async function() {
             else if(rank === 2) rankClass = 'rank-2';
             else if(rank === 3) rankClass = 'rank-3';
             
-            // ROBUST CHECK: Compare User IDs, not names
             const isMe = (currentUser && u.id === currentUser.uid);
             if(isMe) myRank = rank;
 
