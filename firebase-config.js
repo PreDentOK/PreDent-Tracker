@@ -19,7 +19,6 @@ try {
     db = getFirestore(app);
     auth = getAuth(app);
     
-    // Listen for auth changes to update UI
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         updateAuthUI(user);
@@ -36,7 +35,6 @@ try {
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
-// --- AUTH FUNCTIONS ---
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try {
@@ -51,7 +49,7 @@ window.googleLogout = async function() {
     try {
         await signOut(auth);
         document.getElementById('profile-dropdown').classList.remove('active');
-        localStorage.removeItem('pd_username'); // Optional: clear local name on logout
+        localStorage.removeItem('pd_username'); 
     } catch (error) {
         console.error("Logout Failed", error);
     }
@@ -70,7 +68,7 @@ function updateAuthUI(user) {
         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
         document.getElementById('dropdown-name').textContent = user.displayName || 'User';
         
-        // Leaderboard logic
+        // Logged In: Show Profile Edit Box & Leaderboard
         if(signinPromo) signinPromo.style.display = 'none';
         if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden');
         if(lbMain) lbMain.classList.remove('pd-hidden');
@@ -78,14 +76,13 @@ function updateAuthUI(user) {
         loginBtn.classList.remove('hidden');
         profileSection.classList.add('hidden');
         
-        // Leaderboard logic
+        // Logged Out: Show Promo, HIDE Profile Edit Box & Leaderboard
         if(signinPromo) signinPromo.style.display = 'block';
         if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
         if(lbMain) lbMain.classList.add('pd-hidden');
     }
 }
 
-// --- DATA SYNC ---
 window.syncToCloud = async function() {
     if(!db || !currentUser) return;
     const entries = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
@@ -95,7 +92,6 @@ window.syncToCloud = async function() {
         else vTotal += parseInt(e.hours);
     });
 
-    // Prefer manual override name, otherwise Google Name
     const displayName = localStorage.getItem('pd_username') || currentUser.displayName;
     
     if(displayName) {
@@ -128,7 +124,7 @@ window.fetchLeaderboard = async function() {
         list.innerHTML = '';
         if(users.length === 0) { 
             list.innerHTML = '<div style="padding:2rem; text-align:center;">No students yet. Be the first!</div>'; 
-            badge.classList.add('hidden');
+            if(badge) badge.classList.add('hidden');
             return; 
         }
 
@@ -154,11 +150,10 @@ window.fetchLeaderboard = async function() {
             list.insertAdjacentHTML('beforeend', html);
         });
 
-        // Update Header Badge
-        if (myRank) {
+        if (myRank && badge) {
             badge.innerText = `Rank: #${myRank}`;
             badge.classList.remove('hidden');
-        } else {
+        } else if (badge) {
             badge.classList.add('hidden');
         }
 
