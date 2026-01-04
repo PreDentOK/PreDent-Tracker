@@ -87,12 +87,18 @@ body {
 .pd-menu-btn.active { background: rgba(255, 255, 255, 0.15); color: #4da6ff; }
 
 .pd-dropdown {
-    position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 200px; display: none; flex-direction: column; z-index: 100; overflow: hidden;
+    position: absolute; top: 45px; right: 0; 
+    background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+    width: 200px; 
+    display: none; flex-direction: column; 
+    z-index: 200; /* Increased Z-index for visibility */
+    overflow: hidden;
 }
 .pd-dropdown.active { display: flex; }
 .pd-menu-item {
-    padding: 14px 16px; color: #F0F4F8; background: transparent; border: none;
+    padding: 14px 16px; color: #F0F4F8; /* Forced Color */
+    background: transparent; border: none;
     text-align: center; cursor: pointer; font-size: 0.9rem; font-family: 'Inter', sans-serif;
     border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%;
 }
@@ -131,7 +137,7 @@ body {
     -webkit-overflow-scrolling: touch; 
 }
 
-/* SHARED STATS (Default Desktop) */
+/* SHARED STATS */
 .pd-stats-container { display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem; flex-wrap: wrap; margin-top: 1rem; }
 .pd-circle-card { position: relative; width: 260px; height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .pd-progress-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -164,15 +170,18 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* --- LEADERBOARD GRID --- */
+/* --- LEADERBOARD GRID (SAFARI/CHROME UNIFIED) --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    grid-template-columns: 12% 38% 25% 25%;
-    padding: 1rem 0.5rem; align-items: center; text-align: center;
+    /* Fixed pixel widths for Rank/Stats to ensure perfect alignment */
+    grid-template-columns: 40px 1fr 60px 60px;
+    padding: 1rem 0.5rem; 
+    align-items: center; 
+    text-align: center;
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    font-weight: 700; color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
+    font-weight: 700; color: #cbd5e1; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; 
 }
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
@@ -180,7 +189,7 @@ body {
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; margin: 0 auto; 
-    text-align: center; margin-left: 0; 
+    text-align: center;
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
@@ -190,7 +199,7 @@ body {
     font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: center; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
 }
-.pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
+.pd-lb-stat { font-size: 0.9rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.7em; opacity: 0.6; }
 
 .pd-hidden { display: none !important; }
@@ -207,19 +216,11 @@ body {
 .pd-input-wrapper.error .pd-error-asterisk { display: block; }
 .pd-input-wrapper.error .pd-input, .pd-input-wrapper.error .pd-select { border-color: #ff6b6b; }
 
-/* UNIFIED INPUT STYLES */
 .pd-input, .pd-select, .pd-textarea {
-    width: 100%; 
-    height: 50px !important; 
-    min-height: 50px !important;
-    max-height: 50px !important;
-    padding: 0 0.8rem; 
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px; 
-    font-family: 'Inter', sans-serif; font-size: 0.95rem;
-    background-color: rgba(0, 0, 0, 0.4); color: #FFFFFF;
-    outline: none; transition: border-color 0.2s; box-sizing: border-box;
-    color-scheme: dark;
+    width: 100%; height: 50px !important; min-height: 50px !important; max-height: 50px !important;
+    padding: 0 0.8rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; 
+    font-family: 'Inter', sans-serif; font-size: 0.95rem; background-color: rgba(0, 0, 0, 0.4); color: #FFFFFF;
+    outline: none; transition: border-color 0.2s; box-sizing: border-box; color-scheme: dark;
     -webkit-appearance: none; appearance: none; text-align: left;
 }
 input[type="date"] { display: block; text-align: left; -webkit-align-items: center; line-height: 50px; }
@@ -248,8 +249,7 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .pd-list { width: 100%; } .pd-list ul { list-style: none; padding: 0; margin: 0; }
 .pd-entry-item { 
     background: #0f1c5e; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #cbd5e1; 
-    border-radius: 8px; padding: 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
-    cursor: pointer;
+    border-radius: 8px; padding: 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; cursor: pointer;
 }
 .pd-entry-item.type-shadow { border-left-color: #4da6ff; }
 .pd-entry-item.type-volunteer { border-left-color: #ffd700; }
@@ -297,27 +297,8 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* FIX FOR CIRCLES: Use larger sizing strategy with scaling */
-    .pd-stats-container { 
-        display: flex;
-        flex-wrap: nowrap; /* Prevent wrap */
-        justify-content: space-between; /* Spread circles out */
-        gap: 0; /* Remove gap, space handled by padding/width */
-        padding: 0 10px; /* Safe padding */
-        
-        margin-top: 0;
-        margin-bottom: 1rem; 
-    }
-    
-    .pd-circle-card {
-        /* Set flexible width to maximize size */
-        width: 44vw; 
-        height: 44vw;
-        max-width: 180px; /* Don't get too huge on tablets */
-        max-height: 180px;
-    }
-    
-    /* Font Adjustment for Mobile Circles */
+    .pd-stats-container { display: flex; flex-wrap: nowrap; justify-content: space-between; gap: 0; padding: 0 10px; margin-top: 0; margin-bottom: 1rem; }
+    .pd-circle-card { width: 44vw; height: 44vw; max-width: 180px; max-height: 180px; }
     .pd-stat-number { font-size: 3rem; margin-bottom: 2px; }
     .pd-stat-label { font-size: 0.6rem; }
 }
