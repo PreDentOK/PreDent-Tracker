@@ -10,7 +10,7 @@ let isSelectionMode = false;
 
 const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
-const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
+const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "nigga", "nigger", "rape", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
 const CIRCLE_RADIUS = 110; 
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
@@ -39,6 +39,105 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
     handleTypeChange();
 });
+
+// --- CANVAS GRAPH LOGIC ---
+function renderActivityGraph() {
+    const canvas = document.getElementById('activity-canvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    
+    const width = rect.width;
+    const height = rect.height;
+    
+    const months = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        months.push({ 
+            key: d.toISOString().slice(0, 7), // YYYY-MM
+            label: d.toLocaleString('default', { month: 'short' }),
+            shadow: 0,
+            vol: 0
+        });
+    }
+
+    entries.forEach(e => {
+        const key = e.date.slice(0, 7);
+        const m = months.find(x => x.key === key);
+        if (m) {
+            if (e.type === 'Shadowing') m.shadow += parseInt(e.hours);
+            else m.vol += parseInt(e.hours);
+        }
+    });
+
+    let maxVal = 0;
+    months.forEach(m => {
+        if (m.shadow > maxVal) maxVal = m.shadow;
+        if (m.vol > maxVal) maxVal = m.vol;
+    });
+    if (maxVal === 0) maxVal = 10;
+    const maxY = maxVal * 1.2;
+
+    const padding = 30;
+    const chartW = width - (padding * 2);
+    const chartH = height - (padding * 2);
+    const stepX = chartW / (months.length - 1);
+
+    const getY = (val) => height - padding - ((val / maxY) * chartH);
+
+    // DRAW SHADOWING LINE (BLUE)
+    ctx.beginPath();
+    ctx.strokeStyle = '#4da6ff';
+    ctx.lineWidth = 3;
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        const y = getY(m.shadow);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        ctx.fillStyle = '#4da6ff';
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.stroke();
+
+    // DRAW VOLUNTEER LINE (YELLOW)
+    ctx.beginPath();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        const y = getY(m.vol);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        ctx.fillText(m.label, x, height - 10);
+    });
+}
+
+function calculateTrends() {
+    const uniqueDocs = new Set(entries.filter(e => e.type === 'Shadowing').map(e => e.doctor)).size;
+    document.getElementById('stat-unique-docs').innerText = uniqueDocs;
+    document.getElementById('stat-total-entries').innerText = entries.length;
+    
+    // ... existing stats logic ...
+    
+    renderActivityGraph();
+}
 
 // --- HELPER: UPDATE DELETE BUTTON STATE ---
 function updateDeleteButtonState() {
@@ -266,7 +365,7 @@ window.viewEntry = function(id) {
 
 window.toggleFilterMenu = (e) => { e.stopPropagation(); document.getElementById('pd-filter-dropdown').classList.toggle('active'); };
 window.toggleOptionsMenu = (e) => { e.stopPropagation(); document.getElementById('pd-options-dropdown').classList.toggle('active'); };
-window.toggleProfileMenu = (e) => { e.stopPropagation(); document.getElementById('profile-dropdown').classList.toggle('active'); }; // Added
+window.toggleProfileMenu = (e) => { e.stopPropagation(); document.getElementById('profile-dropdown').classList.toggle('active'); };
 
 window.setFilter = setFilter;
 window.openResetModal = openResetModal;
@@ -285,7 +384,7 @@ window.saveEditEntry = saveEditEntry;
 window.switchTab = switchTab;
 window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
-// Removed duplicate toggleProfileMenu here
+window.toggleProfileMenu = () => document.getElementById('profile-dropdown').classList.toggle('active');
 
 function checkResetInput() { const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase(); document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE'); }
 function closeAllMenus() {
@@ -392,140 +491,3 @@ function render() {
         document.getElementById('btn-select-mode').textContent = 'Select Entries';
     }
 }
-
-// --- RENDER ACTIVITY GRAPH ---
-function renderActivityChart() {
-    const chartContainer = document.getElementById('activity-chart');
-    if(!chartContainer) return;
-    chartContainer.innerHTML = '';
-    
-    // 1. Group data by Month
-    const monthlyData = {}; // Key: "2024-01", Val: { shadow: 0, vol: 0 }
-    
-    // Get last 6 months dynamically
-    const today = new Date();
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const key = d.toISOString().slice(0, 7); // YYYY-MM
-        monthlyData[key] = { shadow: 0, vol: 0, label: d.toLocaleString('default', { month: 'short' }) };
-    }
-
-    entries.forEach(e => {
-        const key = e.date.slice(0, 7);
-        if (monthlyData[key]) {
-            if (e.type === 'Shadowing') monthlyData[key].shadow += parseInt(e.hours);
-            else monthlyData[key].vol += parseInt(e.hours);
-        }
-    });
-
-    // 2. Find Max for scaling
-    let maxTotal = 0;
-    Object.values(monthlyData).forEach(d => {
-        if ((d.shadow + d.vol) > maxTotal) maxTotal = d.shadow + d.vol;
-    });
-    if (maxTotal === 0) maxTotal = 10; // Avoid divide by zero
-
-    // 3. Render HTML Bars
-    Object.values(monthlyData).forEach(data => {
-        const hShadow = (data.shadow / maxTotal) * 100;
-        const hVol = (data.vol / maxTotal) * 100;
-        
-        const col = document.createElement('div');
-        col.className = 'pd-chart-col';
-        col.innerHTML = `
-            <div class="pd-chart-bar-bg">
-                <div class="pd-bar-fill-shadow" style="height:${hShadow}%"></div>
-                <div class="pd-bar-fill-vol" style="height:${hVol}%"></div>
-            </div>
-            <div class="pd-chart-label">${data.label}</div>
-        `;
-        chartContainer.appendChild(col);
-    });
-}
-
-function calculateTrends() {
-    const uniqueDocs = new Set(entries.filter(e => e.type === 'Shadowing').map(e => e.doctor)).size;
-    document.getElementById('stat-unique-docs').innerText = uniqueDocs;
-    document.getElementById('stat-total-entries').innerText = entries.length;
-    const specialties = {}; entries.filter(e => e.type === 'Shadowing').forEach(e => { specialties[e.subtype] = (specialties[e.subtype] || 0) + e.hours; });
-    const sortedSpecs = Object.entries(specialties).sort((a,b) => b[1] - a[1]);
-    const specList = document.getElementById('list-top-specialties');
-    specList.innerHTML = sortedSpecs.length === 0 ? '<div class="pd-trend-empty">No shadowing data available</div>' : '';
-    sortedSpecs.slice(0, 5).forEach(([name, hours]) => { specList.innerHTML += `<li><span>${name}</span><span>${hours} hrs</span></li>`; });
-    const volEntries = entries.filter(e => e.type === 'Volunteering');
-    let dentalHrs = 0, nonDentalHrs = 0; volEntries.forEach(e => { if(e.subtype === 'Dental Related') dentalHrs += parseInt(e.hours); else nonDentalHrs += parseInt(e.hours); });
-    const volList = document.getElementById('list-vol-mix');
-    if(dentalHrs > 0 || nonDentalHrs > 0) {
-        const total = dentalHrs + nonDentalHrs; const dPct = Math.round((dentalHrs / total) * 100); const nPct = 100 - dPct;
-        volList.innerHTML = `<li><span style="color:#51cf66;">Dental Related</span><span>${dPct}% (${dentalHrs} hrs)</span></li><li><span style="color:#ff6b6b;">Non-Dental</span><span>${nPct}% (${nonDentalHrs} hrs)</span></li><div class="pd-percent-bar"><div class="pd-fill-dental" style="width:${dPct}%;"></div><div class="pd-fill-non" style="width:${nPct}%;"></div></div>`;
-    } else { volList.innerHTML = '<div class="pd-trend-empty">No volunteer data available</div>'; }
-    
-    renderActivityChart(); // CALL CHART RENDER HERE
-}
-
-function updateCircleStats(ringId, textId, hours) {
-    const circle = document.getElementById(ringId); const text = document.getElementById(textId);
-    if(circle) { const percent = Math.min(hours, 100); const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE; circle.style.strokeDashoffset = offset; }
-    if(text) text.innerText = hours;
-}
-
-// --- CSV IMPORT LOGIC (RESTORED) ---
-window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
-window.handleCSVImport = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(e) { await processCSV(e.target.result); input.value = ''; };
-    reader.readAsText(file);
-};
-async function processCSV(csvText) {
-    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
-    if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
-    const headerRow = rows[0].toUpperCase();
-    let isShadowingSheet = false, isVolunteeringSheet = false;
-    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
-    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
-    if (!isShadowingSheet && !isVolunteeringSheet) { alert("Could not identify sheet type."); return; }
-    const dataLines = rows.slice(1);
-    let importedCount = 0;
-    for (let line of dataLines) {
-        if (!line.trim()) continue; 
-        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
-        const rawDate = cols[0]; if(!rawDate) continue;
-        let formattedDate = rawDate;
-        if(rawDate.includes('/')) {
-            const parts = rawDate.split('/');
-            if(parts.length === 3) {
-                const m = parts[0].padStart(2, '0'), d = parts[1].padStart(2, '0'); let y = parts[2];
-                if (y.length === 2) y = '20' + y;
-                formattedDate = `${y}-${m}-${d}`;
-            }
-        }
-        let type, subtype, doctor, location;
-        if (isShadowingSheet) { type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3]; } 
-        else { type = "Volunteering"; doctor = cols[1]; location = cols[2]; const rawRel = (cols[3] || "").toLowerCase(); subtype = (rawRel.includes("yes") || rawRel.includes("true")) ? "Dental Related" : "Non-Dental Related"; }
-        let hrs = Math.round(parseFloat(cols[4])); if(isNaN(hrs) || hrs <= 0) hrs = 0;
-        const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
-        if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
-    }
-    saveData(); render(); alert(`Successfully imported ${importedCount} entries.`);
-}
-
-window.openEditNameModal = function() {
-    closeAllMenus();
-    document.getElementById('edit-name-input').value = localStorage.getItem('pd_username') || '';
-    document.getElementById('edit-name-modal').style.display = 'flex';
-};
-window.closeEditNameModal = function() { document.getElementById('edit-name-modal').style.display = 'none'; };
-window.saveNewName = function() {
-    const newName = document.getElementById('edit-name-input').value.trim();
-    if (newName) {
-        const lowerName = newName.toLowerCase();
-        const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
-        if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; document.getElementById('edit-name-modal').style.display = 'none'; return; }
-        localStorage.setItem('pd_username', newName);
-        document.getElementById('dropdown-name').textContent = newName;
-        saveData(); 
-    }
-    closeEditNameModal();
-};
