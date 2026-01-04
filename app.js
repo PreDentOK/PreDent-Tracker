@@ -54,20 +54,31 @@ async function loadData() {
     render();
 }
 
+// --- UPDATED SAVE DATA ---
 async function saveData() {
     if (appUser) {
-        if(window.syncToCloud) window.syncToCloud();
+        // Online: Entries already saved individually.
+        // We just need to update the Leaderboard Totals now.
+        let sTotal = 0, vTotal = 0;
+        entries.forEach(e => { 
+            const h = parseInt(e.hours, 10) || 0; 
+            if (e.type === 'Shadowing') sTotal += h; else vTotal += h; 
+        });
+        
+        // Push stats to Firebase Leaderboard
+        if(window.updateLeaderboardStats) {
+            await window.updateLeaderboardStats(appUser, sTotal, vTotal);
+        }
     } else {
+        // Offline: Save to LocalStorage
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     }
 }
 
 // --- ADD ENTRY ---
 async function addEntry() {
-    // 1. Clear previous error styling
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
     
-    // 2. Grab values
     const type = document.getElementById('entry-type').value;
     const subtype = document.getElementById('entry-subtype').value;
     const date = document.getElementById('entry-date').value;
@@ -76,9 +87,7 @@ async function addEntry() {
     let hoursInput = document.getElementById('entry-hours').value;
     const notes = document.getElementById('entry-notes').value;
     
-    // 3. Strict Validation (Visual Only - No Alert)
     let hasError = false;
-
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
@@ -87,18 +96,11 @@ async function addEntry() {
         document.getElementById('entry-hours').parentNode.classList.add('error'); 
         hasError = true; 
     }
-    
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
-    
-    if (!loc) { 
-        document.getElementById('entry-loc').parentNode.classList.add('error'); 
-        hasError = true; 
-    }
+    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
 
-    // Stop execution if errors exist. The red outlines are enough feedback.
     if (hasError) return;
     
-    // 4. Process Data
     let hours = Math.round(parseFloat(hoursInput));
     
     const newEntry = { 
@@ -106,7 +108,6 @@ async function addEntry() {
         type, subtype, date, location: loc, doctor, hours, notes 
     };
     
-    // 5. Save Logic
     try {
         if (appUser) {
             await window.db_addEntry(appUser, newEntry);
@@ -115,7 +116,6 @@ async function addEntry() {
             entries.push(newEntry);
         }
         
-        // 6. Reset Form
         document.getElementById('entry-loc').value = ''; 
         document.getElementById('entry-doctor').value = ''; 
         document.getElementById('entry-hours').value = ''; 
@@ -125,7 +125,6 @@ async function addEntry() {
         render();
     } catch (e) {
         console.error("Error adding entry:", e);
-        alert("Connection error. Please try again.");
     }
 }
 
@@ -133,11 +132,9 @@ async function addEntry() {
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
-    // 1. Clear previous errors in modal
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
-    // Ensure wrapping logic works if class is present (current HTML doesn't strictly wrap all in pd-input-wrapper but parent logic below handles fallback if needed)
-    
-    // 2. Grab values
+    if(modalWrappers.length > 0) modalWrappers.forEach(el => el.classList.remove('error'));
+
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -147,18 +144,9 @@ async function saveEditEntry() {
     const notes = document.getElementById('edit-entry-notes').value;
 
     let hasError = false;
-
-    // Visual Validation Helper
     const markError = (id) => {
         const el = document.getElementById(id);
-        // We look for parent, if it doesn't have class pd-input-wrapper, we might apply style directly or assume parent is the wrapper
-        // Based on the provided HTML, most inputs are inside div.pd-input-wrapper or just a div.
-        // We will apply a border style directly if class check fails for simplicity in modal
-        if(el) {
-            el.style.borderColor = "#ff6b6b";
-            // Add a listener to remove red on input
-            el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true});
-        }
+        if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); }
         hasError = true;
     };
 
@@ -169,7 +157,7 @@ async function saveEditEntry() {
     if (!doctor) markError('edit-entry-doctor');
     if (!hoursInput) markError('edit-entry-hours');
 
-    if (hasError) return; // Stop without alert
+    if (hasError) return; 
 
     const hours = Math.round(parseFloat(hoursInput));
 
@@ -192,7 +180,6 @@ async function saveEditEntry() {
         closeEditModal();
     } catch (e) {
         console.error("Error editing entry:", e);
-        alert("Error saving changes.");
     }
 }
 
@@ -207,6 +194,17 @@ async function confirmDeleteEntry() {
         saveData(); render();
     }
     closeDeleteModal();
+}
+
+// --- RESET (WIPE) ---
+async function confirmReset() {
+    if(appUser) {
+        await window.db_wipeAllEntries(appUser);
+    }
+    entries = []; 
+    saveData(); // This pushes 0, 0 to leaderboard
+    render(); 
+    closeResetModal(); 
 }
 
 window.viewEntry = function(id) {
@@ -255,7 +253,7 @@ window.toggleOptionsMenu = (e) => {
 window.setFilter = setFilter;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
-window.checkResetInput = checkResetInput; // Updated below
+window.checkResetInput = checkResetInput;
 window.confirmReset = confirmReset;
 window.addEntry = addEntry;
 window.exportData = exportData;
@@ -270,7 +268,6 @@ window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = () => document.getElementById('profile-dropdown').classList.toggle('active');
 
-// Reset Input Check - Case Insensitive
 function checkResetInput() {
     const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase();
     document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE');
@@ -359,6 +356,10 @@ function closeEditModal() { document.getElementById('edit-modal').style.display 
 function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; entryToDeleteId = null; }
 function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
+function checkResetInput() { 
+    const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase();
+    document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE');
+}
 function confirmReset() { entries = []; saveData(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function render() {
