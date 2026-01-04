@@ -54,11 +54,9 @@ async function loadData() {
     render();
 }
 
-// --- UPDATED SAVE DATA ---
 async function saveData() {
     if (appUser) {
-        // Online: Entries already saved individually.
-        // We just need to update the Leaderboard Totals now.
+        // Calculate Totals for Leaderboard Sync
         let sTotal = 0, vTotal = 0;
         entries.forEach(e => { 
             const h = parseInt(e.hours, 10) || 0; 
@@ -70,7 +68,6 @@ async function saveData() {
             await window.updateLeaderboardStats(appUser, sTotal, vTotal);
         }
     } else {
-        // Offline: Save to LocalStorage
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     }
 }
@@ -88,6 +85,7 @@ async function addEntry() {
     const notes = document.getElementById('entry-notes').value;
     
     let hasError = false;
+
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
@@ -96,8 +94,13 @@ async function addEntry() {
         document.getElementById('entry-hours').parentNode.classList.add('error'); 
         hasError = true; 
     }
+    
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
-    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+    
+    if (!loc) { 
+        document.getElementById('entry-loc').parentNode.classList.add('error'); 
+        hasError = true; 
+    }
 
     if (hasError) return;
     
@@ -125,6 +128,7 @@ async function addEntry() {
         render();
     } catch (e) {
         console.error("Error adding entry:", e);
+        alert("Connection error. Please try again.");
     }
 }
 
@@ -180,9 +184,11 @@ async function saveEditEntry() {
         closeEditModal();
     } catch (e) {
         console.error("Error editing entry:", e);
+        alert("Error saving changes.");
     }
 }
 
+// --- DELETE ENTRY (With Leaderboard Update) ---
 async function confirmDeleteEntry() {
     if (entryToDeleteId) {
         if (appUser) {
@@ -191,7 +197,10 @@ async function confirmDeleteEntry() {
         } else {
             entries = entries.filter(e => e.id !== entryToDeleteId);
         }
-        saveData(); render();
+        
+        // IMPORTANT: saveData() recalculates totals and pushes to leaderboard
+        saveData(); 
+        render();
     }
     closeDeleteModal();
 }
@@ -199,10 +208,20 @@ async function confirmDeleteEntry() {
 // --- RESET (WIPE) ---
 async function confirmReset() {
     if(appUser) {
-        await window.db_wipeAllEntries(appUser);
+        try {
+            // Wait for DB wipe to complete
+            await window.db_wipeAllEntries(appUser);
+        } catch(e) {
+            console.error("Wipe failed", e);
+            closeResetModal();
+            return;
+        }
     }
+    
+    // Only clear local IF remote succeeded
     entries = []; 
-    saveData(); // This pushes 0, 0 to leaderboard
+    // saveData will push 0, 0 to leaderboard now that entries is empty
+    saveData(); 
     render(); 
     closeResetModal(); 
 }
