@@ -25,6 +25,9 @@ body {
     position: relative; 
     display: flex; 
     flex-direction: column;
+    /* SAFARI NOTCH & HOME BAR FIX */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* --- 2. HEADER SECTION --- */
@@ -88,7 +91,7 @@ body {
 
 .pd-dropdown {
     position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 200px; display: none; flex-direction: column; z-index: 200; overflow: hidden; opacity: 1;
+    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 200px; display: none; flex-direction: column; z-index: 100; overflow: hidden;
 }
 .pd-dropdown.active { display: flex; }
 .pd-menu-item {
@@ -167,12 +170,12 @@ body {
 /* --- LEADERBOARD GRID --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    grid-template-columns: 40px 1fr 60px 60px;
+    grid-template-columns: 50px 1fr 70px 70px;
     padding: 1rem 0.5rem; align-items: center; text-align: center;
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    font-weight: 700; color: #cbd5e1; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; 
+    font-weight: 700; color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
 }
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
@@ -180,17 +183,17 @@ body {
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; margin: 0 auto; 
-    text-align: center;
+    text-align: center; 
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
 .rank-3 { background: #cd7f32; color: #030D4A; }
 
 .pd-lb-name { 
-    font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: center; 
+    font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: left; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
 }
-.pd-lb-stat { font-size: 0.9rem; font-weight: 500; color: #cbd5e1; }
+.pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.7em; opacity: 0.6; }
 
 .pd-hidden { display: none !important; }
@@ -280,11 +283,35 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 
 /* --- MOBILE SPECIFIC FIXES --- */
 @media (max-width: 700px) { 
-    .pd-header-banner { justify-content: space-between; padding: 0.5rem 1rem; gap: 5px; }
-    .pd-logo-text { font-size: 1.1rem; order: 1; width: auto; }
-    .pd-actions-group { order: 2; gap: 5px; }
-    .pd-nav-rank { font-size: 0.7rem; padding: 2px 8px; height: 24px; }
-    .pd-avatar-img, .pd-menu-btn { width: 30px; height: 30px; }
+    .pd-header-banner { 
+        /* FORCE SINGLE LINE */
+        flex-wrap: nowrap; 
+        justify-content: space-between; 
+        padding: 0.5rem 0.8rem; 
+        gap: 0;
+    }
+    
+    .pd-logo-text { 
+        font-size: 1rem; /* Smaller Logo */
+        margin-right: auto;
+    }
+    
+    .pd-actions-group { 
+        gap: 4px; /* Tighter gap between icons */
+    }
+    
+    /* Compact Rank Badge */
+    .pd-nav-rank { 
+        font-size: 0.65rem; 
+        padding: 2px 6px; 
+        height: 24px; 
+    }
+    
+    /* Smaller Icons */
+    .pd-avatar-img, .pd-menu-btn { 
+        width: 30px; 
+        height: 30px; 
+    }
     
     .pd-tabs-container { position: static; transform: none; order: 3; width: 100%; justify-content: flex-start; margin-top: 0.5rem; padding-left: 0; max-width: 100%; }
     
