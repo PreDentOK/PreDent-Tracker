@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCz0-dUukvFHUG6DZR9hGdgduUzTcobt0M",
@@ -19,14 +19,73 @@ try {
     db = getFirestore(app);
     auth = getAuth(app);
     
-    signInAnonymously(auth).then((userCredential) => {
-        currentUser = userCredential.user;
-        if(window.syncToCloud) window.syncToCloud();
-        if(window.fetchLeaderboard) window.fetchLeaderboard();
-    }).catch((e) => console.error("Auth Failed", e));
+    // Listen for auth changes to update UI
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        updateAuthUI(user);
+        if (user) {
+            // Check if we have a saved display name override, if not use Google Name
+            const savedName = localStorage.getItem('pd_username');
+            if(!savedName && user.displayName) {
+                localStorage.setItem('pd_username', user.displayName);
+            }
+            window.syncToCloud();
+        }
+        window.fetchLeaderboard();
+    });
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
+// --- AUTH FUNCTIONS ---
+window.googleLogin = async function() {
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Login Failed", error);
+        alert("Sign in failed. Please try again.");
+    }
+};
+
+window.googleLogout = async function() {
+    try {
+        await signOut(auth);
+        document.getElementById('profile-dropdown').classList.remove('active');
+        localStorage.removeItem('pd_username'); // Optional: clear local name on logout
+    } catch (error) {
+        console.error("Logout Failed", error);
+    }
+};
+
+function updateAuthUI(user) {
+    const loginBtn = document.getElementById('btn-google-login');
+    const profileSection = document.getElementById('user-profile');
+    const signinPromo = document.getElementById('signin-promo');
+    const lbProfileBox = document.getElementById('lb-profile-box');
+    const lbMain = document.getElementById('lb-card-main');
+
+    if (user) {
+        loginBtn.classList.add('hidden');
+        profileSection.classList.remove('hidden');
+        document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
+        document.getElementById('dropdown-name').textContent = user.displayName || 'User';
+        
+        // Leaderboard logic
+        if(signinPromo) signinPromo.style.display = 'none';
+        if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden');
+        if(lbMain) lbMain.classList.remove('pd-hidden');
+    } else {
+        loginBtn.classList.remove('hidden');
+        profileSection.classList.add('hidden');
+        
+        // Leaderboard logic
+        if(signinPromo) signinPromo.style.display = 'block';
+        if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
+        if(lbMain) lbMain.classList.add('pd-hidden');
+    }
+}
+
+// --- DATA SYNC ---
 window.syncToCloud = async function() {
     if(!db || !currentUser) return;
     const entries = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
@@ -36,7 +95,9 @@ window.syncToCloud = async function() {
         else vTotal += parseInt(e.hours);
     });
 
-    const displayName = localStorage.getItem('pd_username');
+    // Prefer manual override name, otherwise Google Name
+    const displayName = localStorage.getItem('pd_username') || currentUser.displayName;
+    
     if(displayName) {
         try {
             const userRef = doc(db, 'leaderboard', currentUser.uid);
@@ -44,8 +105,9 @@ window.syncToCloud = async function() {
                 name: displayName,
                 shadow: sTotal,
                 vol: vTotal,
-                total: sTotal + vTotal
-            });
+                total: sTotal + vTotal,
+                photo: currentUser.photoURL
+            }, { merge: true });
             window.fetchLeaderboard();
         } catch(e) { console.error("Sync error:", e); }
     }
@@ -54,7 +116,7 @@ window.syncToCloud = async function() {
 window.fetchLeaderboard = async function() {
     if(!db) return;
     const list = document.getElementById('leaderboard-list');
-    const badge = document.getElementById('nav-rank-badge'); // The new header element
+    const badge = document.getElementById('nav-rank-badge');
     const lbRef = collection(db, 'leaderboard');
     
     try {
@@ -70,7 +132,7 @@ window.fetchLeaderboard = async function() {
             return; 
         }
 
-        const myName = localStorage.getItem('pd_username');
+        const myName = localStorage.getItem('pd_username') || (currentUser ? currentUser.displayName : '');
         let myRank = null;
 
         users.forEach((u, i) => {
@@ -80,7 +142,7 @@ window.fetchLeaderboard = async function() {
             else if(rank === 2) rankClass = 'rank-2';
             else if(rank === 3) rankClass = 'rank-3';
             
-            const isMe = u.name === myName;
+            const isMe = (currentUser && u.name === myName);
             if(isMe) myRank = rank;
 
             const html = `
