@@ -84,18 +84,20 @@
             <h2 class="pd-section-title">Activity Log <span id="filter-badge" class="pd-filter-badge">FILTERED</span></h2>
             
             <div class="pd-form-card" id="input-form-card">
+                
+                <div class="pd-menu-container pd-filter-pos" id="pd-filter-container">
+                    <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+                    </button>
+                    <div id="pd-filter-dropdown" class="pd-dropdown">
+                        <button class="pd-menu-item" onclick="setFilter('All')">Show All</button>
+                        <button class="pd-menu-item" onclick="setFilter('Shadowing')">Shadowing</button>
+                        <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
+                    </div>
+                </div>
+
                 <div class="pd-form-header">
                     <span>Log New Hours</span>
-                    <div class="pd-menu-container" id="pd-filter-container">
-                        <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
-                        </button>
-                        <div id="pd-filter-dropdown" class="pd-dropdown">
-                            <button class="pd-menu-item" onclick="setFilter('All')">Show All</button>
-                            <button class="pd-menu-item" onclick="setFilter('Shadowing')">Shadowing</button>
-                            <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
-                        </div>
-                    </div>
                 </div>
                 
                 <div style="margin-bottom: 1rem;">
