@@ -151,12 +151,12 @@
             <div class="pd-list-controls">
                 <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
                 
-                <div style="display:flex; gap:5px;">
+                <div style="display:flex; gap:5px; align-items:center;">
                     <div class="pd-menu-container" id="pd-filter-container">
-                        <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle">
+                        <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
                         </button>
-                        <div id="pd-filter-dropdown" class="pd-dropdown">
+                        <div id="pd-filter-dropdown" class="pd-dropdown" style="right:0; width: 160px;">
                             <button class="pd-menu-item" onclick="setFilter('All')">Show All</button>
                             <button class="pd-menu-item" onclick="setFilter('Shadowing')">Shadowing</button>
                             <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
@@ -180,13 +180,16 @@
                     <div class="pd-trend-card"><h4>Unique Dentists</h4><div class="pd-trend-stat" id="stat-unique-docs">0</div></div>
                     <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
                 </div>
-                <div class="pd-trend-card"><h4>Top Specialties</h4><ul class="pd-trend-list" id="list-top-specialties"><div class="pd-trend-empty">No data available</div></ul></div>
-                <div class="pd-trend-card"><h4>Volunteer Experience Mix</h4><ul class="pd-trend-list" id="list-vol-mix"><div class="pd-trend-empty">No data available</div></ul></div>
                 
                 <div class="pd-trend-card">
                     <h4>Monthly Activity</h4>
-                    <div id="activity-chart" class="pd-chart-container"></div>
+                    <div class="pd-chart-wrapper">
+                        <canvas id="activity-canvas"></canvas>
+                    </div>
                 </div>
+
+                <div class="pd-trend-card"><h4>Top Specialties</h4><ul class="pd-trend-list" id="list-top-specialties"><div class="pd-trend-empty">No data available</div></ul></div>
+                <div class="pd-trend-card"><h4>Volunteer Experience Mix</h4><ul class="pd-trend-list" id="list-vol-mix"><div class="pd-trend-empty">No data available</div></ul></div>
             </div>
         </div>
 
