@@ -10,7 +10,7 @@ let isSelectionMode = false;
 
 const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
-const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "nigga", "nigger", "rape", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
+const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
 const CIRCLE_RADIUS = 110; 
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
@@ -39,105 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
     handleTypeChange();
 });
-
-// --- CANVAS GRAPH LOGIC ---
-function renderActivityGraph() {
-    const canvas = document.getElementById('activity-canvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    
-    const width = rect.width;
-    const height = rect.height;
-    
-    const months = [];
-    const today = new Date();
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        months.push({ 
-            key: d.toISOString().slice(0, 7), // YYYY-MM
-            label: d.toLocaleString('default', { month: 'short' }),
-            shadow: 0,
-            vol: 0
-        });
-    }
-
-    entries.forEach(e => {
-        const key = e.date.slice(0, 7);
-        const m = months.find(x => x.key === key);
-        if (m) {
-            if (e.type === 'Shadowing') m.shadow += parseInt(e.hours);
-            else m.vol += parseInt(e.hours);
-        }
-    });
-
-    let maxVal = 0;
-    months.forEach(m => {
-        if (m.shadow > maxVal) maxVal = m.shadow;
-        if (m.vol > maxVal) maxVal = m.vol;
-    });
-    if (maxVal === 0) maxVal = 10;
-    const maxY = maxVal * 1.2;
-
-    const padding = 30;
-    const chartW = width - (padding * 2);
-    const chartH = height - (padding * 2);
-    const stepX = chartW / (months.length - 1);
-
-    const getY = (val) => height - padding - ((val / maxY) * chartH);
-
-    // DRAW SHADOWING LINE (BLUE)
-    ctx.beginPath();
-    ctx.strokeStyle = '#4da6ff';
-    ctx.lineWidth = 3;
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        const y = getY(m.shadow);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        ctx.fillStyle = '#4da6ff';
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
-    });
-    ctx.stroke();
-
-    // DRAW VOLUNTEER LINE (YELLOW)
-    ctx.beginPath();
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 3;
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        const y = getY(m.vol);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        ctx.fillStyle = '#ffd700';
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '10px Inter';
-    ctx.textAlign = 'center';
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        ctx.fillText(m.label, x, height - 10);
-    });
-}
-
-function calculateTrends() {
-    const uniqueDocs = new Set(entries.filter(e => e.type === 'Shadowing').map(e => e.doctor)).size;
-    document.getElementById('stat-unique-docs').innerText = uniqueDocs;
-    document.getElementById('stat-total-entries').innerText = entries.length;
-    
-    // ... existing stats logic ...
-    
-    renderActivityGraph();
-}
 
 // --- HELPER: UPDATE DELETE BUTTON STATE ---
 function updateDeleteButtonState() {
@@ -281,7 +182,11 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
-    } catch (e) { console.error("Error adding entry:", e); alert("Connection error."); }
+    } catch (e) { 
+        console.error("Error adding entry:", e); 
+        // IMPROVED ERROR ALERT
+        alert(`Error saving: ${e.message || "Connection failed. Check Firebase Rules."}`);
+    }
 }
 
 async function saveEditEntry() {
@@ -308,7 +213,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
+    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function deleteSelectedEntries() {
@@ -490,4 +395,93 @@ function render() {
         document.getElementById('btn-delete-selected').style.display = 'none';
         document.getElementById('btn-select-mode').textContent = 'Select Entries';
     }
+}
+
+// --- CANVAS GRAPH LOGIC ---
+function renderActivityGraph() {
+    const canvas = document.getElementById('activity-canvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    
+    const width = rect.width;
+    const height = rect.height;
+    
+    const months = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        months.push({ 
+            key: d.toISOString().slice(0, 7), // YYYY-MM
+            label: d.toLocaleString('default', { month: 'short' }),
+            shadow: 0,
+            vol: 0
+        });
+    }
+
+    entries.forEach(e => {
+        const key = e.date.slice(0, 7);
+        const m = months.find(x => x.key === key);
+        if (m) {
+            if (e.type === 'Shadowing') m.shadow += parseInt(e.hours);
+            else m.vol += parseInt(e.hours);
+        }
+    });
+
+    let maxVal = 0;
+    months.forEach(m => {
+        if (m.shadow > maxVal) maxVal = m.shadow;
+        if (m.vol > maxVal) maxVal = m.vol;
+    });
+    if (maxVal === 0) maxVal = 10;
+    const maxY = maxVal * 1.2;
+
+    const padding = 30;
+    const chartW = width - (padding * 2);
+    const chartH = height - (padding * 2);
+    const stepX = chartW / (months.length - 1);
+
+    const getY = (val) => height - padding - ((val / maxY) * chartH);
+
+    // DRAW SHADOWING LINE (BLUE)
+    ctx.beginPath();
+    ctx.strokeStyle = '#4da6ff';
+    ctx.lineWidth = 3;
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        const y = getY(m.shadow);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        ctx.fillStyle = '#4da6ff';
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.stroke();
+
+    // DRAW VOLUNTEER LINE (YELLOW)
+    ctx.beginPath();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        const y = getY(m.vol);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '10px Inter';
+    ctx.textAlign = 'center';
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        ctx.fillText(m.label, x, height - 10);
+    });
 }
