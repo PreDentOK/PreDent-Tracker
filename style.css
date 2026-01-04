@@ -114,6 +114,8 @@ body {
 .pd-user-profile { display: flex; align-items: center; gap: 10px; position: relative; }
 .pd-user-profile.hidden { display: none; }
 .pd-avatar-img { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #4da6ff; cursor: pointer; object-fit: cover; }
+
+/* RANK BADGE */
 .pd-nav-rank {
     display: inline-flex; align-items: center; background: rgba(255, 215, 0, 0.15);
     color: #ffd700; border: 1px solid #ffd700; padding: 4px 10px; border-radius: 20px;
@@ -166,11 +168,14 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* --- LEADERBOARD GRID --- */
+/* --- LEADERBOARD GRID (DESKTOP DEFAULT) --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    grid-template-columns: 50px 1fr 70px 70px;
-    padding: 1rem 0.5rem; align-items: center; text-align: center;
+    /* Rank | Name | Shadow | Volunteer */
+    grid-template-columns: 50px 1fr 80px 90px;
+    padding: 1rem 0.5rem; 
+    align-items: center; 
+    text-align: center;
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
@@ -189,8 +194,8 @@ body {
 .rank-3 { background: #cd7f32; color: #030D4A; }
 
 .pd-lb-name { 
-    font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: center; 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
+    font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: left; 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; padding-left: 10px;
 }
 .pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.7em; opacity: 0.6; }
@@ -238,7 +243,7 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 #entry-date { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1.2em; padding-right: 2.5rem; }
 #entry-date::-webkit-calendar-picker-indicator { position: absolute; top: 0; right: 0; width: 3rem; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; display: block !important; }
 
-/* List & Selection */
+/* List */
 .pd-list { width: 100%; } .pd-list ul { list-style: none; padding: 0; margin: 0; }
 .pd-entry-item { 
     background: #0f1c5e; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #cbd5e1; 
@@ -259,20 +264,13 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .pd-entry-btn.delete { color: #ff6b6b; }
 .pd-filter-badge { background: #4da6ff; color: #030D4A; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 10px; display: none; }
 
-/* SELECTION MODE STYLES */
-.pd-checkbox {
-    width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: #4da6ff; display: none; /* Hidden by default */
-}
+/* SELECTION MODE */
+.pd-checkbox { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: #4da6ff; display: none; }
 .pd-list.selection-mode .pd-checkbox { display: block; }
-.pd-list-controls {
-    display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 1rem;
-}
-#btn-select-mode, #btn-delete-selected {
-    background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1;
-    padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: 600;
-}
+.pd-list-controls { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 1rem; }
+#btn-select-mode, #btn-delete-selected { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
 #btn-select-mode:hover { color: #fff; border-color: #fff; }
-#btn-delete-selected { color: #ff6b6b; border-color: #ff6b6b; display: none; } /* Hidden by default */
+#btn-delete-selected { color: #ff6b6b; border-color: #ff6b6b; display: none; }
 
 /* VIEW DETAIL MODAL STYLES */
 .pd-view-row { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
