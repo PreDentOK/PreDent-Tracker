@@ -227,6 +227,39 @@ async function saveEditEntry() {
     } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
+// --- BATCH DELETE LOGIC ---
+async function deleteSelectedEntries() {
+    const checkboxes = document.querySelectorAll('.pd-checkbox:checked');
+    if(checkboxes.length === 0) return;
+
+    const idsToDelete = Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
+    
+    if(appUser) {
+        await window.db_batchDelete(appUser, idsToDelete);
+    }
+    
+    entries = entries.filter(e => !idsToDelete.includes(e.id));
+    saveData();
+    render();
+}
+
+// --- RESET ALL LOGIC ---
+async function confirmReset() {
+    if(appUser) {
+        try {
+            await window.db_wipeAllEntries(appUser);
+        } catch(e) {
+            console.error("Wipe failed", e);
+            closeResetModal();
+            return;
+        }
+    }
+    entries = []; 
+    saveData(); 
+    render(); 
+    closeResetModal(); 
+}
+
 async function confirmDeleteEntry() {
     if (entryToDeleteId) {
         if (appUser) {
@@ -283,9 +316,10 @@ window.setFilter = setFilter;
 window.openResetModal = openResetModal;
 window.closeResetModal = closeResetModal;
 window.checkResetInput = checkResetInput;
-window.confirmReset = confirmReset; // Empty function to prevent errors
+window.confirmReset = confirmReset;
 window.addEntry = addEntry;
 window.exportData = exportData;
+window.deleteSelectedEntries = deleteSelectedEntries; // EXPOSE TO HTML
 window.deleteEntry = (id) => { entryToDeleteId = String(id); document.getElementById('delete-modal').style.display = 'flex'; };
 window.closeDeleteModal = closeDeleteModal;
 window.confirmDeleteEntry = confirmDeleteEntry;
@@ -338,21 +372,9 @@ function switchTab(tabName) {
     document.querySelectorAll('.pd-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`view-${tabName}`).classList.add('active');
     const btns = document.querySelectorAll('.pd-tab-btn');
-    
-    if(tabName === 'tracker') { 
-        btns[0].classList.add('active'); 
-        handleTypeChange(); 
-    }
-    else if (tabName === 'stats') { 
-        btns[1].classList.add('active'); 
-        calculateTrends(); 
-    }
-    else { 
-        btns[2].classList.add('active'); 
-        if(localStorage.getItem('pd_username')) {
-            document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username');
-        }
-    }
+    if(tabName === 'tracker') { btns[0].classList.add('active'); handleTypeChange(); }
+    else if (tabName === 'stats') { btns[1].classList.add('active'); calculateTrends(); }
+    else { btns[2].classList.add('active'); if(localStorage.getItem('pd_username')) { document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username'); } }
 }
 
 function handleTypeChange() { updateSubtypeOptions('entry-type', 'entry-subtype', 'entry-doctor'); }
@@ -367,24 +389,9 @@ function updateSubtypeOptions(typeId, subtypeId, docId) {
     docInput.placeholder = mainType === 'Shadowing' ? "Doctor(s)" : "Organization / Supervisor";
 }
 
-function editEntry(id) {
-    const entry = entries.find(e => e.id === String(id)); 
-    if (!entry) return;
-    editingEntryId = String(id);
-    document.getElementById('edit-entry-type').value = entry.type;
-    handleEditTypeChange();
-    document.getElementById('edit-entry-subtype').value = entry.subtype;
-    document.getElementById('edit-entry-date').value = entry.date;
-    document.getElementById('edit-entry-hours').value = entry.hours;
-    document.getElementById('edit-entry-doctor').value = entry.doctor || '';
-    document.getElementById('edit-entry-loc').value = entry.location;
-    document.getElementById('edit-entry-notes').value = entry.notes || '';
-    document.getElementById('edit-modal').style.display = 'flex';
-}
-function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; editingEntryId = null; }
-function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; entryToDeleteId = null; }
-function openResetModal() { } // Removed logic
-function closeResetModal() { } // Removed logic
+function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
+function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
+
 function render() {
     updateDatalists();
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
@@ -403,7 +410,9 @@ function render() {
         const li = document.createElement('li');
         li.className = `pd-entry-item ${typeClass}`;
         li.setAttribute('onclick', `viewEntry('${entry.id}')`);
+        
         li.innerHTML = `
+            <input type="checkbox" class="pd-checkbox" data-id="${entry.id}" onclick="event.stopPropagation()">
             <div class="pd-entry-content">
                 <div class="pd-entry-title">${entry.doctor||entry.location} <span style="font-weight:400; opacity:0.7; font-size:0.9em;">(${entry.subtype})</span></div>
                 <div class="pd-entry-meta">${entry.location} • ${displayDate}</div>
@@ -412,9 +421,6 @@ function render() {
             <div class="pd-entry-actions">
                 <button class="pd-entry-btn edit" onclick="event.stopPropagation(); editEntry('${entry.id}')">
                     <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                </button>
-                <button class="pd-entry-btn delete" onclick="event.stopPropagation(); deleteEntry('${entry.id}')">
-                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
             </div>
         `;
