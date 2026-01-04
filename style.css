@@ -238,7 +238,7 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 #entry-date { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1.2em; padding-right: 2.5rem; }
 #entry-date::-webkit-calendar-picker-indicator { position: absolute; top: 0; right: 0; width: 3rem; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; display: block !important; }
 
-/* List */
+/* List & Selection */
 .pd-list { width: 100%; } .pd-list ul { list-style: none; padding: 0; margin: 0; }
 .pd-entry-item { 
     background: #0f1c5e; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #cbd5e1; 
@@ -259,11 +259,20 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .pd-entry-btn.delete { color: #ff6b6b; }
 .pd-filter-badge { background: #4da6ff; color: #030D4A; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 10px; display: none; }
 
-/* CHECKBOX FOR BATCH DELETE */
+/* SELECTION MODE STYLES */
 .pd-checkbox {
-    width: 20px; height: 20px; margin-right: 15px; cursor: pointer;
-    accent-color: #4da6ff;
+    width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: #4da6ff; display: none; /* Hidden by default */
 }
+.pd-list.selection-mode .pd-checkbox { display: block; }
+.pd-list-controls {
+    display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 1rem;
+}
+#btn-select-mode, #btn-delete-selected {
+    background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1;
+    padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: 600;
+}
+#btn-select-mode:hover { color: #fff; border-color: #fff; }
+#btn-delete-selected { color: #ff6b6b; border-color: #ff6b6b; display: none; } /* Hidden by default */
 
 /* VIEW DETAIL MODAL STYLES */
 .pd-view-row { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
