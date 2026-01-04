@@ -48,12 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation(); 
         const btn = document.getElementById('btn-filter-toggle');
         const menu = document.getElementById('pd-filter-dropdown');
-        
-        // Close others
         document.getElementById('pd-options-dropdown').classList.remove('active');
         document.getElementById('btn-options-toggle').classList.remove('active');
-        
-        // Toggle current
         menu.classList.toggle('active');
         btn.classList.toggle('active');
     };
@@ -62,12 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation(); 
         const btn = document.getElementById('btn-options-toggle');
         const menu = document.getElementById('pd-options-dropdown');
-        
-        // Close others
         document.getElementById('pd-filter-dropdown').classList.remove('active');
         document.getElementById('btn-filter-toggle').classList.remove('active');
-        
-        // Toggle current
         menu.classList.toggle('active');
         btn.classList.toggle('active');
     };
@@ -84,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.cancelEdit = cancelEdit;
     window.switchTab = switchTab;
     window.updateProfileName = updateProfileName;
-    window.skipProfileSetup = skipProfileSetup; // Export Skip function
+    window.skipProfileSetup = skipProfileSetup; 
 
     handleTypeChange(); 
     render();
@@ -93,23 +85,18 @@ document.addEventListener('DOMContentLoaded', () => {
 function closeAllMenus() {
     document.getElementById('pd-filter-dropdown').classList.remove('active');
     document.getElementById('btn-filter-toggle').classList.remove('active');
-    
     document.getElementById('pd-options-dropdown').classList.remove('active');
     document.getElementById('btn-options-toggle').classList.remove('active');
-    
     const profDrop = document.getElementById('profile-dropdown');
     if(profDrop) profDrop.classList.remove('active');
 }
 
-// Helper for auth menu
 window.toggleProfileMenu = function() {
     document.getElementById('profile-dropdown').classList.toggle('active');
 };
 
 function skipProfileSetup() {
-    // Mark setup as done forever
     localStorage.setItem('pd_profile_setup_done', 'true');
-    // Hide the box
     document.getElementById('lb-profile-box').classList.add('pd-hidden');
 }
 
@@ -119,26 +106,24 @@ function updateProfileName() {
     
     if(!name) return;
 
-    // PROFANITY FILTER CHECK
     const lowerName = name.toLowerCase();
     const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
 
     if (hasProfanity) {
         document.getElementById('warning-modal').style.display = 'flex';
-        nameInput.value = ''; // Clear the input
+        nameInput.value = ''; 
         return;
     }
 
     localStorage.setItem('pd_username', name);
-    // Force a re-render of the auth UI to update the name in the dropdown immediately
     const dropdownName = document.getElementById('dropdown-name');
     if(dropdownName) dropdownName.textContent = name;
 
-    // Mark setup as done forever since they updated it
     localStorage.setItem('pd_profile_setup_done', 'true');
     document.getElementById('lb-profile-box').classList.add('pd-hidden');
     
     if(window.syncToCloud) window.syncToCloud();
+    alert("Display name updated!");
 }
 
 function switchTab(tabName) {
@@ -218,12 +203,30 @@ function render() {
     document.getElementById('filter-badge').style.display = currentFilter !== 'All' ? 'inline-block' : 'none';
     if(currentFilter !== 'All') document.getElementById('filter-badge').innerText = currentFilter.toUpperCase();
     if (displayEntries.length === 0) list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:1rem;">No entries found.</div>';
+    
     displayEntries.forEach((entry) => {
         const typeClass = entry.type === 'Shadowing' ? 'type-shadow' : 'type-volunteer';
         const displayDate = new Date(entry.date.split('-')[0], entry.date.split('-')[1]-1, entry.date.split('-')[2]).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const li = document.createElement('li'); li.className = 'swipeout';
-        li.innerHTML = `<div class="swipeout-actions-right"><a href="#" class="swipeout-btn swipeout-edit" onclick="editEntry('${entry.id}'); return false;"><svg class="pd-action-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></a><a href="#" class="swipeout-btn swipeout-delete" onclick="deleteEntry('${entry.id}'); return false;"><svg class="pd-action-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></a></div><div class="swipeout-content ${typeClass}" id="card-${entry.id}"><div class="pd-log-info"><h4>${entry.doctor||entry.location} <span style="font-weight:400; opacity:0.7; font-size:0.9em;">(${entry.subtype})</span></h4><div class="pd-log-meta">${entry.location} • ${displayDate}</div></div><div class="pd-log-hours">${entry.hours} hrs</div></div>`;
-        list.appendChild(li); attachSwipeEvents(li.querySelector('.swipeout-content'), entry.id);
+        
+        // NEW LIST ITEM LAYOUT with visible buttons
+        const li = document.createElement('li');
+        li.className = `pd-entry-item ${typeClass}`;
+        li.innerHTML = `
+            <div class="pd-entry-content">
+                <div class="pd-entry-title">${entry.doctor||entry.location} <span style="font-weight:400; opacity:0.7; font-size:0.9em;">(${entry.subtype})</span></div>
+                <div class="pd-entry-meta">${entry.location} • ${displayDate}</div>
+            </div>
+            <div style="font-weight:700; color:#fff; margin-right:15px; white-space:nowrap;">${entry.hours} hrs</div>
+            <div class="pd-entry-actions">
+                <button class="pd-entry-btn edit" onclick="editEntry('${entry.id}')">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </button>
+                <button class="pd-entry-btn delete" onclick="deleteEntry('${entry.id}')">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+            </div>
+        `;
+        list.appendChild(li);
     });
 }
 
@@ -243,13 +246,6 @@ function calculateTrends() {
         const total = dentalHrs + nonDentalHrs; const dPct = Math.round((dentalHrs / total) * 100); const nPct = 100 - dPct;
         volList.innerHTML = `<li><span style="color:#51cf66;">Dental Related</span><span>${dPct}% (${dentalHrs} hrs)</span></li><li><span style="color:#ff6b6b;">Non-Dental</span><span>${nPct}% (${nonDentalHrs} hrs)</span></li><div class="pd-percent-bar"><div class="pd-fill-dental" style="width:${dPct}%;"></div><div class="pd-fill-non" style="width:${nPct}%;"></div></div>`;
     } else { volList.innerHTML = '<div class="pd-trend-empty">No volunteer data available</div>'; }
-}
-
-function attachSwipeEvents(element, id) {
-    let startX, currentX, isSwiping = false;
-    element.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; isSwiping = true; element.style.transition = 'none'; }, {passive: true});
-    element.addEventListener('touchmove', (e) => { if(!isSwiping) return; currentX = e.touches[0].clientX; let diff = currentX - startX; if(diff < 0) { if(diff < -140) diff = -140; element.style.transform = `translateX(${diff}px)`; } }, {passive: true});
-    element.addEventListener('touchend', (e) => { isSwiping = false; element.style.transition = 'transform 0.3s ease-out'; let diff = currentX - startX; if (diff < -70) element.style.transform = 'translateX(-140px)'; else element.style.transform = 'translateX(0)'; });
 }
 
 function updateCircleStats(ringId, textId, hours) {
