@@ -51,13 +51,11 @@ window.googleLogout = async function() {
         await signOut(auth);
         document.getElementById('profile-dropdown').classList.remove('active');
         localStorage.removeItem('pd_username'); 
-        // Note: We do NOT clear pd_profile_setup_done so it stays hidden if they skipped previously
     } catch (error) {
         console.error("Logout Failed", error);
     }
 };
 
-// UI Update Logic
 function updateAuthUI(user) {
     const loginBtn = document.getElementById('btn-google-login');
     const profileSection = document.getElementById('user-profile');
@@ -73,7 +71,6 @@ function updateAuthUI(user) {
         
         if(signinPromo) signinPromo.style.display = 'none';
         
-        // CHECK IF SETUP IS DONE (Skipped or Updated)
         const isSetupDone = localStorage.getItem('pd_profile_setup_done') === 'true';
         
         if (!isSetupDone) {
@@ -93,7 +90,6 @@ function updateAuthUI(user) {
     }
 }
 
-// Data Syncing
 window.syncToCloud = async function() {
     if(!db || !currentUser) return;
     const entries = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
@@ -152,9 +148,11 @@ window.fetchLeaderboard = async function() {
             const isMe = (currentUser && u.name === myName);
             if(isMe) myRank = rank;
 
+            // Updated HTML to have rank in its own Div
             const html = `
                 <div class="pd-lb-item ${isMe ? 'current-user' : ''}">
-                    <div class="pd-lb-name"><span class="pd-rank-badge ${rankClass}">${rank}</span>${isMe ? '<strong>YOU</strong>' : u.name}</div>
+                    <div class="pd-rank-badge ${rankClass}">${rank}</div>
+                    <div class="pd-lb-name">${isMe ? '<strong>YOU</strong>' : u.name}</div>
                     <div class="pd-lb-stat">${u.shadow} <span>hrs</span></div>
                     <div class="pd-lb-stat">${u.vol} <span>hrs</span></div>
                 </div>`;
