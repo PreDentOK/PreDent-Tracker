@@ -18,65 +18,16 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 .pd-header-banner {
     background-color: #0f1c5e; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1.2rem 2rem;
-    display: flex;
-    justify-content: space-between;
+    padding: 1rem 2rem;
+    
+    /* Grid layout to handle the 3 distinct zones (Left, Center, Right) */
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; 
     align-items: center;
-    flex-wrap: wrap; 
     gap: 1rem;
 }
 
-/* AUTH & PROFILE STYLES */
-.pd-auth-btn {
-    background-color: white;
-    color: #333;
-    border: none;
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.1s;
-}
-.pd-auth-btn:active { transform: scale(0.95); }
-.pd-auth-btn.hidden { display: none; }
-
-.pd-user-profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: relative;
-}
-.pd-user-profile.hidden { display: none; }
-
-.pd-avatar-img {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid #4da6ff;
-    cursor: pointer;
-    object-fit: cover;
-}
-
-.pd-nav-rank {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(255, 215, 0, 0.15);
-    color: #ffd700;
-    border: 1px solid #ffd700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    font-family: 'Montserrat', sans-serif;
-}
-.pd-nav-rank.hidden { display: none; }
-
-/* Logo */
+/* LEFT: LOGO */
 .pd-logo-text {
     font-family: 'Montserrat', sans-serif;
     font-weight: 800;
@@ -87,6 +38,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     align-items: center;
     gap: 6px;
     white-space: nowrap;
+    justify-self: start; /* Pin to left */
 }
 .brand-prefix { color: #4da6ff; } 
 .brand-main { color: #FFFFFF; }    
@@ -100,13 +52,14 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     min-width: 80px; 
 }
 
-/* TABS */
+/* CENTER: TABS */
 .pd-tabs-container {
     display: flex;
     gap: 5px;
     background: rgba(0, 0, 0, 0.2);
     padding: 4px;
     border-radius: 50px;
+    justify-self: center; /* Pin to center */
 }
 
 .pd-tab-btn {
@@ -130,13 +83,15 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     box-shadow: 0 2px 10px rgba(77, 166, 255, 0.3);
 }
 
-/* ACTION BUTTONS GROUP */
+/* RIGHT: ACTIONS (Profile, Filter, Settings) */
 .pd-actions-group {
     display: flex;
     gap: 10px;
     align-items: center;
+    justify-self: end; /* Pin to right */
 }
 
+/* --- DROPDOWNS & MENUS --- */
 .pd-menu-container { position: relative; z-index: 20; }
 
 .pd-menu-btn {
@@ -145,6 +100,11 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 }
 .pd-menu-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; }
 .pd-menu-btn.active { background: rgba(255, 255, 255, 0.15); color: #4da6ff; }
+
+/* ARROW ROTATION FIX */
+/* Used for any SVG that needs to flip when active */
+.arrow-icon { transition: transform 0.2s ease; }
+.active .arrow-icon, .pd-menu-btn.active .arrow-icon { transform: rotate(180deg); }
 
 .pd-dropdown {
     position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
@@ -160,6 +120,29 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 .pd-menu-item:last-child { border-bottom: none; }
 .pd-menu-danger { color: #ff6b6b; font-weight: 600; }
 .pd-menu-item.selected { color: #4da6ff; font-weight: 700; background: rgba(77, 166, 255, 0.1); }
+
+/* --- AUTH & PROFILE --- */
+.pd-auth-btn {
+    background-color: white; color: #333; border: none; border-radius: 20px;
+    padding: 6px 14px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.85rem;
+    cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.1s;
+}
+.pd-auth-btn:active { transform: scale(0.95); }
+.pd-auth-btn.hidden { display: none; }
+
+.pd-user-profile { display: flex; align-items: center; gap: 10px; position: relative; }
+.pd-user-profile.hidden { display: none; }
+
+.pd-avatar-img {
+    width: 36px; height: 36px; border-radius: 50%; border: 2px solid #4da6ff; cursor: pointer; object-fit: cover;
+}
+
+.pd-nav-rank {
+    display: inline-flex; align-items: center; background: rgba(255, 215, 0, 0.15);
+    color: #ffd700; border: 1px solid #ffd700; padding: 4px 10px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 700; font-family: 'Montserrat', sans-serif;
+}
+.pd-nav-rank.hidden { display: none; }
 
 /* --- 3. MAIN CONTENT BODY --- */
 .pd-content-body { background-color: #030D4A; padding: 2rem; padding-bottom: 2rem; flex: 1; overflow-y: auto; }
@@ -279,7 +262,23 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* --- MOBILE SPECIFIC FIXES --- */
-@media (max-width: 600px) { 
+@media (max-width: 700px) { 
+    /* Header Re-layout for Mobile: Logo top, Tabs bottom-center, Actions top-right */
+    .pd-header-banner { 
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .pd-logo-text { order: 1; width: auto; }
+    .pd-actions-group { order: 2; }
+    .pd-tabs-container { 
+        order: 3; 
+        width: 100%; /* Force full width line */
+        justify-content: center; /* Center the tabs */
+        margin-top: 1rem; /* Space from top row */
+    }
+
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
