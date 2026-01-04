@@ -2,7 +2,7 @@
 const STORAGE_KEY = 'pd_tracker_data_v2'; 
 let entries = []; 
 let currentFilter = 'All';
-let currentSearch = ''; // NEW: Search State
+let currentSearch = ''; 
 let entryToDeleteId = null; 
 let editingEntryId = null;
 let appUser = null; 
@@ -41,13 +41,21 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
+// --- HELPER: UPDATE DELETE BUTTON STATE ---
+function updateDeleteButtonState() {
+    const count = document.querySelectorAll('.pd-checkbox:checked').length;
+    const btn = document.getElementById('btn-delete-selected');
+    btn.disabled = count === 0;
+    if (count > 0) btn.classList.add('active');
+    else btn.classList.remove('active');
+}
+
 // --- SEARCH LOGIC ---
 window.handleSearch = function() {
     currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
     render();
 };
 
-// --- STRICT HOURS ---
 function setupHoursInput(id) {
     const el = document.getElementById(id);
     if(!el) return;
@@ -55,7 +63,7 @@ function setupHoursInput(id) {
     el.addEventListener('blur', function() { if (this.value) this.value = Math.round(parseFloat(this.value)); });
 }
 
-// --- CSV & SELECTION ---
+// --- CSV IMPORT LOGIC ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
 window.handleCSVImport = function(input) {
     const file = input.files[0];
@@ -102,8 +110,18 @@ window.toggleSelectionMode = function() {
     const list = document.getElementById('log-list');
     const delBtn = document.getElementById('btn-delete-selected');
     const selectBtn = document.getElementById('btn-select-mode');
-    if (isSelectionMode) { list.classList.add('selection-mode'); delBtn.style.display = 'block'; selectBtn.textContent = 'Cancel'; } 
-    else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
+    if (isSelectionMode) { 
+        list.classList.add('selection-mode'); 
+        delBtn.style.display = 'block'; 
+        selectBtn.textContent = 'Cancel'; 
+        updateDeleteButtonState(); // Initialize state
+    } 
+    else { 
+        list.classList.remove('selection-mode'); 
+        delBtn.style.display = 'none'; 
+        selectBtn.textContent = 'Select Entries'; 
+        document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); 
+    }
 };
 
 window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
@@ -149,9 +167,12 @@ async function addEntry() {
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
+        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
+    }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
@@ -169,6 +190,7 @@ async function saveEditEntry() {
     if (!editingEntryId) return;
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
     if(modalWrappers.length > 0) modalWrappers.forEach(el => el.classList.remove('error'));
+
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -176,6 +198,7 @@ async function saveEditEntry() {
     const doctor = document.getElementById('edit-entry-doctor').value.trim();
     const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
+
     let hasError = false;
     const markError = (id) => { const el = document.getElementById(id); if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); } hasError = true; };
     if (!type) markError('edit-entry-type'); if (!subtype) markError('edit-entry-subtype'); if (!date) markError('edit-entry-date'); if (!loc) markError('edit-entry-loc'); if (!doctor) markError('edit-entry-doctor'); if (!hoursInput) markError('edit-entry-hours');
@@ -214,11 +237,29 @@ async function confirmDeleteEntry() {
 }
 
 window.viewEntry = function(id) {
-    if(isSelectionMode) { const cb = document.querySelector(`.pd-checkbox[data-id="${id}"]`); if(cb) cb.checked = !cb.checked; return; }
+    // If in selection mode, handle checkbox toggle and UI update
+    if(isSelectionMode) {
+        const cb = document.querySelector(`.pd-checkbox[data-id="${id}"]`);
+        if(cb) {
+            cb.checked = !cb.checked;
+            updateDeleteButtonState();
+        }
+        return;
+    }
     const entry = entries.find(e => e.id === String(id));
     if(!entry) return;
+
+    // Toggle Modal Class for Color
+    const modalContent = document.getElementById('view-modal-content');
+    if (entry.type === 'Volunteering') {
+        modalContent.classList.add('pd-modal-volunteer');
+        document.getElementById('view-type-title').style.color = '#ffd700';
+    } else {
+        modalContent.classList.remove('pd-modal-volunteer');
+        document.getElementById('view-type-title').style.color = '#4da6ff';
+    }
+
     document.getElementById('view-type-title').textContent = entry.type;
-    document.getElementById('view-type-title').style.color = entry.type === 'Shadowing' ? '#4da6ff' : '#ffd700';
     document.getElementById('view-subtype').textContent = entry.subtype;
     let viewDate = entry.date;
     if(viewDate.includes('-')) { const p = viewDate.split('-'); viewDate = `${p[1]}/${p[2]}/${p[0]}`; }
@@ -227,7 +268,8 @@ window.viewEntry = function(id) {
     document.getElementById('view-doc').textContent = entry.doctor;
     document.getElementById('view-loc').textContent = entry.location;
     const notesDiv = document.getElementById('view-notes-container');
-    if(entry.notes) { notesDiv.textContent = entry.notes; notesDiv.style.display = 'block'; } else { notesDiv.style.display = 'none'; }
+    if(entry.notes) { notesDiv.textContent = entry.notes; notesDiv.style.display = 'block'; } 
+    else { notesDiv.style.display = 'none'; }
     document.getElementById('view-modal').style.display = 'flex';
 };
 
@@ -332,7 +374,7 @@ function render() {
         li.className = `pd-entry-item ${typeClass}`;
         li.setAttribute('onclick', `viewEntry('${entry.id}')`);
         li.innerHTML = `
-            <input type="checkbox" class="pd-checkbox" data-id="${entry.id}" onclick="event.stopPropagation()">
+            <input type="checkbox" class="pd-checkbox" data-id="${entry.id}" onclick="event.stopPropagation(); updateDeleteButtonState()">
             <div class="pd-entry-content">
                 <div class="pd-entry-title">${entry.doctor||entry.location} <span style="font-weight:400; opacity:0.7; font-size:0.9em;">(${entry.subtype})</span></div>
                 <div class="pd-entry-meta">${entry.location} • ${displayDate}</div>
@@ -351,6 +393,7 @@ function render() {
         document.getElementById('log-list').classList.add('selection-mode');
         document.getElementById('btn-delete-selected').style.display = 'block';
         document.getElementById('btn-select-mode').textContent = 'Cancel';
+        updateDeleteButtonState();
     } else {
         document.getElementById('log-list').classList.remove('selection-mode');
         document.getElementById('btn-delete-selected').style.display = 'none';
@@ -382,19 +425,44 @@ function updateCircleStats(ringId, textId, hours) {
     if(text) text.innerText = hours;
 }
 
-function setFilter(type) {
-    currentFilter = type; 
-    document.querySelectorAll('#pd-filter-dropdown .pd-menu-item').forEach(btn => { if(btn.innerText.includes(type)) btn.classList.add('selected'); else btn.classList.remove('selected'); });
-    render(); 
-    document.getElementById('pd-filter-dropdown').classList.remove('active');
-    document.getElementById('btn-filter-toggle').classList.remove('active'); 
-}
-
-function exportData() {
-    if(entries.length === 0) { alert("No data to export!"); return; }
-    let csv = "Date,Activity Type,Subtype,Doctor/Supervisor,Location,Hours,Notes\n";
-    entries.forEach(e => { const sl = `"${e.location.replace(/"/g, '""')}"`; const sd = `"${(e.doctor || '').replace(/"/g, '""')}"`; const sn = `"${(e.notes || '').replace(/"/g, '""')}"`; csv += `${e.date},"${e.type}","${e.subtype}",${sd},${sl},${e.hours},${sn}\n`; });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'PreDent_Activity_Log.csv'; a.click();
+// --- CSV IMPORT LOGIC (RESTORED) ---
+window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
+window.handleCSVImport = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) { await processCSV(e.target.result); input.value = ''; };
+    reader.readAsText(file);
+};
+async function processCSV(csvText) {
+    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
+    if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
+    const headerRow = rows[0].toUpperCase();
+    let isShadowingSheet = false, isVolunteeringSheet = false;
+    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
+    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
+    if (!isShadowingSheet && !isVolunteeringSheet) { alert("Could not identify sheet type."); return; }
+    const dataLines = rows.slice(1);
+    let importedCount = 0;
+    for (let line of dataLines) {
+        if (!line.trim()) continue; 
+        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
+        const rawDate = cols[0]; if(!rawDate) continue;
+        let formattedDate = rawDate;
+        if(rawDate.includes('/')) {
+            const parts = rawDate.split('/');
+            if(parts.length === 3) {
+                const m = parts[0].padStart(2, '0'), d = parts[1].padStart(2, '0'); let y = parts[2];
+                if (y.length === 2) y = '20' + y;
+                formattedDate = `${y}-${m}-${d}`;
+            }
+        }
+        let type, subtype, doctor, location;
+        if (isShadowingSheet) { type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3]; } 
+        else { type = "Volunteering"; doctor = cols[1]; location = cols[2]; const rawRel = (cols[3] || "").toLowerCase(); subtype = (rawRel.includes("yes") || rawRel.includes("true")) ? "Dental Related" : "Non-Dental Related"; }
+        let hrs = Math.round(parseFloat(cols[4])); if(isNaN(hrs) || hrs <= 0) hrs = 0;
+        const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
+        if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
+    }
+    saveData(); render(); alert(`Successfully imported ${importedCount} entries.`);
 }
