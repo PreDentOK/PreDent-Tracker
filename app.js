@@ -62,9 +62,12 @@ async function saveData() {
     }
 }
 
+// --- ADD ENTRY WITH STRICT VALIDATION ---
 async function addEntry() {
+    // 1. Clear previous errors
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
     
+    // 2. Grab values
     const type = document.getElementById('entry-type').value;
     const subtype = document.getElementById('entry-subtype').value;
     const date = document.getElementById('entry-date').value;
@@ -73,14 +76,35 @@ async function addEntry() {
     let hoursInput = document.getElementById('entry-hours').value;
     const notes = document.getElementById('entry-notes').value;
     
+    // 3. Strict Validation Checks
     let hasError = false;
+
+    // Check Type (Rarely empty, but safe to check)
+    if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
+    
+    // Check Date
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
-    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+    
+    // Check Subtype
+    if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
+    
+    // Check Hours
+    if (!hoursInput || parseFloat(hoursInput) <= 0) { 
+        document.getElementById('entry-hours').parentNode.classList.add('error'); 
+        hasError = true; 
+    }
+    
+    // Check Doctor
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
+    
+    // Check Location
+    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+
+    // Stop if errors found
     if (hasError) return;
     
-    let hours = Math.round(parseFloat(hoursInput)) || 1;
+    // 4. Process Data
+    let hours = Math.round(parseFloat(hoursInput));
     
     const newEntry = { 
         id: String(Date.now()) + Math.random().toString(16).slice(2), 
@@ -94,6 +118,7 @@ async function addEntry() {
         entries.push(newEntry);
     }
     
+    // 5. Reset Form
     document.getElementById('entry-loc').value = ''; 
     document.getElementById('entry-doctor').value = ''; 
     document.getElementById('entry-hours').value = ''; 
@@ -102,16 +127,33 @@ async function addEntry() {
     saveData(); render();
 }
 
+// --- EDIT ENTRY WITH STRICT VALIDATION ---
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
+    // 1. Clear previous errors in modal
+    document.querySelectorAll('#edit-modal .pd-input-wrapper').forEach(el => el.classList.remove('error'));
+
+    // 2. Grab values
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
     const loc = document.getElementById('edit-entry-loc').value.trim();
     const doctor = document.getElementById('edit-entry-doctor').value.trim();
-    const hours = Math.round(parseFloat(document.getElementById('edit-entry-hours').value)) || 1;
+    const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
+
+    // 3. Strict Validation Checks (Manual styling for modal fields if needed, or rely on wrapper class)
+    // Note: The modal HTML didn't explicitly have pd-input-wrapper on all fields in previous versions,
+    // assuming they are wrapped. If validation fails visually, ensure the HTML structure in index.html matches.
+    // For now, we alert simply to ensure data integrity if UI wrappers missing.
+    
+    if (!type || !subtype || !date || !loc || !doctor || !hoursInput) {
+        alert("Please fill out all required fields.");
+        return;
+    }
+
+    const hours = Math.round(parseFloat(hoursInput));
 
     const updatedEntry = { 
         id: editingEntryId, 
