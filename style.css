@@ -8,7 +8,7 @@ body {
     margin: 0; 
     padding: 0; 
     background-color: #030D4A; 
-    height: 100dvh; /* Dynamic Viewport Height */
+    height: 100dvh; 
     width: 100vw;
     overflow: hidden; 
     position: fixed; 
@@ -124,14 +124,14 @@ body {
     background-color: #030D4A; 
     padding: 2rem; 
     padding-bottom: 4rem; 
-    flex: 1; /* Takes remaining space */
-    overflow-y: auto; /* Internal Scroll */
+    flex: 1; 
+    overflow-y: auto; 
     overflow-x: hidden; 
     overscroll-behavior-y: contain; 
     -webkit-overflow-scrolling: touch; 
 }
 
-/* SHARED STATS */
+/* SHARED STATS (DEFAULT DESKTOP SIZE: 260px) */
 .pd-stats-container { display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem; flex-wrap: wrap; margin-top: 1rem; }
 .pd-circle-card { position: relative; width: 260px; height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .pd-progress-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -220,20 +220,9 @@ body {
     background-color: rgba(0, 0, 0, 0.4); color: #FFFFFF;
     outline: none; transition: border-color 0.2s; box-sizing: border-box;
     color-scheme: dark;
-    
-    /* IOS RESET & ALIGNMENT */
-    -webkit-appearance: none;
-    appearance: none;
-    text-align: left; /* FORCE LEFT ALIGN */
+    -webkit-appearance: none; appearance: none; text-align: left;
 }
-/* SPECIFIC DATE FIXES FOR WEBKIT/MOBILE */
-input[type="date"] {
-    display: block;
-    text-align: left;
-    -webkit-align-items: center;
-    line-height: 50px; /* Vertically center text */
-}
-
+input[type="date"] { display: block; text-align: left; -webkit-align-items: center; line-height: 50px; }
 .pd-textarea { resize: vertical; min-height: 80px !important; max-height: none !important; height: auto !important; padding-top: 0.8rem; }
 
 .pd-select {
@@ -307,26 +296,19 @@ input[type="date"] {
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* FIX FOR CIRCLES: Use wide container + scale down strategy */
+    /* FIX FOR CIRCLES: Use standard scaling on the CARD, not the container */
     .pd-stats-container { 
         display: flex;
-        flex-wrap: nowrap; /* Prevent wrapping */
+        flex-wrap: nowrap; /* Prevent wrap */
         justify-content: center;
-        gap: 20px; /* Standard gap */
-        
-        /* MAGIC FIX: Make container wider than screen, then scale it back down */
-        width: 180%; 
-        margin-left: -40%; /* Re-center the 180% width */
-        
-        transform: scale(0.55); /* Scale entire thing down to fit screen */
-        transform-origin: top center;
-        
+        gap: 10px; 
         margin-top: 0;
-        margin-bottom: -100px; /* Pull content up drastically to fill empty scale space */
+        margin-bottom: 1rem; 
     }
     
-    /* Ensure child items don't shrink and cause overlap */
+    /* Shrink the individual cards instead of zooming the whole container */
     .pd-circle-card {
-        flex-shrink: 0; 
+        width: 160px; /* Reduced from 260 */
+        height: 160px;
     }
 }
