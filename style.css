@@ -32,17 +32,16 @@ body {
 .pd-tabs-container {
     display: grid; 
     grid-template-columns: 1fr 1fr 1fr; /* Exactly 3 equal columns */
-    gap: 2px; /* Small gap to keep them tight */
+    gap: 2px; 
     background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 50px;
     
-    /* Desktop: Absolute Center */
     position: absolute; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 320px; 
 }
 
 .pd-tab-btn {
     background: transparent; border: none; color: #cbd5e1; 
-    padding: 8px 0; /* No side padding, let grid handle width */
+    padding: 8px 0; 
     width: 100%;
     border-radius: 40px;
     font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer;
@@ -135,39 +134,31 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* --- UPDATED LEADERBOARD GRID (FIXED FOR MOBILE) --- */
+/* --- LEADERBOARD GRID --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    /* Rank (12%) | Name (38%) | Shadow (25%) | Volunteer (25%) */
     grid-template-columns: 12% 38% 25% 25%;
-    padding: 1rem 0.5rem; 
-    align-items: center; 
-    text-align: center; /* Center content in every cell */
+    padding: 1rem 0.5rem; align-items: center; text-align: center;
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    font-weight: 700; color: #cbd5e1; font-size: 0.75rem; /* Smaller font for headers */
-    text-transform: uppercase; letter-spacing: 0.05em; 
+    font-weight: 700; color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
 }
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
 
-/* Rank badge centered within its column */
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
-    background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; 
-    margin: 0 auto; 
+    background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; margin: 0 auto; 
+    text-align: center; margin-left: 0; /* Align left in cell */
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
 .rank-3 { background: #cd7f32; color: #030D4A; }
 
-/* Name Centered but text ellipsis for safety */
 .pd-lb-name { 
-    font-weight: 600; color: #FFFFFF; font-size: 0.9rem;
-    text-align: center; 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-    padding: 0 4px;
+    font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: center; 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
 }
 .pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.7em; opacity: 0.6; }
@@ -176,17 +167,8 @@ body {
 
 /* --- TRACKER FORM STYLES --- */
 .pd-form-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; position: relative; }
-
-/* Form Header Title */
 .pd-form-header { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; color: #cbd5e1; }
-
-/* FILTER BUTTON POSITIONING */
-.pd-filter-pos {
-    position: absolute;
-    top: 1.2rem;
-    right: 1.5rem;
-    z-index: 10;
-}
+.pd-filter-pos { position: absolute; top: 1.2rem; right: 1.5rem; z-index: 10; }
 
 .pd-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
 
@@ -226,6 +208,7 @@ body {
 .pd-entry-item { 
     background: #0f1c5e; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid #cbd5e1; 
     border-radius: 8px; padding: 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+    cursor: pointer; /* Clickable */
 }
 .pd-entry-item.type-shadow { border-left-color: #4da6ff; }
 .pd-entry-item.type-volunteer { border-left-color: #ffd700; }
@@ -241,6 +224,12 @@ body {
 .pd-entry-btn.edit { color: #4da6ff; }
 .pd-entry-btn.delete { color: #ff6b6b; }
 .pd-filter-badge { background: #4da6ff; color: #030D4A; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 10px; display: none; }
+
+/* VIEW DETAIL MODAL STYLES */
+.pd-view-row { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
+.pd-view-label { color: #cbd5e1; font-size: 0.85rem; font-weight: 600; }
+.pd-view-val { color: #fff; font-size: 0.9rem; text-align: right; font-weight: 500; }
+.pd-view-notes { margin-top: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 0.9rem; color: #F0F4F8; line-height: 1.5; text-align: left; }
 
 /* Modal & Footer */
 .pd-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
@@ -266,9 +255,5 @@ body {
     
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
-    
     .pd-stats-container { flex-wrap: nowrap; gap: 0px; transform: scale(0.65); transform-origin: top center; margin-bottom: -70px; width: 140%; margin-left: -20%; }
-    
-    /* Ensure Header Fonts Fit */
-    .pd-lb-header { font-size: 0.7rem; }
 }
