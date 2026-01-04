@@ -35,17 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- PROMPT LOGIC ---
-window.closeSignInPrompt = function() {
-    localStorage.setItem('pd_signin_prompt_seen', 'true');
-    document.getElementById('signin-prompt-modal').style.display = 'none';
-};
-
-window.googleLoginFromPrompt = function() {
-    window.closeSignInPrompt();
-    window.googleLogin(); // Calls firebase-config.js
-};
-
 window.refreshApp = async function(user) {
     appUser = user;
     await loadData();
@@ -67,11 +56,14 @@ async function loadData() {
 
 async function saveData() {
     if (appUser) {
+        // Calculate Totals for Leaderboard Sync
         let sTotal = 0, vTotal = 0;
         entries.forEach(e => { 
             const h = parseInt(e.hours, 10) || 0; 
             if (e.type === 'Shadowing') sTotal += h; else vTotal += h; 
         });
+        
+        // Push stats to Firebase Leaderboard
         if(window.updateLeaderboardStats) {
             await window.updateLeaderboardStats(appUser, sTotal, vTotal);
         }
@@ -104,7 +96,11 @@ async function addEntry() {
     }
     
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
-    if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+    
+    if (!loc) { 
+        document.getElementById('entry-loc').parentNode.classList.add('error'); 
+        hasError = true; 
+    }
 
     if (hasError) return;
     
@@ -205,23 +201,6 @@ async function confirmDeleteEntry() {
     closeDeleteModal();
 }
 
-// --- RESET (WIPE) ---
-async function confirmReset() {
-    if(appUser) {
-        try {
-            await window.db_wipeAllEntries(appUser);
-        } catch(e) {
-            console.error("Wipe failed", e);
-            closeResetModal();
-            return;
-        }
-    }
-    entries = []; 
-    saveData(); 
-    render(); 
-    closeResetModal(); 
-}
-
 window.viewEntry = function(id) {
     const entry = entries.find(e => e.id === String(id));
     if(!entry) return;
@@ -266,10 +245,6 @@ window.toggleOptionsMenu = (e) => {
 };
 
 window.setFilter = setFilter;
-window.openResetModal = openResetModal;
-window.closeResetModal = closeResetModal;
-window.checkResetInput = checkResetInput;
-window.confirmReset = confirmReset;
 window.addEntry = addEntry;
 window.exportData = exportData;
 window.deleteEntry = (id) => { entryToDeleteId = String(id); document.getElementById('delete-modal').style.display = 'flex'; };
@@ -282,11 +257,6 @@ window.switchTab = switchTab;
 window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = () => document.getElementById('profile-dropdown').classList.toggle('active');
-
-function checkResetInput() {
-    const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase();
-    document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE');
-}
 
 function closeAllMenus() {
     document.getElementById('pd-filter-dropdown').classList.remove('active');
@@ -371,7 +341,6 @@ function closeEditModal() { document.getElementById('edit-modal').style.display 
 function closeDeleteModal() { document.getElementById('delete-modal').style.display = 'none'; entryToDeleteId = null; }
 function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
-function confirmReset() { entries = []; saveData(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function render() {
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
