@@ -25,10 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
 
-    // Setup Strict Hours Inputs
-    setupHoursInput('entry-hours');
-    setupHoursInput('edit-entry-hours');
-
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.pd-menu-btn') && !e.target.closest('.pd-user-profile')) {
             closeAllMenus();
@@ -39,39 +35,123 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- NEW: STRICT HOURS LOGIC ---
-function setupHoursInput(id) {
-    const el = document.getElementById(id);
-    if(!el) return;
+// --- CSV IMPORT LOGIC ---
+window.triggerImport = function() {
+    document.getElementById('import-file-input').click();
+    closeAllMenus();
+};
 
-    // 1. Prevent invalid chars like 'e', '-', '+'
-    el.addEventListener('keydown', function(e) {
-        if (['e', 'E', '-', '+'].includes(e.key)) {
-            e.preventDefault();
-        }
-    });
+window.handleCSVImport = function(input) {
+    const file = input.files[0];
+    if (!file) return;
 
-    // 2. Round on blur (when user clicks away)
-    el.addEventListener('blur', function() {
-        if (this.value) {
-            this.value = Math.round(parseFloat(this.value));
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        await processCSV(text);
+        input.value = ''; 
+    };
+    reader.readAsText(file);
+};
+
+async function processCSV(csvText) {
+    // Regex to split by newline, respecting quotes
+    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
+    
+    if (!rows || rows.length < 2) {
+        alert("CSV appears empty or unreadable.");
+        return;
+    }
+
+    // Analyze Header
+    const headerRow = rows[0].toUpperCase();
+    let isShadowingSheet = false;
+    let isVolunteeringSheet = false;
+
+    if (headerRow.includes("SPECIALTY")) {
+        isShadowingSheet = true;
+    } else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) {
+        isVolunteeringSheet = true;
+    }
+
+    if (!isShadowingSheet && !isVolunteeringSheet) {
+        alert("Could not identify sheet type. Please ensure headers include 'SPECIALTY' (for Shadowing) or 'DENTAL RELATED' (for Volunteering).");
+        return;
+    }
+
+    const dataLines = rows.slice(1);
+    let importedCount = 0;
+
+    for (let line of dataLines) {
+        if (!line.trim()) continue; 
+        
+        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
+        
+        const rawDate = cols[0];
+        if(!rawDate) continue;
+
+        // --- PARSE DATE (Handles MM/DD/YY -> YYYY-MM-DD for storage) ---
+        let formattedDate = rawDate;
+        if(rawDate.includes('/')) {
+            const parts = rawDate.split('/');
+            if(parts.length === 3) {
+                const m = parts[0].padStart(2, '0');
+                const d = parts[1].padStart(2, '0');
+                let y = parts[2];
+                // Handle 2-digit year (e.g., 24 -> 2024)
+                if (y.length === 2) y = '20' + y;
+                formattedDate = `${y}-${m}-${d}`;
+            }
         }
-    });
+
+        let type, subtype, doctor, location;
+        
+        if (isShadowingSheet) {
+            type = "Shadowing";
+            doctor = cols[1];
+            subtype = cols[2] || "General Dentistry";
+            location = cols[3];
+        } else {
+            type = "Volunteering";
+            doctor = cols[1]; 
+            location = cols[2];
+            const rawRel = (cols[3] || "").toLowerCase();
+            if (rawRel.includes("yes") || rawRel.includes("true")) subtype = "Dental Related";
+            else if (rawRel.includes("no") || rawRel.includes("false")) subtype = "Non-Dental Related";
+            else subtype = "Dental Related"; 
+        }
+
+        let hrs = Math.round(parseFloat(cols[4]));
+        if(isNaN(hrs) || hrs <= 0) hrs = 0;
+        
+        const entry = {
+            id: String(Date.now()) + Math.random().toString(16).slice(2),
+            date: formattedDate,
+            type: type,
+            subtype: subtype,
+            doctor: doctor || "Unknown",
+            location: location || "Unknown",
+            hours: hrs,
+            notes: cols[5] || '' 
+        };
+
+        if(entry.date && entry.hours > 0) {
+             if (appUser) {
+                await window.db_addEntry(appUser, entry);
+                entries.push(entry);
+            } else {
+                entries.push(entry);
+            }
+            importedCount++;
+        }
+    }
+
+    saveData();
+    render();
+    alert(`Successfully imported ${importedCount} entries.`);
 }
 
-// --- NEW: AUTO-SUGGESTIONS ---
-function updateDatalists() {
-    // Extract unique doctors and locations from existing entries
-    const uniqueDocs = [...new Set(entries.map(e => e.doctor).filter(Boolean))].sort();
-    const uniqueLocs = [...new Set(entries.map(e => e.location).filter(Boolean))].sort();
-
-    const docList = document.getElementById('doc-suggestions');
-    const locList = document.getElementById('loc-suggestions');
-
-    // Repopulate Datalists
-    if(docList) docList.innerHTML = uniqueDocs.map(d => `<option value="${d}">`).join('');
-    if(locList) locList.innerHTML = uniqueLocs.map(l => `<option value="${l}">`).join('');
-}
+// --- STANDARD APP LOGIC ---
 
 window.refreshApp = async function(user) {
     appUser = user;
@@ -105,11 +185,18 @@ async function saveData() {
     } else {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     }
-    // Update suggestions immediately after save
     updateDatalists();
 }
 
-// --- ADD ENTRY ---
+function updateDatalists() {
+    const uniqueDocs = [...new Set(entries.map(e => e.doctor).filter(Boolean))].sort();
+    const uniqueLocs = [...new Set(entries.map(e => e.location).filter(Boolean))].sort();
+    const docList = document.getElementById('doc-suggestions');
+    const locList = document.getElementById('loc-suggestions');
+    if(docList) docList.innerHTML = uniqueDocs.map(d => `<option value="${d}">`).join('');
+    if(locList) locList.innerHTML = uniqueLocs.map(l => `<option value="${l}">`).join('');
+}
+
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
     
@@ -165,7 +252,6 @@ async function addEntry() {
     }
 }
 
-// --- EDIT ENTRY ---
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
@@ -257,7 +343,15 @@ window.viewEntry = function(id) {
     document.getElementById('view-type-title').textContent = entry.type;
     document.getElementById('view-type-title').style.color = entry.type === 'Shadowing' ? '#4da6ff' : '#ffd700';
     document.getElementById('view-subtype').textContent = entry.subtype;
-    document.getElementById('view-date').textContent = entry.date;
+    
+    // FORMAT DATE FOR VIEW MODAL (MM/DD/YYYY)
+    let viewDate = entry.date;
+    if(viewDate.includes('-')) {
+        const p = viewDate.split('-');
+        viewDate = `${p[1]}/${p[2]}/${p[0]}`;
+    }
+    document.getElementById('view-date').textContent = viewDate;
+    
     document.getElementById('view-hours').textContent = entry.hours;
     document.getElementById('view-doc').textContent = entry.doctor;
     document.getElementById('view-loc').textContent = entry.location;
@@ -402,8 +496,7 @@ function closeResetModal() { document.getElementById('reset-modal').style.displa
 function confirmReset() { entries = []; saveData(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function render() {
-    updateDatalists(); // REFRESH SUGGESTIONS ON RENDER
-
+    updateDatalists();
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
     let sTotal = 0, vTotal = 0; entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
     updateCircleStats('ring-shadow', 'total-shadow', sTotal); updateCircleStats('ring-volunteer', 'total-volunteer', vTotal);
@@ -415,7 +508,10 @@ function render() {
     
     displayEntries.forEach((entry) => {
         const typeClass = entry.type === 'Shadowing' ? 'type-shadow' : 'type-volunteer';
-        const displayDate = new Date(entry.date.split('-')[0], entry.date.split('-')[1]-1, entry.date.split('-')[2]).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // DISPLAY DATE FORMAT (MM/DD/YYYY)
+        const dp = entry.date.split('-'); // YYYY, MM, DD
+        const displayDate = `${dp[1]}/${dp[2]}/${dp[0]}`;
         
         const li = document.createElement('li');
         li.className = `pd-entry-item ${typeClass}`;
