@@ -119,7 +119,7 @@ body {
 }
 .pd-nav-rank.hidden { display: none; }
 
-/* --- 3. MAIN CONTENT BODY (SCROLLABLE AREA) --- */
+/* --- 3. MAIN CONTENT BODY --- */
 .pd-content-body { 
     background-color: #030D4A; 
     padding: 2rem; 
@@ -131,14 +131,22 @@ body {
     -webkit-overflow-scrolling: touch; 
 }
 
-/* SHARED STATS (DEFAULT DESKTOP SIZE: 260px) */
+/* SHARED STATS */
 .pd-stats-container { display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem; flex-wrap: wrap; margin-top: 1rem; }
 .pd-circle-card { position: relative; width: 260px; height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .pd-progress-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .pd-progress-ring__circle { transition: stroke-dashoffset 0.5s ease-in-out; transform-origin: 50% 50%; }
 .pd-circle-content { z-index: 2; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 200px; height: 200px; }
-.pd-stat-number { font-family: 'Montserrat', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
-.pd-stat-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: #cbd5e1; }
+.pd-stat-number { font-family: 'Montserrat', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+
+/* UPDATED LABEL SIZE TO FIT IN CIRCLE */
+.pd-stat-label { 
+    font-size: 0.7rem; /* Reduced from 0.9rem */
+    text-transform: uppercase; 
+    letter-spacing: 0.05em; 
+    font-weight: 600; 
+    color: #cbd5e1; 
+}
 
 /* VIEWS */
 .pd-view { display: none; animation: fadeIn 0.3s ease; }
@@ -220,9 +228,22 @@ body {
     background-color: rgba(0, 0, 0, 0.4); color: #FFFFFF;
     outline: none; transition: border-color 0.2s; box-sizing: border-box;
     color-scheme: dark;
-    -webkit-appearance: none; appearance: none; text-align: left;
+    -webkit-appearance: none; appearance: none; 
+    text-align: left; /* FORCE LEFT ALIGN */
 }
-input[type="date"] { display: block; text-align: left; -webkit-align-items: center; line-height: 50px; }
+
+/* DATE INPUT FIXES */
+input[type="date"] {
+    display: block;
+    text-align: left;
+    -webkit-align-items: center;
+    line-height: 50px;
+}
+/* SPECIFIC IOS FIX FOR DATE TEXT ALIGNMENT */
+input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+}
+
 .pd-textarea { resize: vertical; min-height: 80px !important; max-height: none !important; height: auto !important; padding-top: 0.8rem; }
 
 .pd-select {
@@ -296,17 +317,16 @@ input[type="date"] { display: block; text-align: left; -webkit-align-items: cent
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* FIX FOR CIRCLES: Use standard scaling on the CARD, not the container */
+    /* FIX FOR CIRCLES: Scale down items to fit */
     .pd-stats-container { 
         display: flex;
-        flex-wrap: nowrap; /* Prevent wrap */
+        flex-wrap: nowrap; 
         justify-content: center;
         gap: 10px; 
         margin-top: 0;
         margin-bottom: 1rem; 
     }
     
-    /* Shrink the individual cards instead of zooming the whole container */
     .pd-circle-card {
         width: 160px; /* Reduced from 260 */
         height: 160px;
