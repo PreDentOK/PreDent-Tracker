@@ -124,10 +124,11 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* UPDATED GRID FOR FIXED RANK POSITION */
+/* --- UPDATED LEADERBOARD GRID --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    grid-template-columns: 50px 1fr 70px 70px; /* FIXED WIDTH for Rank */
+    /* First column is 40px fixed for rank, aligned left */
+    grid-template-columns: 40px 1fr 70px 70px; 
     padding: 1rem; 
     align-items: center; 
     text-align: center;
@@ -139,17 +140,17 @@ body {
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
 
-/* Rank badge centered in its fixed column */
+/* RANK BADGE: Fixed alignment */
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; 
-    margin: 0 auto; /* Center in grid cell */
+    margin: 0; /* Align left in the grid cell */
+    text-align: center;
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
 .rank-3 { background: #cd7f32; color: #030D4A; }
 
-/* Name left aligned */
 .pd-lb-name { font-weight: 600; color: #FFFFFF; text-align: left; padding-left: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.75em; opacity: 0.6; }
@@ -159,10 +160,16 @@ body {
 /* --- TRACKER FORM STYLES --- */
 .pd-form-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; position: relative; }
 
-/* UPDATED FORM HEADER to hold the Filter Button */
-.pd-form-header { 
-    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; color: #cbd5e1; 
-    display: flex; justify-content: space-between; align-items: center;
+/* Form Header Title */
+.pd-form-header { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; color: #cbd5e1; }
+
+/* FILTER BUTTON POSITIONING */
+/* Absolute positioning relative to the card */
+.pd-filter-pos {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.5rem;
+    z-index: 10;
 }
 
 .pd-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
