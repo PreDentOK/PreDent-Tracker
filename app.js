@@ -2,6 +2,7 @@
 const STORAGE_KEY = 'pd_tracker_data_v2'; 
 let entries = []; 
 let currentFilter = 'All';
+let currentSearch = ''; // NEW: Search State
 let entryToDeleteId = null; 
 let editingEntryId = null;
 let appUser = null; 
@@ -26,6 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
 
+    // Setup Strict Hours
+    setupHoursInput('entry-hours');
+    setupHoursInput('edit-entry-hours');
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.pd-menu-btn') && !e.target.closest('.pd-user-profile')) {
             closeAllMenus();
@@ -36,87 +41,60 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- CSV IMPORT LOGIC ---
-window.triggerImport = function() {
-    document.getElementById('import-file-input').click();
-    closeAllMenus();
+// --- SEARCH LOGIC ---
+window.handleSearch = function() {
+    currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
+    render();
 };
 
+// --- STRICT HOURS ---
+function setupHoursInput(id) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('keydown', function(e) { if (['e', 'E', '-', '+'].includes(e.key)) e.preventDefault(); });
+    el.addEventListener('blur', function() { if (this.value) this.value = Math.round(parseFloat(this.value)); });
+}
+
+// --- CSV & SELECTION ---
+window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
 window.handleCSVImport = function(input) {
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = async function(e) {
-        const text = e.target.result;
-        await processCSV(text);
-        input.value = ''; 
-    };
+    reader.onload = async function(e) { await processCSV(e.target.result); input.value = ''; };
     reader.readAsText(file);
 };
-
 async function processCSV(csvText) {
     const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
     if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
-
     const headerRow = rows[0].toUpperCase();
-    let isShadowingSheet = false;
-    let isVolunteeringSheet = false;
-
+    let isShadowingSheet = false, isVolunteeringSheet = false;
     if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
     else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
-
-    if (!isShadowingSheet && !isVolunteeringSheet) {
-        alert("Could not identify sheet type."); return;
-    }
-
+    if (!isShadowingSheet && !isVolunteeringSheet) { alert("Could not identify sheet type."); return; }
     const dataLines = rows.slice(1);
     let importedCount = 0;
-
     for (let line of dataLines) {
         if (!line.trim()) continue; 
         const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
-        const rawDate = cols[0];
-        if(!rawDate) continue;
-
+        const rawDate = cols[0]; if(!rawDate) continue;
         let formattedDate = rawDate;
         if(rawDate.includes('/')) {
             const parts = rawDate.split('/');
             if(parts.length === 3) {
-                const m = parts[0].padStart(2, '0');
-                const d = parts[1].padStart(2, '0');
-                let y = parts[2];
+                const m = parts[0].padStart(2, '0'), d = parts[1].padStart(2, '0'); let y = parts[2];
                 if (y.length === 2) y = '20' + y;
                 formattedDate = `${y}-${m}-${d}`;
             }
         }
-
         let type, subtype, doctor, location;
-        if (isShadowingSheet) {
-            type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3];
-        } else {
-            type = "Volunteering"; doctor = cols[1]; location = cols[2];
-            const rawRel = (cols[3] || "").toLowerCase();
-            if (rawRel.includes("yes") || rawRel.includes("true")) subtype = "Dental Related";
-            else if (rawRel.includes("no") || rawRel.includes("false")) subtype = "Non-Dental Related";
-            else subtype = "Dental Related"; 
-        }
-
-        let hrs = Math.round(parseFloat(cols[4]));
-        if(isNaN(hrs) || hrs <= 0) hrs = 0;
-        
-        const entry = {
-            id: String(Date.now()) + Math.random().toString(16).slice(2),
-            date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' 
-        };
-
-        if(entry.date && entry.hours > 0) {
-             if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } 
-             else { entries.push(entry); }
-             importedCount++;
-        }
+        if (isShadowingSheet) { type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3]; } 
+        else { type = "Volunteering"; doctor = cols[1]; location = cols[2]; const rawRel = (cols[3] || "").toLowerCase(); subtype = (rawRel.includes("yes") || rawRel.includes("true")) ? "Dental Related" : "Non-Dental Related"; }
+        let hrs = Math.round(parseFloat(cols[4])); if(isNaN(hrs) || hrs <= 0) hrs = 0;
+        const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
+        if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
     }
-    saveData(); render();
-    alert(`Successfully imported ${importedCount} entries.`);
+    saveData(); render(); alert(`Successfully imported ${importedCount} entries.`);
 }
 
 window.toggleSelectionMode = function() {
@@ -124,19 +102,12 @@ window.toggleSelectionMode = function() {
     const list = document.getElementById('log-list');
     const delBtn = document.getElementById('btn-delete-selected');
     const selectBtn = document.getElementById('btn-select-mode');
-
-    if (isSelectionMode) {
-        list.classList.add('selection-mode');
-        delBtn.style.display = 'block';
-        selectBtn.textContent = 'Cancel';
-    } else {
-        list.classList.remove('selection-mode');
-        delBtn.style.display = 'none';
-        selectBtn.textContent = 'Select Entries';
-        document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false);
-    }
+    if (isSelectionMode) { list.classList.add('selection-mode'); delBtn.style.display = 'block'; selectBtn.textContent = 'Cancel'; } 
+    else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
 };
 
+window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
+window.googleLoginFromPrompt = function() { window.closeSignInPrompt(); window.googleLogin(); };
 window.refreshApp = async function(user) { appUser = user; await loadData(); };
 window.refreshAppPage = function() { window.location.href = 'https://predent.net/#app'; window.location.reload(); };
 
@@ -178,27 +149,18 @@ async function addEntry() {
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
-        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
-    }
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
-
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
-    const newEntry = { 
-        id: String(Date.now()) + Math.random().toString(16).slice(2), 
-        type, subtype, date, location: loc, doctor, hours, notes 
-    };
+    const newEntry = { id: String(Date.now()) + Math.random().toString(16).slice(2), type, subtype, date, location: loc, doctor, hours, notes };
     
     try {
         if (appUser) { await window.db_addEntry(appUser, newEntry); entries.push(newEntry); } 
         else { entries.push(newEntry); }
-        document.getElementById('entry-loc').value = ''; 
-        document.getElementById('entry-doctor').value = ''; 
-        document.getElementById('entry-hours').value = ''; 
-        document.getElementById('entry-notes').value = ''; 
+        document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
     } catch (e) { console.error("Error adding entry:", e); alert("Connection error."); }
 }
@@ -207,7 +169,6 @@ async function saveEditEntry() {
     if (!editingEntryId) return;
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
     if(modalWrappers.length > 0) modalWrappers.forEach(el => el.classList.remove('error'));
-
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -215,33 +176,16 @@ async function saveEditEntry() {
     const doctor = document.getElementById('edit-entry-doctor').value.trim();
     const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
-
     let hasError = false;
-    const markError = (id) => {
-        const el = document.getElementById(id);
-        if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); }
-        hasError = true;
-    };
-    if (!type) markError('edit-entry-type');
-    if (!subtype) markError('edit-entry-subtype');
-    if (!date) markError('edit-entry-date');
-    if (!loc) markError('edit-entry-loc');
-    if (!doctor) markError('edit-entry-doctor');
-    if (!hoursInput) markError('edit-entry-hours');
+    const markError = (id) => { const el = document.getElementById(id); if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); } hasError = true; };
+    if (!type) markError('edit-entry-type'); if (!subtype) markError('edit-entry-subtype'); if (!date) markError('edit-entry-date'); if (!loc) markError('edit-entry-loc'); if (!doctor) markError('edit-entry-doctor'); if (!hoursInput) markError('edit-entry-hours');
     if (hasError) return; 
 
     const hours = Math.round(parseFloat(hoursInput));
     const updatedEntry = { id: editingEntryId, type, subtype, date, location: loc, doctor, hours, notes };
-
     try {
-        if (appUser) {
-            await window.db_addEntry(appUser, updatedEntry); 
-            const idx = entries.findIndex(e => e.id === editingEntryId);
-            if(idx !== -1) entries[idx] = updatedEntry;
-        } else {
-            const idx = entries.findIndex(e => e.id === editingEntryId);
-            if (idx !== -1) entries[idx] = updatedEntry;
-        }
+        if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
+        else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
     } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
@@ -262,23 +206,15 @@ async function confirmReset() {
 
 async function confirmDeleteEntry() {
     if (entryToDeleteId) {
-        if (appUser) {
-            await window.db_deleteEntry(appUser, entryToDeleteId);
-            entries = entries.filter(e => e.id !== entryToDeleteId);
-        } else {
-            entries = entries.filter(e => e.id !== entryToDeleteId);
-        }
+        if (appUser) { await window.db_deleteEntry(appUser, entryToDeleteId); entries = entries.filter(e => e.id !== entryToDeleteId); } 
+        else { entries = entries.filter(e => e.id !== entryToDeleteId); }
         saveData(); render();
     }
     closeDeleteModal();
 }
 
 window.viewEntry = function(id) {
-    if(isSelectionMode) {
-        const cb = document.querySelector(`.pd-checkbox[data-id="${id}"]`);
-        if(cb) cb.checked = !cb.checked;
-        return;
-    }
+    if(isSelectionMode) { const cb = document.querySelector(`.pd-checkbox[data-id="${id}"]`); if(cb) cb.checked = !cb.checked; return; }
     const entry = entries.find(e => e.id === String(id));
     if(!entry) return;
     document.getElementById('view-type-title').textContent = entry.type;
@@ -291,8 +227,7 @@ window.viewEntry = function(id) {
     document.getElementById('view-doc').textContent = entry.doctor;
     document.getElementById('view-loc').textContent = entry.location;
     const notesDiv = document.getElementById('view-notes-container');
-    if(entry.notes) { notesDiv.textContent = entry.notes; notesDiv.style.display = 'block'; } 
-    else { notesDiv.style.display = 'none'; }
+    if(entry.notes) { notesDiv.textContent = entry.notes; notesDiv.style.display = 'block'; } else { notesDiv.style.display = 'none'; }
     document.getElementById('view-modal').style.display = 'flex';
 };
 
@@ -318,22 +253,13 @@ window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = () => document.getElementById('profile-dropdown').classList.toggle('active');
 
-function checkResetInput() {
-    const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase();
-    document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE');
-}
-
+function checkResetInput() { const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase(); document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE'); }
 function closeAllMenus() {
     document.getElementById('pd-filter-dropdown').classList.remove('active');
     document.getElementById('pd-options-dropdown').classList.remove('active');
     document.getElementById('profile-dropdown').classList.remove('active');
 }
-
-function skipProfileSetup() {
-    localStorage.setItem('pd_profile_setup_done', 'true');
-    document.getElementById('lb-profile-box').classList.add('pd-hidden');
-}
-
+function skipProfileSetup() { localStorage.setItem('pd_profile_setup_done', 'true'); document.getElementById('lb-profile-box').classList.add('pd-hidden'); }
 function updateProfileName() {
     const nameInput = document.getElementById('user-display-name');
     const name = nameInput.value.trim();
@@ -351,7 +277,6 @@ function updateProfileName() {
     if(window.syncToCloud) window.syncToCloud();
     if(name) alert("Display name updated!");
 }
-
 function switchTab(tabName) {
     document.querySelectorAll('.pd-view').forEach(view => view.classList.remove('active'));
     document.querySelectorAll('.pd-tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -361,7 +286,6 @@ function switchTab(tabName) {
     else if (tabName === 'stats') { btns[1].classList.add('active'); calculateTrends(); }
     else { btns[2].classList.add('active'); if(localStorage.getItem('pd_username')) { document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username'); } }
 }
-
 function handleTypeChange() { updateSubtypeOptions('entry-type', 'entry-subtype', 'entry-doctor'); }
 function handleEditTypeChange() { updateSubtypeOptions('edit-entry-type', 'edit-entry-subtype', 'edit-entry-doctor'); }
 function updateSubtypeOptions(typeId, subtypeId, docId) {
@@ -373,7 +297,6 @@ function updateSubtypeOptions(typeId, subtypeId, docId) {
     options.forEach(opt => { const el = document.createElement('option'); el.value = opt; el.textContent = opt; subSelect.appendChild(el); });
     docInput.placeholder = mainType === 'Shadowing' ? "Doctor(s)" : "Organization / Supervisor";
 }
-
 function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
 
@@ -382,9 +305,22 @@ function render() {
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
     let sTotal = 0, vTotal = 0; entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
     updateCircleStats('ring-shadow', 'total-shadow', sTotal); updateCircleStats('ring-volunteer', 'total-volunteer', vTotal);
+    
     let displayEntries = entries.sort((a, b) => new Date(b.date) - new Date(a.date));
     if (currentFilter !== 'All') displayEntries = displayEntries.filter(e => e.type === currentFilter);
+    if (currentSearch) {
+        const term = currentSearch.toLowerCase();
+        displayEntries = displayEntries.filter(e => 
+            (e.doctor && e.doctor.toLowerCase().includes(term)) ||
+            (e.location && e.location.toLowerCase().includes(term)) ||
+            (e.notes && e.notes.toLowerCase().includes(term))
+        );
+    }
+    
     document.getElementById('filter-badge').style.display = currentFilter !== 'All' ? 'inline-block' : 'none';
+    if(currentFilter === 'Volunteering') document.getElementById('filter-badge').classList.add('volunteer');
+    else document.getElementById('filter-badge').classList.remove('volunteer');
+    
     if(currentFilter !== 'All') document.getElementById('filter-badge').innerText = currentFilter.toUpperCase();
     if (displayEntries.length === 0) list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:1rem;">No entries found.</div>';
     
@@ -395,7 +331,6 @@ function render() {
         const li = document.createElement('li');
         li.className = `pd-entry-item ${typeClass}`;
         li.setAttribute('onclick', `viewEntry('${entry.id}')`);
-        
         li.innerHTML = `
             <input type="checkbox" class="pd-checkbox" data-id="${entry.id}" onclick="event.stopPropagation()">
             <div class="pd-entry-content">
@@ -416,6 +351,10 @@ function render() {
         document.getElementById('log-list').classList.add('selection-mode');
         document.getElementById('btn-delete-selected').style.display = 'block';
         document.getElementById('btn-select-mode').textContent = 'Cancel';
+    } else {
+        document.getElementById('log-list').classList.remove('selection-mode');
+        document.getElementById('btn-delete-selected').style.display = 'none';
+        document.getElementById('btn-select-mode').textContent = 'Select Entries';
     }
 }
 
@@ -444,10 +383,10 @@ function updateCircleStats(ringId, textId, hours) {
 }
 
 function setFilter(type) {
-    currentFilter = type; const badge = document.getElementById('filter-badge'); badge.style.display = type !== 'All' ? 'inline-block' : 'none';
-    if(type !== 'All') badge.innerText = type.toUpperCase();
+    currentFilter = type; 
     document.querySelectorAll('#pd-filter-dropdown .pd-menu-item').forEach(btn => { if(btn.innerText.includes(type)) btn.classList.add('selected'); else btn.classList.remove('selected'); });
-    render(); document.getElementById('pd-filter-dropdown').classList.remove('active');
+    render(); 
+    document.getElementById('pd-filter-dropdown').classList.remove('active');
     document.getElementById('btn-filter-toggle').classList.remove('active'); 
 }
 
