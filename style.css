@@ -1,16 +1,16 @@
-/* --- 1. DARK THEME LAYOUT --- */
+/* --- 1. DARK THEME LAYOUT (FULL SCREEN) --- */
+body { margin: 0; padding: 0; background-color: #030D4A; }
+
 .pd-tracker-wrapper {
     width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
+    /* Full viewport height and width */
+    min-height: 100vh; 
+    margin: 0;
+    border-radius: 0; /* Removed rounded corners for full screen */
     font-family: 'Inter', sans-serif;
     color: #F0F4F8; 
     background-color: #030D4A; 
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     position: relative;
-    overflow: hidden; 
-    min-height: 700px;
     display: flex;
     flex-direction: column;
 }
@@ -26,6 +26,23 @@
     flex-wrap: wrap; 
     gap: 1rem;
 }
+
+/* NEW: RANK BADGE IN HEADER */
+.pd-nav-rank {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid #ffd700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-right: 10px;
+    font-family: 'Montserrat', sans-serif;
+    animation: fadeIn 0.5s ease;
+}
+.pd-nav-rank.hidden { display: none; }
 
 /* Logo */
 .pd-logo-text {
@@ -110,12 +127,10 @@
 .pd-menu-item:hover { background: rgba(255,255,255,0.05); }
 .pd-menu-item:last-child { border-bottom: none; }
 .pd-menu-danger { color: #ff6b6b; font-weight: 600; }
-
-/* Active Filter State */
 .pd-menu-item.selected { color: #4da6ff; font-weight: 700; background: rgba(77, 166, 255, 0.1); }
 
 /* --- 3. MAIN CONTENT BODY --- */
-.pd-content-body { background-color: #030D4A; padding: 2rem; padding-bottom: 2rem; flex: 1; }
+.pd-content-body { background-color: #030D4A; padding: 2rem; padding-bottom: 2rem; flex: 1; overflow-y: auto; }
 
 /* SHARED STATS */
 .pd-stats-container { display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem; flex-wrap: wrap; margin-top: 1rem; }
@@ -138,7 +153,6 @@
 .pd-trend-list li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: #F0F4F8; font-size: 0.9rem; }
 .pd-trend-list li span:last-child { font-weight: 700; color: #4da6ff; }
 .pd-trend-empty { color: #64748b; font-style: italic; font-size: 0.9rem; margin-top: 0.5rem; }
-
 .pd-percent-bar { height: 12px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-top: 12px; display: flex; }
 .pd-fill-dental { background: #51cf66; height: 100%; transition: width 0.5s ease; } 
 .pd-fill-non { background: #ff6b6b; height: 100%; transition: width 0.5s ease; } 
@@ -161,7 +175,6 @@
 .pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.75em; opacity: 0.6; }
 
-/* Hidden Helper */
 .pd-hidden { display: none !important; }
 
 /* --- TRACKER FORM STYLES --- */
@@ -232,4 +245,4 @@
 .pd-footer { text-align: center; padding: 1rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: auto; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 600px) { .pd-form-grid { grid-template-columns: 1fr; } .pd-tracker-wrapper { padding: 0; border-radius: 0; } .pd-content-body { padding: 1rem; padding-bottom: 6rem; } }
+@media (max-width: 600px) { .pd-form-grid { grid-template-columns: 1fr; } .pd-content-body { padding: 1rem; padding-bottom: 6rem; } }
