@@ -76,14 +76,13 @@ async function addEntry() {
     let hoursInput = document.getElementById('entry-hours').value;
     const notes = document.getElementById('entry-notes').value;
     
-    // 3. Strict Validation
+    // 3. Strict Validation (Visual Only - No Alert)
     let hasError = false;
 
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
     
-    // Validate Hours (Must be number)
     if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
         document.getElementById('entry-hours').parentNode.classList.add('error'); 
         hasError = true; 
@@ -91,18 +90,15 @@ async function addEntry() {
     
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     
-    // VALIDATE LOCATION (Required)
     if (!loc) { 
         document.getElementById('entry-loc').parentNode.classList.add('error'); 
         hasError = true; 
     }
 
-    if (hasError) {
-        alert("Please fill out all required fields marked with *");
-        return;
-    }
+    // Stop execution if errors exist. The red outlines are enough feedback.
+    if (hasError) return;
     
-    // 4. Round Hours Logic (Decimal -> Nearest Integer)
+    // 4. Process Data
     let hours = Math.round(parseFloat(hoursInput));
     
     const newEntry = { 
@@ -119,7 +115,7 @@ async function addEntry() {
             entries.push(newEntry);
         }
         
-        // 6. Reset Form ONLY if successful
+        // 6. Reset Form
         document.getElementById('entry-loc').value = ''; 
         document.getElementById('entry-doctor').value = ''; 
         document.getElementById('entry-hours').value = ''; 
@@ -129,7 +125,7 @@ async function addEntry() {
         render();
     } catch (e) {
         console.error("Error adding entry:", e);
-        alert("There was an error saving your entry. Please check your connection.");
+        alert("Connection error. Please try again.");
     }
 }
 
@@ -137,6 +133,15 @@ async function addEntry() {
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
+    // 1. Clear previous errors in modal (Assuming wrappers exist, if not we fall back to logic)
+    // Note: If you want visual red outlines in the modal, ensure the HTML input/selects are wrapped in <div class="pd-input-wrapper">
+    // The current logic assumes your HTML structure supports this class.
+    const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
+    if(modalWrappers.length > 0) {
+        modalWrappers.forEach(el => el.classList.remove('error'));
+    }
+
+    // 2. Grab values
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -145,12 +150,26 @@ async function saveEditEntry() {
     const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
 
-    if (!type || !subtype || !date || !loc || !doctor || !hoursInput) {
-        alert("Please fill out all required fields.");
-        return;
-    }
+    let hasError = false;
 
-    // Round Hours
+    // Visual Validation Helper
+    const markError = (id) => {
+        const el = document.getElementById(id);
+        if(el && el.parentNode.classList.contains('pd-input-wrapper')) {
+            el.parentNode.classList.add('error');
+        }
+        hasError = true;
+    };
+
+    if (!type) markError('edit-entry-type');
+    if (!subtype) markError('edit-entry-subtype');
+    if (!date) markError('edit-entry-date');
+    if (!loc) markError('edit-entry-loc');
+    if (!doctor) markError('edit-entry-doctor');
+    if (!hoursInput) markError('edit-entry-hours');
+
+    if (hasError) return; // Stop without alert
+
     const hours = Math.round(parseFloat(hoursInput));
 
     const updatedEntry = { 
