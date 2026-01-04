@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// ADDED: setPersistence, browserLocalPersistence to imports
+// ADDED: setPersistence, browserLocalPersistence
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -21,12 +21,12 @@ try {
     analytics = getAnalytics(app); 
     db = getFirestore(app);
     auth = getAuth(app);
-
+    
     // --- NEW: FORCE PERSISTENCE ---
-    // This ensures the user stays logged in even if the tab/browser is closed
+    // This guarantees the user stays logged in even if the tab is closed
     setPersistence(auth, browserLocalPersistence)
         .then(() => {
-            // Persistence set, now listen for changes
+            // Once persistence is set, start listening for auth changes
             onAuthStateChanged(auth, async (user) => {
                 currentUser = user;
                 updateAuthUI(user);
@@ -90,7 +90,6 @@ async function migrateLocalToCloud(user) {
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try {
-        // Persistence is already set on init, so we just sign in
         await signInWithPopup(auth, provider);
     } catch (error) {
         console.error("Login Failed", error);
@@ -163,7 +162,7 @@ window.syncToCloud = async function() {
                 vol: vTotal,
                 total: sTotal + vTotal,
                 photo: currentUser.photoURL,
-                uid: currentUser.uid 
+                uid: currentUser.uid // IMPORTANT: Save UID for accurate rank checking
             }, { merge: true });
             window.fetchLeaderboard();
         } catch(e) { console.error("Sync error:", e); }
