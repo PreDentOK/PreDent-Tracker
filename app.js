@@ -37,18 +37,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     
+    // Close menus when clicking outside
     document.addEventListener('click', (e) => {
-        // Handle closing both filter menu and profile menu
         if (!e.target.closest('.pd-menu-btn') && !e.target.closest('.pd-user-profile')) {
-            document.getElementById('pd-filter-dropdown').classList.remove('active');
-            document.getElementById('pd-options-dropdown').classList.remove('active');
-            const profDrop = document.getElementById('profile-dropdown');
-            if(profDrop) profDrop.classList.remove('active');
+            closeAllMenus();
         }
     });
 
-    window.toggleFilterMenu = (e) => { e.stopPropagation(); document.getElementById('pd-options-dropdown').classList.remove('active'); document.getElementById('pd-filter-dropdown').classList.toggle('active'); };
-    window.toggleOptionsMenu = (e) => { e.stopPropagation(); document.getElementById('pd-filter-dropdown').classList.remove('active'); document.getElementById('pd-options-dropdown').classList.toggle('active'); };
+    window.toggleFilterMenu = (e) => { 
+        e.stopPropagation(); 
+        const btn = document.getElementById('btn-filter-toggle');
+        const menu = document.getElementById('pd-filter-dropdown');
+        
+        // Close others
+        document.getElementById('pd-options-dropdown').classList.remove('active');
+        document.getElementById('btn-options-toggle').classList.remove('active');
+        
+        // Toggle current
+        menu.classList.toggle('active');
+        btn.classList.toggle('active');
+    };
+
+    window.toggleOptionsMenu = (e) => { 
+        e.stopPropagation(); 
+        const btn = document.getElementById('btn-options-toggle');
+        const menu = document.getElementById('pd-options-dropdown');
+        
+        // Close others
+        document.getElementById('pd-filter-dropdown').classList.remove('active');
+        document.getElementById('btn-filter-toggle').classList.remove('active');
+        
+        // Toggle current
+        menu.classList.toggle('active');
+        btn.classList.toggle('active');
+    };
+
     window.setFilter = setFilter;
     window.openResetModal = openResetModal;
     window.closeResetModal = closeResetModal;
@@ -65,6 +88,17 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange(); 
     render();
 });
+
+function closeAllMenus() {
+    document.getElementById('pd-filter-dropdown').classList.remove('active');
+    document.getElementById('btn-filter-toggle').classList.remove('active');
+    
+    document.getElementById('pd-options-dropdown').classList.remove('active');
+    document.getElementById('btn-options-toggle').classList.remove('active');
+    
+    const profDrop = document.getElementById('profile-dropdown');
+    if(profDrop) profDrop.classList.remove('active');
+}
 
 // Helper for auth menu
 window.toggleProfileMenu = function() {
@@ -92,6 +126,7 @@ function updateProfileName() {
     const dropdownName = document.getElementById('dropdown-name');
     if(dropdownName) dropdownName.textContent = name;
     
+    alert("Display name updated!"); // Friendly feedback
     if(window.syncToCloud) window.syncToCloud();
 }
 
