@@ -4,7 +4,7 @@ let entries = []; // Now volatile, populated on load
 let currentFilter = 'All';
 let entryToDeleteId = null; 
 let editingEntryId = null;
-let appUser = null; // Track current user state locally
+let appUser = null; 
 
 const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
@@ -25,20 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
 
-    // Close menus click listener
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.pd-menu-btn') && !e.target.closest('.pd-user-profile')) {
             closeAllMenus();
         }
     });
 
-    // Initialize Default View (Offline Mode)
-    // If firebase loads later, refreshApp will be called
     loadData();
     handleTypeChange();
 });
 
-// CALLED BY FIREBASE CONFIG WHEN AUTH CHANGES
 window.refreshApp = async function(user) {
     appUser = user;
     await loadData();
@@ -46,10 +42,8 @@ window.refreshApp = async function(user) {
 
 async function loadData() {
     if (appUser) {
-        // Online Mode: Fetch from Cloud
         entries = await window.db_loadEntries(appUser);
     } else {
-        // Offline Mode: Fetch from LocalStorage
         entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     }
     render();
@@ -57,16 +51,11 @@ async function loadData() {
 
 async function saveData() {
     if (appUser) {
-        // Online: We don't save the whole array, individual add/edits handle DB calls.
-        // But we trigger sync to Leaderboard
         if(window.syncToCloud) window.syncToCloud();
     } else {
-        // Offline: Save array to LocalStorage
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     }
 }
-
-// --- ENTRY ACTIONS ---
 
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
@@ -95,13 +84,11 @@ async function addEntry() {
     
     if (appUser) {
         await window.db_addEntry(appUser, newEntry);
-        // Refresh local array
         entries.push(newEntry);
     } else {
         entries.push(newEntry);
     }
     
-    // Reset Form
     document.getElementById('entry-loc').value = ''; 
     document.getElementById('entry-doctor').value = ''; 
     document.getElementById('entry-hours').value = ''; 
@@ -127,7 +114,7 @@ async function saveEditEntry() {
     };
 
     if (appUser) {
-        await window.db_addEntry(appUser, updatedEntry); // setDoc overwrites, acts as update
+        await window.db_addEntry(appUser, updatedEntry); 
         const idx = entries.findIndex(e => e.id === editingEntryId);
         if(idx !== -1) entries[idx] = updatedEntry;
     } else {
@@ -152,7 +139,6 @@ async function confirmDeleteEntry() {
     closeDeleteModal();
 }
 
-// --- VIEW DETAILS LOGIC (NEW) ---
 window.viewEntry = function(id) {
     const entry = entries.find(e => e.id === String(id));
     if(!entry) return;
@@ -176,7 +162,6 @@ window.viewEntry = function(id) {
     document.getElementById('view-modal').style.display = 'flex';
 };
 
-// --- BOILERPLATE UI LOGIC ---
 window.toggleFilterMenu = (e) => { 
     e.stopPropagation(); 
     const btn = document.getElementById('btn-filter-toggle');
@@ -231,16 +216,25 @@ function skipProfileSetup() {
 function updateProfileName() {
     const nameInput = document.getElementById('user-display-name');
     const name = nameInput.value.trim();
-    if(!name) return;
-    const lowerName = name.toLowerCase();
-    const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
-    if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; nameInput.value = ''; return; }
-    localStorage.setItem('pd_username', name);
-    document.getElementById('dropdown-name').textContent = name;
+    
+    // If empty, do nothing
+    if(!name && !localStorage.getItem('pd_username')) return; 
+
+    // If name exists, validate
+    if(name) {
+        const lowerName = name.toLowerCase();
+        const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
+        if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; nameInput.value = ''; return; }
+        localStorage.setItem('pd_username', name);
+    }
+
+    const savedName = localStorage.getItem('pd_username');
+    if(savedName) document.getElementById('dropdown-name').textContent = savedName;
+    
     localStorage.setItem('pd_profile_setup_done', 'true');
     document.getElementById('lb-profile-box').classList.add('pd-hidden');
     if(window.syncToCloud) window.syncToCloud();
-    alert("Display name updated!");
+    if(name) alert("Display name updated!");
 }
 
 function switchTab(tabName) {
@@ -248,9 +242,23 @@ function switchTab(tabName) {
     document.querySelectorAll('.pd-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`view-${tabName}`).classList.add('active');
     const btns = document.querySelectorAll('.pd-tab-btn');
-    if(tabName === 'tracker') { btns[0].classList.add('active'); document.getElementById('logo-suffix').innerText = 'TRACKER'; document.getElementById('pd-filter-container').classList.remove('pd-hidden'); }
-    else if (tabName === 'stats') { btns[1].classList.add('active'); document.getElementById('logo-suffix').innerText = 'STATS'; calculateTrends(); document.getElementById('pd-filter-container').classList.add('pd-hidden'); }
-    else { btns[2].classList.add('active'); document.getElementById('logo-suffix').innerText = 'RANKING'; document.getElementById('pd-filter-container').classList.add('pd-hidden'); }
+    
+    if(tabName === 'tracker') { 
+        btns[0].classList.add('active'); 
+        // Force recalc type on tab switch
+        handleTypeChange(); 
+    }
+    else if (tabName === 'stats') { 
+        btns[1].classList.add('active'); 
+        calculateTrends(); 
+    }
+    else { 
+        btns[2].classList.add('active'); 
+        // Ensure name is consistent when opening leaderboard
+        if(localStorage.getItem('pd_username')) {
+            document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username');
+        }
+    }
 }
 
 function handleTypeChange() { updateSubtypeOptions('entry-type', 'entry-subtype', 'entry-doctor'); }
@@ -302,7 +310,6 @@ function render() {
         
         const li = document.createElement('li');
         li.className = `pd-entry-item ${typeClass}`;
-        // CLICK HANDLER FOR VIEW
         li.setAttribute('onclick', `viewEntry('${entry.id}')`);
         
         li.innerHTML = `
