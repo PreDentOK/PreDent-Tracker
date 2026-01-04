@@ -48,6 +48,7 @@
                     <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                 </button>
                 <div id="pd-options-dropdown" class="pd-dropdown">
+                    <button class="pd-menu-item" onclick="refreshAppPage()">Refresh App</button>
                     <button class="pd-menu-item" onclick="exportData()">Export CSV</button>
                     <div style="height:1px; background:rgba(255,255,255,0.1); margin:5px 0;"></div>
                     <button id="btn-reset-all" class="pd-menu-item pd-menu-danger" onclick="openResetModal()">Reset All Data</button>
@@ -135,7 +136,7 @@
                     </div>
                 </div>
 
-                <div style="margin-bottom: 1rem;" class="pd-input-wrapper">
+                <div style="margin-bottom: 1rem;">
                     <input type="text" id="entry-loc" class="pd-input" placeholder="Location / Address" list="loc-suggestions" autocomplete="off" required>
                     <datalist id="loc-suggestions"></datalist>
                     <span class="pd-error-asterisk">*</span>
