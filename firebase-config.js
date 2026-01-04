@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// ADDED: setPersistence, browserLocalPersistence
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -22,11 +21,8 @@ try {
     db = getFirestore(app);
     auth = getAuth(app);
     
-    // --- NEW: FORCE PERSISTENCE ---
-    // This guarantees the user stays logged in even if the tab is closed
     setPersistence(auth, browserLocalPersistence)
         .then(() => {
-            // Once persistence is set, start listening for auth changes
             onAuthStateChanged(auth, async (user) => {
                 currentUser = user;
                 updateAuthUI(user);
@@ -39,6 +35,7 @@ try {
                     if(!savedName && user.displayName) {
                         localStorage.setItem('pd_username', user.displayName);
                     }
+                    // Initial Sync check
                     window.syncToCloud(); 
                 }
                 window.fetchLeaderboard();
@@ -51,6 +48,7 @@ try {
 } catch(e) { console.error("Firebase Init Error", e); }
 
 // --- DATABASE HELPERS ---
+
 window.db_loadEntries = async function(user) {
     if(!user || !db) return [];
     const colRef = collection(db, 'users', user.uid, 'entries');
@@ -72,6 +70,41 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
+// NEW: Wipe all entries for user
+window.db_wipeAllEntries = async function(user) {
+    if(!user || !db) return;
+    const colRef = collection(db, 'users', user.uid, 'entries');
+    const snapshot = await getDocs(colRef);
+    
+    // Batch delete is more efficient
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+    await batch.commit();
+};
+
+// NEW: Direct Leaderboard Update
+window.updateLeaderboardStats = async function(user, shadowTotal, volTotal) {
+    if(!user || !db) return;
+    try {
+        const displayName = localStorage.getItem('pd_username') || user.displayName;
+        const userRef = doc(db, 'leaderboard', user.uid);
+        
+        await setDoc(userRef, {
+            name: displayName,
+            shadow: shadowTotal,
+            vol: volTotal,
+            total: shadowTotal + volTotal,
+            photo: user.photoURL,
+            uid: user.uid
+        }, { merge: true });
+        
+        // Immediately refresh the board to show changes
+        window.fetchLeaderboard();
+    } catch(e) { console.error("LB Update Error", e); }
+};
+
 async function migrateLocalToCloud(user) {
     const local = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
     if (local.length > 0 && db) {
@@ -82,7 +115,6 @@ async function migrateLocalToCloud(user) {
         });
         await batch.commit();
         localStorage.removeItem('pd_tracker_data_v2'); 
-        console.log("Migrated local entries to cloud");
     }
 }
 
@@ -139,34 +171,16 @@ function updateAuthUI(user) {
     }
 }
 
-// --- LEADERBOARD SYNC ---
+// --- LEADERBOARD SYNC (Legacy / Initial Check) ---
 window.syncToCloud = async function() {
     if(!db || !currentUser) return;
-    
     const entries = await window.db_loadEntries(currentUser);
-    
     let sTotal = 0, vTotal = 0;
     entries.forEach(e => {
         if(e.type === 'Shadowing') sTotal += parseInt(e.hours);
         else vTotal += parseInt(e.hours);
     });
-
-    const displayName = localStorage.getItem('pd_username') || currentUser.displayName;
-    
-    if(displayName) {
-        try {
-            const userRef = doc(db, 'leaderboard', currentUser.uid);
-            await setDoc(userRef, {
-                name: displayName,
-                shadow: sTotal,
-                vol: vTotal,
-                total: sTotal + vTotal,
-                photo: currentUser.photoURL,
-                uid: currentUser.uid // IMPORTANT: Save UID for accurate rank checking
-            }, { merge: true });
-            window.fetchLeaderboard();
-        } catch(e) { console.error("Sync error:", e); }
-    }
+    window.updateLeaderboardStats(currentUser, sTotal, vTotal);
 };
 
 window.fetchLeaderboard = async function() {
