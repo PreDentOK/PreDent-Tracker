@@ -74,6 +74,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     font-weight: 700;
     font-family: 'Montserrat', sans-serif;
 }
+.pd-nav-rank.hidden { display: none; }
 
 /* Logo */
 .pd-logo-text {
@@ -276,4 +277,20 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 .pd-footer { text-align: center; padding: 1rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: auto; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 600px) { .pd-form-grid { grid-template-columns: 1fr; } .pd-content-body { padding: 1rem; padding-bottom: 6rem; } }
+
+/* --- MOBILE SPECIFIC FIXES --- */
+@media (max-width: 600px) { 
+    .pd-form-grid { grid-template-columns: 1fr; } 
+    .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
+    
+    /* Force side-by-side circles on mobile */
+    .pd-stats-container {
+        flex-wrap: nowrap; 
+        gap: 0px; 
+        transform: scale(0.65); /* Shrink them down */
+        transform-origin: top center;
+        margin-bottom: -70px; /* Fix whitespace caused by scaling */
+        width: 140%; /* Compensate for width loss during scale */
+        margin-left: -20%; /* Re-center */
+    }
+}
