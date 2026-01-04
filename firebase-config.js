@@ -1,12 +1,8 @@
-// firebase-config.js
-
-// 1. We use full URL links so the browser understands them without a bundler
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"; // Added Analytics
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// 2. Your Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCz0-dUukvFHUG6DZR9hGdgduUzTcobt0M",
   authDomain: "dental-tracker-b6242.firebaseapp.com",
@@ -20,13 +16,11 @@ const firebaseConfig = {
 let db, auth, currentUser, analytics;
 
 try {
-    // 3. Initialize Everything
     const app = initializeApp(firebaseConfig);
-    analytics = getAnalytics(app); // Analytics is now active
+    analytics = getAnalytics(app); 
     db = getFirestore(app);
     auth = getAuth(app);
     
-    // 4. Setup Authentication Listener
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         updateAuthUI(user);
@@ -42,7 +36,6 @@ try {
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
-// 5. Export Functions to Window so app.js can use them
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try {
@@ -58,6 +51,7 @@ window.googleLogout = async function() {
         await signOut(auth);
         document.getElementById('profile-dropdown').classList.remove('active');
         localStorage.removeItem('pd_username'); 
+        // Note: We do NOT clear pd_profile_setup_done so it stays hidden if they skipped previously
     } catch (error) {
         console.error("Logout Failed", error);
     }
@@ -78,7 +72,16 @@ function updateAuthUI(user) {
         document.getElementById('dropdown-name').textContent = user.displayName || 'User';
         
         if(signinPromo) signinPromo.style.display = 'none';
-        if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden');
+        
+        // CHECK IF SETUP IS DONE (Skipped or Updated)
+        const isSetupDone = localStorage.getItem('pd_profile_setup_done') === 'true';
+        
+        if (!isSetupDone) {
+            if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden');
+        } else {
+            if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
+        }
+
         if(lbMain) lbMain.classList.remove('pd-hidden');
     } else {
         loginBtn.classList.remove('hidden');
