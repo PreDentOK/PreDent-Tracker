@@ -35,7 +35,6 @@ try {
                     if(!savedName && user.displayName) {
                         localStorage.setItem('pd_username', user.displayName);
                     }
-                    // Initial Sync check
                     window.syncToCloud(); 
                 }
                 window.fetchLeaderboard();
@@ -51,11 +50,16 @@ try {
 
 window.db_loadEntries = async function(user) {
     if(!user || !db) return [];
-    const colRef = collection(db, 'users', user.uid, 'entries');
-    const snapshot = await getDocs(colRef);
-    const data = [];
-    snapshot.forEach(doc => data.push(doc.data()));
-    return data;
+    try {
+        const colRef = collection(db, 'users', user.uid, 'entries');
+        const snapshot = await getDocs(colRef);
+        const data = [];
+        snapshot.forEach(doc => data.push(doc.data()));
+        return data;
+    } catch(e) {
+        console.error("Error loading entries:", e);
+        return [];
+    }
 };
 
 window.db_addEntry = async function(user, entry) {
@@ -70,21 +74,34 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
-// NEW: Wipe all entries for user
+// NEW: ROBUST WIPE FUNCTION
 window.db_wipeAllEntries = async function(user) {
     if(!user || !db) return;
-    const colRef = collection(db, 'users', user.uid, 'entries');
-    const snapshot = await getDocs(colRef);
     
-    // Batch delete is more efficient
-    const batch = writeBatch(db);
-    snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-    await batch.commit();
+    try {
+        const colRef = collection(db, 'users', user.uid, 'entries');
+        const snapshot = await getDocs(colRef);
+        
+        // 1. Delete all entries individually (Promise.all ensures all complete)
+        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        // 2. Force Leaderboard Reset immediately
+        const userRef = doc(db, 'leaderboard', user.uid);
+        await setDoc(userRef, {
+            shadow: 0,
+            vol: 0,
+            total: 0
+        }, { merge: true }); // Merge ensures we keep the Name/Photo
+        
+        console.log("Wipe complete & Leaderboard reset.");
+    } catch (e) {
+        console.error("Wipe Error:", e);
+        alert("Error wiping data. Please try again.");
+        throw e; // Stop app.js from clearing local if DB failed
+    }
 };
 
-// NEW: Direct Leaderboard Update
 window.updateLeaderboardStats = async function(user, shadowTotal, volTotal) {
     if(!user || !db) return;
     try {
@@ -100,7 +117,6 @@ window.updateLeaderboardStats = async function(user, shadowTotal, volTotal) {
             uid: user.uid
         }, { merge: true });
         
-        // Immediately refresh the board to show changes
         window.fetchLeaderboard();
     } catch(e) { console.error("LB Update Error", e); }
 };
@@ -171,15 +187,19 @@ function updateAuthUI(user) {
     }
 }
 
-// --- LEADERBOARD SYNC (Legacy / Initial Check) ---
+// --- LEADERBOARD SYNC ---
 window.syncToCloud = async function() {
     if(!db || !currentUser) return;
+    
     const entries = await window.db_loadEntries(currentUser);
+    
     let sTotal = 0, vTotal = 0;
     entries.forEach(e => {
         if(e.type === 'Shadowing') sTotal += parseInt(e.hours);
         else vTotal += parseInt(e.hours);
     });
+
+    // Use direct update function
     window.updateLeaderboardStats(currentUser, sTotal, vTotal);
 };
 
