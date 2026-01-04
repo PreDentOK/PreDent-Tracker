@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -21,21 +21,67 @@ try {
     db = getFirestore(app);
     auth = getAuth(app);
     
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         updateAuthUI(user);
+        
+        // Notify App to refresh data
+        if (window.refreshApp) window.refreshApp(user);
+
         if (user) {
+            // SYNC LOGIC: Check if we have local entries to upload on first login
+            await migrateLocalToCloud(user);
+            
             const savedName = localStorage.getItem('pd_username');
             if(!savedName && user.displayName) {
                 localStorage.setItem('pd_username', user.displayName);
             }
-            window.syncToCloud();
+            window.syncToCloud(); // Sync Leaderboard Total
         }
         window.fetchLeaderboard();
     });
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
+// --- DATABASE HELPERS FOR APP.JS ---
+
+window.db_loadEntries = async function(user) {
+    if(!user || !db) return [];
+    const colRef = collection(db, 'users', user.uid, 'entries');
+    const snapshot = await getDocs(colRef);
+    const data = [];
+    snapshot.forEach(doc => data.push(doc.data()));
+    return data;
+};
+
+window.db_addEntry = async function(user, entry) {
+    if(!user || !db) return;
+    const ref = doc(db, 'users', user.uid, 'entries', entry.id);
+    await setDoc(ref, entry);
+};
+
+window.db_deleteEntry = async function(user, entryId) {
+    if(!user || !db) return;
+    const ref = doc(db, 'users', user.uid, 'entries', entryId);
+    await deleteDoc(ref);
+};
+
+// --- MIGRATION LOGIC ---
+async function migrateLocalToCloud(user) {
+    const local = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
+    if (local.length > 0 && db) {
+        const batch = writeBatch(db);
+        local.forEach(entry => {
+            const ref = doc(db, 'users', user.uid, 'entries', entry.id);
+            batch.set(ref, entry);
+        });
+        await batch.commit();
+        localStorage.removeItem('pd_tracker_data_v2'); // Clear local after sync
+        console.log("Migrated local entries to cloud");
+    }
+}
+
+// --- AUTH ---
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try {
@@ -51,6 +97,7 @@ window.googleLogout = async function() {
         await signOut(auth);
         document.getElementById('profile-dropdown').classList.remove('active');
         localStorage.removeItem('pd_username'); 
+        window.location.reload(); // Reload to clear state
     } catch (error) {
         console.error("Logout Failed", error);
     }
@@ -72,27 +119,32 @@ function updateAuthUI(user) {
         if(signinPromo) signinPromo.style.display = 'none';
         
         const isSetupDone = localStorage.getItem('pd_profile_setup_done') === 'true';
-        
         if (!isSetupDone) {
             if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden');
         } else {
             if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
         }
-
         if(lbMain) lbMain.classList.remove('pd-hidden');
     } else {
         loginBtn.classList.remove('hidden');
         profileSection.classList.add('hidden');
-        
         if(signinPromo) signinPromo.style.display = 'block';
         if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
         if(lbMain) lbMain.classList.add('pd-hidden');
     }
 }
 
+// --- LEADERBOARD SYNC ---
 window.syncToCloud = async function() {
+    // Only updates the totals for the leaderboard, not specific entries
     if(!db || !currentUser) return;
-    const entries = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
+    
+    // We need to re-calculate totals from the CURRENT source of truth (handled in App.js usually, but here we can't access App variables directly easily without passing them.
+    // However, since we just migrated or loaded, we can fetch from DB again or trust the App to call this with data.)
+    
+    // Actually, App.js should trigger this. But to keep it simple, we will fetch from DB here to be accurate.
+    const entries = await window.db_loadEntries(currentUser);
+    
     let sTotal = 0, vTotal = 0;
     entries.forEach(e => {
         if(e.type === 'Shadowing') sTotal += parseInt(e.hours);
@@ -148,7 +200,6 @@ window.fetchLeaderboard = async function() {
             const isMe = (currentUser && u.name === myName);
             if(isMe) myRank = rank;
 
-            // Updated HTML to have rank in its own Div
             const html = `
                 <div class="pd-lb-item ${isMe ? 'current-user' : ''}">
                     <div class="pd-rank-badge ${rankClass}">${rank}</div>
