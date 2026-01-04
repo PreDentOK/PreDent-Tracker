@@ -25,26 +25,22 @@ try {
         currentUser = user;
         updateAuthUI(user);
         
-        // Notify App to refresh data
         if (window.refreshApp) window.refreshApp(user);
 
         if (user) {
-            // SYNC LOGIC: Check if we have local entries to upload on first login
             await migrateLocalToCloud(user);
-            
             const savedName = localStorage.getItem('pd_username');
             if(!savedName && user.displayName) {
                 localStorage.setItem('pd_username', user.displayName);
             }
-            window.syncToCloud(); // Sync Leaderboard Total
+            window.syncToCloud(); 
         }
         window.fetchLeaderboard();
     });
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
-// --- DATABASE HELPERS FOR APP.JS ---
-
+// --- DATABASE HELPERS ---
 window.db_loadEntries = async function(user) {
     if(!user || !db) return [];
     const colRef = collection(db, 'users', user.uid, 'entries');
@@ -66,7 +62,6 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
-// --- MIGRATION LOGIC ---
 async function migrateLocalToCloud(user) {
     const local = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
     if (local.length > 0 && db) {
@@ -76,7 +71,7 @@ async function migrateLocalToCloud(user) {
             batch.set(ref, entry);
         });
         await batch.commit();
-        localStorage.removeItem('pd_tracker_data_v2'); // Clear local after sync
+        localStorage.removeItem('pd_tracker_data_v2'); 
         console.log("Migrated local entries to cloud");
     }
 }
@@ -97,7 +92,7 @@ window.googleLogout = async function() {
         await signOut(auth);
         document.getElementById('profile-dropdown').classList.remove('active');
         localStorage.removeItem('pd_username'); 
-        window.location.reload(); // Reload to clear state
+        window.location.reload(); 
     } catch (error) {
         console.error("Logout Failed", error);
     }
@@ -136,13 +131,8 @@ function updateAuthUI(user) {
 
 // --- LEADERBOARD SYNC ---
 window.syncToCloud = async function() {
-    // Only updates the totals for the leaderboard, not specific entries
     if(!db || !currentUser) return;
     
-    // We need to re-calculate totals from the CURRENT source of truth (handled in App.js usually, but here we can't access App variables directly easily without passing them.
-    // However, since we just migrated or loaded, we can fetch from DB again or trust the App to call this with data.)
-    
-    // Actually, App.js should trigger this. But to keep it simple, we will fetch from DB here to be accurate.
     const entries = await window.db_loadEntries(currentUser);
     
     let sTotal = 0, vTotal = 0;
@@ -161,7 +151,8 @@ window.syncToCloud = async function() {
                 shadow: sTotal,
                 vol: vTotal,
                 total: sTotal + vTotal,
-                photo: currentUser.photoURL
+                photo: currentUser.photoURL,
+                uid: currentUser.uid // IMPORTANT: Save UID for accurate rank checking
             }, { merge: true });
             window.fetchLeaderboard();
         } catch(e) { console.error("Sync error:", e); }
@@ -177,7 +168,8 @@ window.fetchLeaderboard = async function() {
     try {
         const snapshot = await getDocs(lbRef);
         const users = [];
-        snapshot.forEach(doc => users.push(doc.data()));
+        // Capture Document ID as UID for robust comparison
+        snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
         users.sort((a,b) => b.total - a.total);
         
         list.innerHTML = '';
@@ -187,7 +179,6 @@ window.fetchLeaderboard = async function() {
             return; 
         }
 
-        const myName = localStorage.getItem('pd_username') || (currentUser ? currentUser.displayName : '');
         let myRank = null;
 
         users.forEach((u, i) => {
@@ -197,7 +188,8 @@ window.fetchLeaderboard = async function() {
             else if(rank === 2) rankClass = 'rank-2';
             else if(rank === 3) rankClass = 'rank-3';
             
-            const isMe = (currentUser && u.name === myName);
+            // ROBUST CHECK: Compare User IDs, not names
+            const isMe = (currentUser && u.id === currentUser.uid);
             if(isMe) myRank = rank;
 
             const html = `
