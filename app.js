@@ -226,7 +226,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
+    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function deleteSelectedEntries() {
