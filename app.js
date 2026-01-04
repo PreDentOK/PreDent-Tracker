@@ -2,7 +2,8 @@
 const STORAGE_KEY = 'pd_tracker_data_v2'; 
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 let currentFilter = 'All';
-let editingEntryId = null;
+let entryToDeleteId = null; // To store ID pending deletion
+let editingEntryId = null;  // To store ID currently being edited
 
 const CIRCLE_RADIUS = 110; 
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
@@ -10,7 +11,6 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
 
-// Basic filter list (expand as needed)
 const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,8 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if(needsSave) save();
 
+    // Listeners for MAIN form
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     
+    // Listeners for EDIT form
+    document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
+
     // Close menus when clicking outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.pd-menu-btn') && !e.target.closest('.pd-user-profile')) {
@@ -64,16 +68,26 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.toggle('active');
     };
 
+    // Expose functions to window
     window.setFilter = setFilter;
     window.openResetModal = openResetModal;
     window.closeResetModal = closeResetModal;
     window.checkResetInput = checkResetInput;
     window.confirmReset = confirmReset;
+    
     window.addEntry = addEntry;
     window.exportData = exportData;
+    
+    // New Delete Logic
     window.deleteEntry = deleteEntry; 
+    window.closeDeleteModal = closeDeleteModal;
+    window.confirmDeleteEntry = confirmDeleteEntry;
+
+    // New Edit Logic
     window.editEntry = editEntry;
-    window.cancelEdit = cancelEdit;
+    window.closeEditModal = closeEditModal;
+    window.saveEditEntry = saveEditEntry;
+
     window.switchTab = switchTab;
     window.updateProfileName = updateProfileName;
     window.skipProfileSetup = skipProfileSetup; 
@@ -103,7 +117,6 @@ function skipProfileSetup() {
 function updateProfileName() {
     const nameInput = document.getElementById('user-display-name');
     const name = nameInput.value.trim();
-    
     if(!name) return;
 
     const lowerName = name.toLowerCase();
@@ -140,19 +153,34 @@ function switchTab(tabName) {
     }
 }
 
+// --- HANDLING TYPES & SUBTYPES ---
 function handleTypeChange() {
-    const mainType = document.getElementById('entry-type').value;
-    const subSelect = document.getElementById('entry-subtype');
-    const docInput = document.getElementById('entry-doctor');
+    updateSubtypeOptions('entry-type', 'entry-subtype', 'entry-doctor');
+}
+
+function handleEditTypeChange() {
+    updateSubtypeOptions('edit-entry-type', 'edit-entry-subtype', 'edit-entry-doctor');
+}
+
+function updateSubtypeOptions(typeId, subtypeId, docId) {
+    const mainType = document.getElementById(typeId).value;
+    const subSelect = document.getElementById(subtypeId);
+    const docInput = document.getElementById(docId);
+    
     subSelect.innerHTML = '';
     const options = mainType === 'Shadowing' ? SUBTYPES_SHADOW : SUBTYPES_VOLUNTEER;
-    options.forEach(opt => { const el = document.createElement('option'); el.value = opt; el.textContent = opt; subSelect.appendChild(el); });
+    options.forEach(opt => { 
+        const el = document.createElement('option'); el.value = opt; el.textContent = opt; 
+        subSelect.appendChild(el); 
+    });
     
     docInput.placeholder = mainType === 'Shadowing' ? "Doctor(s)" : "Organization / Supervisor";
 }
 
+// --- ADD ENTRY ---
 function addEntry() {
-    document.querySelectorAll('.pd-input-wrapper').forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
+    
     const type = document.getElementById('entry-type').value;
     const subtype = document.getElementById('entry-subtype').value;
     const date = document.getElementById('entry-date').value;
@@ -160,40 +188,109 @@ function addEntry() {
     const doctor = document.getElementById('entry-doctor').value.trim();
     let hoursInput = document.getElementById('entry-hours').value;
     const notes = document.getElementById('entry-notes').value;
+    
     let hasError = false;
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!hoursInput) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (hasError) return;
+    
     let hours = Math.round(parseFloat(hoursInput)) || 1;
-    if (editingEntryId) { const index = entries.findIndex(e => e.id === editingEntryId); if (index !== -1) entries[index] = { ...entries[index], type, subtype, date, location: loc, doctor, hours, notes }; cancelEdit(); }
-    else { entries.push({ id: String(Date.now()), type, subtype, date, location: loc, doctor, hours, notes }); document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; }
-    save(); render(); if(window.syncToCloud) window.syncToCloud();
+    
+    entries.push({ 
+        id: String(Date.now()), type, subtype, date, 
+        location: loc, doctor, hours, notes 
+    });
+    
+    // Reset Form
+    document.getElementById('entry-loc').value = ''; 
+    document.getElementById('entry-doctor').value = ''; 
+    document.getElementById('entry-hours').value = ''; 
+    document.getElementById('entry-notes').value = ''; 
+    
+    save(); render(); 
+    if(window.syncToCloud) window.syncToCloud();
 }
 
+// --- EDIT ENTRY LOGIC (NEW) ---
 function editEntry(id) {
-    const entry = entries.find(e => e.id === String(id)); if (!entry) return;
-    document.getElementById('entry-type').value = entry.type; handleTypeChange(); 
-    document.getElementById('entry-subtype').value = entry.subtype;
-    document.getElementById('entry-date').value = entry.date;
-    document.getElementById('entry-hours').value = entry.hours;
-    document.getElementById('entry-doctor').value = entry.doctor || '';
-    document.getElementById('entry-loc').value = entry.location;
-    document.getElementById('entry-notes').value = entry.notes || '';
+    const entry = entries.find(e => e.id === String(id)); 
+    if (!entry) return;
+    
     editingEntryId = String(id);
-    document.getElementById('btn-add-entry').textContent = "UPDATE ENTRY";
-    document.getElementById('btn-cancel-edit').style.display = "block";
-    document.querySelector('.pd-form-header').textContent = "Editing Entry";
-    document.querySelector('.pd-form-card').scrollIntoView({behavior: 'smooth'});
+    
+    // Populate Modal Inputs
+    document.getElementById('edit-entry-type').value = entry.type;
+    handleEditTypeChange(); // Update subtypes based on type
+    
+    document.getElementById('edit-entry-subtype').value = entry.subtype;
+    document.getElementById('edit-entry-date').value = entry.date;
+    document.getElementById('edit-entry-hours').value = entry.hours;
+    document.getElementById('edit-entry-doctor').value = entry.doctor || '';
+    document.getElementById('edit-entry-loc').value = entry.location;
+    document.getElementById('edit-entry-notes').value = entry.notes || '';
+    
+    // Show Modal
+    document.getElementById('edit-modal').style.display = 'flex';
 }
 
-function cancelEdit() {
-    editingEntryId = null; document.getElementById('btn-add-entry').textContent = "+ Add Entry"; document.getElementById('btn-cancel-edit').style.display = "none";
-    document.querySelector('.pd-form-header').textContent = "Log New Hours";
-    document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+    editingEntryId = null;
 }
 
+function saveEditEntry() {
+    if (!editingEntryId) return;
+    
+    const type = document.getElementById('edit-entry-type').value;
+    const subtype = document.getElementById('edit-entry-subtype').value;
+    const date = document.getElementById('edit-entry-date').value;
+    const loc = document.getElementById('edit-entry-loc').value.trim();
+    const doctor = document.getElementById('edit-entry-doctor').value.trim();
+    const hours = Math.round(parseFloat(document.getElementById('edit-entry-hours').value)) || 1;
+    const notes = document.getElementById('edit-entry-notes').value;
+
+    const index = entries.findIndex(e => e.id === editingEntryId);
+    if (index !== -1) {
+        entries[index] = { 
+            ...entries[index], 
+            type, subtype, date, location: loc, doctor, hours, notes 
+        };
+    }
+    
+    save(); render(); 
+    if(window.syncToCloud) window.syncToCloud();
+    closeEditModal();
+}
+
+// --- DELETE ENTRY LOGIC (NEW) ---
+function deleteEntry(id) { 
+    entryToDeleteId = String(id);
+    document.getElementById('delete-modal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+    entryToDeleteId = null;
+}
+
+function confirmDeleteEntry() {
+    if (entryToDeleteId) {
+        entries = entries.filter(e => e.id !== entryToDeleteId);
+        save(); render(); 
+        if(window.syncToCloud) window.syncToCloud();
+    }
+    closeDeleteModal();
+}
+
+// --- RESET ALL LOGIC ---
+function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
+function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
+function checkResetInput() { document.getElementById('reset-confirm-btn').disabled = (document.getElementById('reset-confirm-input').value !== 'DELETE'); }
+function confirmReset() { entries = []; save(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
+
+// --- RENDER & UTILS ---
 function render() {
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
     let sTotal = 0, vTotal = 0; entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
@@ -208,7 +305,6 @@ function render() {
         const typeClass = entry.type === 'Shadowing' ? 'type-shadow' : 'type-volunteer';
         const displayDate = new Date(entry.date.split('-')[0], entry.date.split('-')[1]-1, entry.date.split('-')[2]).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
-        // NEW LIST ITEM LAYOUT with visible buttons
         const li = document.createElement('li');
         li.className = `pd-entry-item ${typeClass}`;
         li.innerHTML = `
@@ -259,13 +355,8 @@ function setFilter(type) {
     if(type !== 'All') badge.innerText = type.toUpperCase();
     document.querySelectorAll('#pd-filter-dropdown .pd-menu-item').forEach(btn => { if(btn.innerText.includes(type)) btn.classList.add('selected'); else btn.classList.remove('selected'); });
     render(); document.getElementById('pd-filter-dropdown').classList.remove('active');
+    document.getElementById('btn-filter-toggle').classList.remove('active'); // Close icon state
 }
-
-function deleteEntry(id) { entries = entries.filter(e => e.id !== String(id)); save(); render(); if(window.syncToCloud) window.syncToCloud(); }
-function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
-function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
-function checkResetInput() { document.getElementById('reset-confirm-btn').disabled = (document.getElementById('reset-confirm-input').value !== 'DELETE'); }
-function confirmReset() { entries = []; save(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function exportData() {
     if(entries.length === 0) { alert("No data to export!"); return; }
