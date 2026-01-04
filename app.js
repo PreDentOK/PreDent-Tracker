@@ -40,6 +40,20 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
+// --- MISSING FUNCTION RESTORED ---
+function updateCircleStats(ringId, textId, hours) {
+    const circle = document.getElementById(ringId); 
+    const text = document.getElementById(textId);
+    if(circle) { 
+        // Max out visual ring at 100 hours (or change logic if needed)
+        // If hours > 100, the ring just stays full.
+        const percent = Math.min(hours, 100); 
+        const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE; 
+        circle.style.strokeDashoffset = offset; 
+    }
+    if(text) text.innerText = hours;
+}
+
 // --- HELPER: UPDATE DELETE BUTTON STATE ---
 function updateDeleteButtonState() {
     const count = document.querySelectorAll('.pd-checkbox:checked').length;
@@ -113,7 +127,7 @@ window.toggleSelectionMode = function() {
         list.classList.add('selection-mode'); 
         delBtn.style.display = 'block'; 
         selectBtn.textContent = 'Cancel'; 
-        updateDeleteButtonState(); // Initialize state
+        updateDeleteButtonState(); 
     } 
     else { 
         list.classList.remove('selection-mode'); 
@@ -184,7 +198,6 @@ async function addEntry() {
         saveData(); render();
     } catch (e) { 
         console.error("Error adding entry:", e); 
-        // IMPROVED ERROR ALERT
         alert(`Error saving: ${e.message || "Connection failed. Check Firebase Rules."}`);
     }
 }
@@ -213,7 +226,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
+    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
 async function deleteSelectedEntries() {
