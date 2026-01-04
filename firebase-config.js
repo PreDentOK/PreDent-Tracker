@@ -74,19 +74,18 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
-// NEW: Batch delete for checkboxes
+// RESTORED: Batch delete for checkboxes
 window.db_batchDelete = async function(user, entryIds) {
     if(!user || !db || entryIds.length === 0) return;
-    
     const batch = writeBatch(db);
     entryIds.forEach(id => {
         const ref = doc(db, 'users', user.uid, 'entries', id);
         batch.delete(ref);
     });
-    
     await batch.commit();
 };
 
+// RESTORED: Wipe all entries logic
 window.db_wipeAllEntries = async function(user) {
     if(!user || !db) return;
     try {
@@ -98,7 +97,7 @@ window.db_wipeAllEntries = async function(user) {
             batch.delete(doc.ref);
         });
         
-        // Reset Leaderboard Stat Document directly
+        // Reset Leaderboard
         const lbRef = doc(db, 'leaderboard', user.uid);
         batch.set(lbRef, {
             shadow: 0,
