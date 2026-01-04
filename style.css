@@ -87,18 +87,12 @@ body {
 .pd-menu-btn.active { background: rgba(255, 255, 255, 0.15); color: #4da6ff; }
 
 .pd-dropdown {
-    position: absolute; top: 45px; right: 0; 
-    background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
-    width: 200px; 
-    display: none; flex-direction: column; 
-    z-index: 200; /* Increased Z-index for visibility */
-    overflow: hidden;
+    position: absolute; top: 45px; right: 0; background: #0f1c5e; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 200px; display: none; flex-direction: column; z-index: 200; overflow: hidden; opacity: 1;
 }
 .pd-dropdown.active { display: flex; }
 .pd-menu-item {
-    padding: 14px 16px; color: #F0F4F8; /* Forced Color */
-    background: transparent; border: none;
+    padding: 14px 16px; color: #F0F4F8; background: transparent; border: none;
     text-align: center; cursor: pointer; font-size: 0.9rem; font-family: 'Inter', sans-serif;
     border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%;
 }
@@ -170,26 +164,27 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* --- LEADERBOARD GRID (SAFARI/CHROME UNIFIED) --- */
+/* --- LEADERBOARD GRID (DESKTOP BASE) --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    /* Fixed pixel widths for Rank/Stats to ensure perfect alignment */
-    grid-template-columns: 40px 1fr 60px 60px;
+    /* Rank | Name | Shadow | Volunteer */
+    grid-template-columns: 50px 1fr 80px 90px;
     padding: 1rem 0.5rem; 
     align-items: center; 
     text-align: center;
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    font-weight: 700; color: #cbd5e1; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; 
+    font-weight: 700; color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
 }
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
 
+/* Rank Badge Alignment */
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; margin: 0 auto; 
-    text-align: center;
+    text-align: center; 
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
@@ -199,7 +194,7 @@ body {
     font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: center; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
 }
-.pd-lb-stat { font-size: 0.9rem; font-weight: 500; color: #cbd5e1; }
+.pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.7em; opacity: 0.6; }
 
 .pd-hidden { display: none !important; }
@@ -216,6 +211,7 @@ body {
 .pd-input-wrapper.error .pd-error-asterisk { display: block; }
 .pd-input-wrapper.error .pd-input, .pd-input-wrapper.error .pd-select { border-color: #ff6b6b; }
 
+/* UNIFIED INPUT STYLES */
 .pd-input, .pd-select, .pd-textarea {
     width: 100%; height: 50px !important; min-height: 50px !important; max-height: 50px !important;
     padding: 0 0.8rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; 
@@ -301,4 +297,12 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     .pd-circle-card { width: 44vw; height: 44vw; max-width: 180px; max-height: 180px; }
     .pd-stat-number { font-size: 3rem; margin-bottom: 2px; }
     .pd-stat-label { font-size: 0.6rem; }
+
+    /* LEADERBOARD MOBILE OVERRIDE: SPECIFIC PIXEL WIDTHS */
+    .pd-lb-header, .pd-lb-item {
+        /* Rank | Name | Shadow | Volunteer */
+        grid-template-columns: 35px 1fr 65px 75px; 
+        gap: 2px; 
+    }
+    .pd-lb-header { font-size: 0.65rem; }
 }
