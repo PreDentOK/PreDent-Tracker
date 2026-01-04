@@ -207,10 +207,10 @@ body {
 .pd-input-wrapper.error .pd-error-asterisk { display: block; }
 .pd-input-wrapper.error .pd-input, .pd-input-wrapper.error .pd-select { border-color: #ff6b6b; }
 
-/* UNIFIED INPUT STYLES (iOS FIX) */
+/* UNIFIED INPUT STYLES (iOS FIX + LEFT ALIGN) */
 .pd-input, .pd-select, .pd-textarea {
     width: 100%; 
-    height: 50px !important; /* Force strict height */
+    height: 50px !important; 
     min-height: 50px !important;
     max-height: 50px !important;
     padding: 0 0.8rem; 
@@ -221,10 +221,19 @@ body {
     outline: none; transition: border-color 0.2s; box-sizing: border-box;
     color-scheme: dark;
     
-    /* IOS RESET */
+    /* IOS RESET & ALIGNMENT */
     -webkit-appearance: none;
     appearance: none;
+    text-align: left; /* FORCE LEFT ALIGN */
 }
+/* SPECIFIC DATE FIXES FOR WEBKIT/MOBILE */
+input[type="date"] {
+    display: block;
+    text-align: left;
+    -webkit-align-items: center;
+    line-height: 50px; /* Vertically center text */
+}
+
 .pd-textarea { resize: vertical; min-height: 80px !important; max-height: none !important; height: auto !important; padding-top: 0.8rem; }
 
 .pd-select {
@@ -298,16 +307,26 @@ body {
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* FIX FOR CIRCLES: Scale down safely */
+    /* FIX FOR CIRCLES: Use wide container + scale down strategy */
     .pd-stats-container { 
         display: flex;
-        flex-wrap: nowrap; /* Force one row */
-        gap: 20px; 
+        flex-wrap: nowrap; /* Prevent wrapping */
         justify-content: center;
-        width: 100%; 
-        transform: scale(0.65); /* Scale entire container */
+        gap: 20px; /* Standard gap */
+        
+        /* MAGIC FIX: Make container wider than screen, then scale it back down */
+        width: 180%; 
+        margin-left: -40%; /* Re-center the 180% width */
+        
+        transform: scale(0.55); /* Scale entire thing down to fit screen */
         transform-origin: top center;
-        margin: 0;
-        margin-bottom: -50px; /* Pull content up */
+        
+        margin-top: 0;
+        margin-bottom: -100px; /* Pull content up drastically to fill empty scale space */
+    }
+    
+    /* Ensure child items don't shrink and cause overlap */
+    .pd-circle-card {
+        flex-shrink: 0; 
     }
 }
