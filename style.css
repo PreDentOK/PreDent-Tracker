@@ -164,27 +164,23 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* --- LEADERBOARD GRID (DESKTOP BASE) --- */
+/* --- LEADERBOARD GRID --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    /* Rank | Name | Shadow | Volunteer */
-    grid-template-columns: 50px 1fr 80px 90px;
-    padding: 1rem 0.5rem; 
-    align-items: center; 
-    text-align: center;
+    grid-template-columns: 40px 1fr 60px 60px;
+    padding: 1rem 0.5rem; align-items: center; text-align: center;
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    font-weight: 700; color: #cbd5e1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
+    font-weight: 700; color: #cbd5e1; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; 
 }
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
 
-/* Rank Badge Alignment */
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; margin: 0 auto; 
-    text-align: center; 
+    text-align: center;
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
@@ -194,7 +190,7 @@ body {
     font-weight: 600; color: #FFFFFF; font-size: 0.9rem; text-align: center; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
 }
-.pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
+.pd-lb-stat { font-size: 0.9rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.7em; opacity: 0.6; }
 
 .pd-hidden { display: none !important; }
@@ -211,7 +207,6 @@ body {
 .pd-input-wrapper.error .pd-error-asterisk { display: block; }
 .pd-input-wrapper.error .pd-input, .pd-input-wrapper.error .pd-select { border-color: #ff6b6b; }
 
-/* UNIFIED INPUT STYLES */
 .pd-input, .pd-select, .pd-textarea {
     width: 100%; height: 50px !important; min-height: 50px !important; max-height: 50px !important;
     padding: 0 0.8rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; 
@@ -285,10 +280,13 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 
 /* --- MOBILE SPECIFIC FIXES --- */
 @media (max-width: 700px) { 
-    .pd-header-banner { justify-content: space-between; }
-    .pd-logo-text { order: 1; width: auto; }
-    .pd-actions-group { order: 2; }
-    .pd-tabs-container { position: static; transform: none; order: 3; width: 100%; justify-content: flex-start; margin-top: 1rem; padding-left: 0; max-width: 100%; }
+    .pd-header-banner { justify-content: space-between; padding: 0.5rem 1rem; gap: 5px; }
+    .pd-logo-text { font-size: 1.1rem; order: 1; width: auto; }
+    .pd-actions-group { order: 2; gap: 5px; }
+    .pd-nav-rank { font-size: 0.7rem; padding: 2px 8px; height: 24px; }
+    .pd-avatar-img, .pd-menu-btn { width: 30px; height: 30px; }
+    
+    .pd-tabs-container { position: static; transform: none; order: 3; width: 100%; justify-content: flex-start; margin-top: 0.5rem; padding-left: 0; max-width: 100%; }
     
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
@@ -298,7 +296,7 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     .pd-stat-number { font-size: 3rem; margin-bottom: 2px; }
     .pd-stat-label { font-size: 0.6rem; }
 
-    /* LEADERBOARD MOBILE OVERRIDE: SPECIFIC PIXEL WIDTHS */
+    /* LEADERBOARD MOBILE OVERRIDE */
     .pd-lb-header, .pd-lb-item {
         /* Rank | Name | Shadow | Volunteer */
         grid-template-columns: 35px 1fr 65px 75px; 
