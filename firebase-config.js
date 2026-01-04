@@ -54,7 +54,9 @@ window.syncToCloud = async function() {
 window.fetchLeaderboard = async function() {
     if(!db) return;
     const list = document.getElementById('leaderboard-list');
+    const badge = document.getElementById('nav-rank-badge'); // The new header element
     const lbRef = collection(db, 'leaderboard');
+    
     try {
         const snapshot = await getDocs(lbRef);
         const users = [];
@@ -62,7 +64,14 @@ window.fetchLeaderboard = async function() {
         users.sort((a,b) => b.total - a.total);
         
         list.innerHTML = '';
-        if(users.length === 0) { list.innerHTML = '<div style="padding:2rem; text-align:center;">No students yet. Be the first!</div>'; return; }
+        if(users.length === 0) { 
+            list.innerHTML = '<div style="padding:2rem; text-align:center;">No students yet. Be the first!</div>'; 
+            badge.classList.add('hidden');
+            return; 
+        }
+
+        const myName = localStorage.getItem('pd_username');
+        let myRank = null;
 
         users.forEach((u, i) => {
             const rank = i + 1;
@@ -71,8 +80,9 @@ window.fetchLeaderboard = async function() {
             else if(rank === 2) rankClass = 'rank-2';
             else if(rank === 3) rankClass = 'rank-3';
             
-            const myName = localStorage.getItem('pd_username');
             const isMe = u.name === myName;
+            if(isMe) myRank = rank;
+
             const html = `
                 <div class="pd-lb-item ${isMe ? 'current-user' : ''}">
                     <div class="pd-lb-name"><span class="pd-rank-badge ${rankClass}">${rank}</span>${isMe ? '<strong>YOU</strong>' : u.name}</div>
@@ -81,5 +91,14 @@ window.fetchLeaderboard = async function() {
                 </div>`;
             list.insertAdjacentHTML('beforeend', html);
         });
+
+        // Update Header Badge
+        if (myRank) {
+            badge.innerText = `Rank: #${myRank}`;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
     } catch(e) { console.error("Fetch LB error:", e); }
 };
