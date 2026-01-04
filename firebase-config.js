@@ -1,29 +1,36 @@
+// firebase-config.js
+
+// 1. We use full URL links so the browser understands them without a bundler
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"; // Added Analytics
 import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// 2. Your Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCz0-dUukvFHUG6DZR9hGdgduUzTcobt0M",
-    authDomain: "dental-tracker-b6242.firebaseapp.com",
-    projectId: "dental-tracker-b6242",
-    storageBucket: "dental-tracker-b6242.firebasestorage.app",
-    messagingSenderId: "418391581928",
-    appId: "1:418391581928:web:30fa024c3b71a9858ad55d",
-    measurementId: "G-5BFYNLJ8QQ"
+  apiKey: "AIzaSyCz0-dUukvFHUG6DZR9hGdgduUzTcobt0M",
+  authDomain: "dental-tracker-b6242.firebaseapp.com",
+  projectId: "dental-tracker-b6242",
+  storageBucket: "dental-tracker-b6242.firebasestorage.app",
+  messagingSenderId: "418391581928",
+  appId: "1:418391581928:web:30fa024c3b71a9858ad55d",
+  measurementId: "G-5BFYNLJ8QQ"
 };
 
-let db, auth, currentUser;
+let db, auth, currentUser, analytics;
 
 try {
+    // 3. Initialize Everything
     const app = initializeApp(firebaseConfig);
+    analytics = getAnalytics(app); // Analytics is now active
     db = getFirestore(app);
     auth = getAuth(app);
     
+    // 4. Setup Authentication Listener
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         updateAuthUI(user);
         if (user) {
-            // Check if we have a saved display name override, if not use Google Name
             const savedName = localStorage.getItem('pd_username');
             if(!savedName && user.displayName) {
                 localStorage.setItem('pd_username', user.displayName);
@@ -35,6 +42,7 @@ try {
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
+// 5. Export Functions to Window so app.js can use them
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try {
@@ -55,6 +63,7 @@ window.googleLogout = async function() {
     }
 };
 
+// UI Update Logic
 function updateAuthUI(user) {
     const loginBtn = document.getElementById('btn-google-login');
     const profileSection = document.getElementById('user-profile');
@@ -68,7 +77,6 @@ function updateAuthUI(user) {
         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
         document.getElementById('dropdown-name').textContent = user.displayName || 'User';
         
-        // Logged In: Show Profile Edit Box & Leaderboard
         if(signinPromo) signinPromo.style.display = 'none';
         if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden');
         if(lbMain) lbMain.classList.remove('pd-hidden');
@@ -76,13 +84,13 @@ function updateAuthUI(user) {
         loginBtn.classList.remove('hidden');
         profileSection.classList.add('hidden');
         
-        // Logged Out: Show Promo, HIDE Profile Edit Box & Leaderboard
         if(signinPromo) signinPromo.style.display = 'block';
         if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
         if(lbMain) lbMain.classList.add('pd-hidden');
     }
 }
 
+// Data Syncing
 window.syncToCloud = async function() {
     if(!db || !currentUser) return;
     const entries = JSON.parse(localStorage.getItem('pd_tracker_data_v2')) || [];
