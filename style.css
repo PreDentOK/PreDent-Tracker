@@ -18,12 +18,12 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 .pd-header-banner {
     background-color: #0f1c5e; 
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem 2rem;
+    padding: 0.8rem 1.5rem; /* Slightly tighter padding */
     
-    /* Grid layout to handle the 3 distinct zones (Left, Center, Right) */
-    display: grid;
-    grid-template-columns: 1fr auto 1fr; 
+    /* Layout: Flexbox allows precise control */
+    display: flex;
     align-items: center;
+    flex-wrap: wrap; 
     gap: 1rem;
 }
 
@@ -38,7 +38,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     align-items: center;
     gap: 6px;
     white-space: nowrap;
-    justify-self: start; /* Pin to left */
+    margin-right: auto; /* Pushes everything else to the right if space allows, but overridden by specific grouping */
 }
 .brand-prefix { color: #4da6ff; } 
 .brand-main { color: #FFFFFF; }    
@@ -59,7 +59,10 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     background: rgba(0, 0, 0, 0.2);
     padding: 4px;
     border-radius: 50px;
-    justify-self: center; /* Pin to center */
+    /* On desktop, this helps centering logic */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .pd-tab-btn {
@@ -83,12 +86,13 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     box-shadow: 0 2px 10px rgba(77, 166, 255, 0.3);
 }
 
-/* RIGHT: ACTIONS (Profile, Filter, Settings) */
+/* RIGHT: ACTIONS (Rank, Profile, Filter, Settings) */
 .pd-actions-group {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
-    justify-self: end; /* Pin to right */
+    margin-left: auto; /* CRITICAL: Forces this group to the far right */
+    z-index: 50; /* Ensure it sits above tabs if overlap occurs */
 }
 
 /* --- DROPDOWNS & MENUS --- */
@@ -101,8 +105,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 .pd-menu-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; }
 .pd-menu-btn.active { background: rgba(255, 255, 255, 0.15); color: #4da6ff; }
 
-/* ARROW ROTATION FIX */
-/* Used for any SVG that needs to flip when active */
+/* ARROW ROTATION */
 .arrow-icon { transition: transform 0.2s ease; }
 .active .arrow-icon, .pd-menu-btn.active .arrow-icon { transform: rotate(180deg); }
 
@@ -141,6 +144,7 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
     display: inline-flex; align-items: center; background: rgba(255, 215, 0, 0.15);
     color: #ffd700; border: 1px solid #ffd700; padding: 4px 10px; border-radius: 20px;
     font-size: 0.8rem; font-weight: 700; font-family: 'Montserrat', sans-serif;
+    white-space: nowrap;
 }
 .pd-nav-rank.hidden { display: none; }
 
@@ -263,33 +267,30 @@ body { margin: 0; padding: 0; background-color: #030D4A; }
 
 /* --- MOBILE SPECIFIC FIXES --- */
 @media (max-width: 700px) { 
-    /* Header Re-layout for Mobile: Logo top, Tabs bottom-center, Actions top-right */
     .pd-header-banner { 
-        display: flex;
-        flex-wrap: wrap;
         justify-content: space-between;
     }
     
-    .pd-logo-text { order: 1; width: auto; }
-    .pd-actions-group { order: 2; }
+    .pd-logo-text { width: auto; margin-right: 0; }
     .pd-tabs-container { 
+        position: static; /* Remove absolute centering on mobile */
+        transform: none;
         order: 3; 
-        width: 100%; /* Force full width line */
-        justify-content: center; /* Center the tabs */
-        margin-top: 1rem; /* Space from top row */
+        width: 100%; 
+        justify-content: center; 
+        margin-top: 1rem; 
     }
 
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* Force side-by-side circles on mobile */
     .pd-stats-container {
         flex-wrap: nowrap; 
         gap: 0px; 
-        transform: scale(0.65); /* Shrink them down */
+        transform: scale(0.65); 
         transform-origin: top center;
-        margin-bottom: -70px; /* Fix whitespace caused by scaling */
-        width: 140%; /* Compensate for width loss during scale */
-        margin-left: -20%; /* Re-center */
+        margin-bottom: -70px; 
+        width: 140%; 
+        margin-left: -20%; 
     }
 }
