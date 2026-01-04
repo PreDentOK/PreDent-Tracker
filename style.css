@@ -28,15 +28,26 @@ body {
     border-left: 1px solid rgba(255,255,255,0.2); padding-left: 8px; margin-left: 2px; min-width: 80px; 
 }
 
-/* CENTER: TABS */
+/* CENTER: TABS (Fixed Grid for Equal Spacing) */
 .pd-tabs-container {
-    display: flex; gap: 5px; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 50px;
+    display: grid; /* Use Grid instead of Flex */
+    grid-template-columns: 1fr 1fr 1fr; /* 3 Equal Columns */
+    gap: 5px; 
+    background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 50px;
+    
+    /* Absolute Center Positioning */
     position: absolute; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 350px; /* Constrain width so buttons aren't huge */
 }
+
 .pd-tab-btn {
-    background: transparent; border: none; color: #cbd5e1; padding: 8px 16px; border-radius: 40px;
+    background: transparent; border: none; color: #cbd5e1; 
+    padding: 8px 0; /* Remove side padding, rely on grid width */
+    width: 100%;
+    border-radius: 40px;
     font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer;
     transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
+    text-align: center;
 }
 .pd-tab-btn:hover { color: white; }
 .pd-tab-btn.active { background: #4da6ff; color: #030D4A; box-shadow: 0 2px 10px rgba(77, 166, 255, 0.3); }
@@ -124,14 +135,14 @@ body {
 
 .pd-leaderboard-card { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0; overflow: hidden; margin-top: 1rem; }
 
-/* --- UPDATED LEADERBOARD GRID --- */
+/* --- UPDATED LEADERBOARD GRID (CENTERED COLUMNS) --- */
 .pd-lb-header, .pd-lb-item { 
     display: grid; 
-    /* First column is 40px fixed for rank, aligned left */
-    grid-template-columns: 40px 1fr 70px 70px; 
-    padding: 1rem; 
+    /* Rank (15%) | Name (45%) | Shadow (20%) | Volunteer (20%) */
+    grid-template-columns: 15% 45% 20% 20%;
+    padding: 1rem 0.5rem; 
     align-items: center; 
-    text-align: center;
+    text-align: center; /* Center content in every cell */
 }
 .pd-lb-header { 
     background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
@@ -140,18 +151,22 @@ body {
 .pd-lb-item { border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s; }
 .pd-lb-item.current-user { background: rgba(77, 166, 255, 0.1); border-left: 4px solid #4da6ff; }
 
-/* RANK BADGE: Fixed alignment */
+/* Rank badge centered within its column */
 .pd-rank-badge { 
     display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
     background: rgba(255, 255, 255, 0.1); font-size: 0.8rem; font-weight: 700; 
-    margin: 0; /* Align left in the grid cell */
-    text-align: center;
+    margin: 0 auto; 
 }
 .rank-1 { background: #ffd700; color: #030D4A; }
 .rank-2 { background: #c0c0c0; color: #030D4A; }
 .rank-3 { background: #cd7f32; color: #030D4A; }
 
-.pd-lb-name { font-weight: 600; color: #FFFFFF; text-align: left; padding-left: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Name Centered but text ellipsis for safety */
+.pd-lb-name { 
+    font-weight: 600; color: #FFFFFF; 
+    text-align: center; /* Center the name under the header */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+}
 .pd-lb-stat { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
 .pd-lb-stat span { display: block; font-size: 0.75em; opacity: 0.6; }
 
@@ -164,7 +179,6 @@ body {
 .pd-form-header { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; color: #cbd5e1; }
 
 /* FILTER BUTTON POSITIONING */
-/* Absolute positioning relative to the card */
 .pd-filter-pos {
     position: absolute;
     top: 1.2rem;
@@ -246,7 +260,14 @@ body {
     .pd-header-banner { justify-content: space-between; }
     .pd-logo-text { order: 1; width: auto; }
     .pd-actions-group { order: 2; }
-    .pd-tabs-container { position: static; transform: none; order: 3; width: 100%; justify-content: flex-start; margin-top: 1rem; padding-left: 0; }
+    
+    /* Tabs on new line, centered, full width */
+    .pd-tabs-container { 
+        position: static; transform: none; order: 3; 
+        width: 100%; max-width: 100%; /* Ensure full width on mobile */
+        margin-top: 1rem; 
+    }
+
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     .pd-stats-container { flex-wrap: nowrap; gap: 0px; transform: scale(0.65); transform-origin: top center; margin-bottom: -70px; width: 140%; margin-left: -20%; }
