@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#030D4A">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <title>PreDent Connect | Hours Tracker</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +28,6 @@
         </div>
 
         <div class="pd-actions-group">
-            
             <div id="auth-section">
                 <button id="btn-google-login" class="pd-auth-btn" onclick="googleLogin()">
                     <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
@@ -117,17 +115,16 @@
                         <span class="pd-error-asterisk">*</span>
                     </div>
                     <div class="pd-input-wrapper">
-                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours (Full numbers)" step="1" min="1" required>
+                        <select id="entry-subtype" class="pd-select" required></select>
                         <span class="pd-error-asterisk">*</span>
                     </div>
                 </div>
 
                 <div class="pd-form-grid">
                     <div class="pd-input-wrapper">
-                        <select id="entry-subtype" class="pd-select" required></select>
+                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours (Full numbers)" step="1" min="1" required>
                         <span class="pd-error-asterisk">*</span>
                     </div>
-                    
                     <div class="pd-input-group pd-input-wrapper">
                         <input type="text" id="entry-doctor" class="pd-input" placeholder="Doctor(s)" list="doc-suggestions" autocomplete="off" required>
                         <a href="https://oklahoma.gov/dentistry/license-verification/verify-a-dentist.html" target="_blank" class="pd-verify-link" title="Verify License">
@@ -172,12 +169,10 @@
 
         <div id="view-leaderboard" class="pd-view">
             <h2 class="pd-section-title">Community Leaderboard</h2>
-            
             <div id="signin-promo" style="text-align:center; padding:2rem; background:rgba(255,255,255,0.05); border-radius:12px;">
                 <p>Sign in with Google to see how you rank against other PreDental students!</p>
                 <button class="pd-btn pd-btn-primary" onclick="googleLogin()">Sign In Now</button>
             </div>
-
             <div class="pd-lb-profile pd-hidden" id="lb-profile-box">
                 <h4>Leaderboard Profile</h4>
                 <p>Your Google name is used by default. Enter a display name below to override it.</p>
@@ -187,7 +182,6 @@
                     <button class="pd-btn pd-btn-cancel" onclick="skipProfileSetup()" style="width: auto; margin-right:0;">Skip</button>
                 </div>
             </div>
-
             <div class="pd-leaderboard-card pd-hidden" id="lb-card-main">
                 <div class="pd-lb-header"><div>Rank</div><div>Name</div><div>Shadow</div><div>Volunteer</div></div>
                 <div id="leaderboard-list">
@@ -224,6 +218,7 @@
         <div class="pd-modal" style="width: 100%; max-width: 500px; padding: 1.5rem;">
             <h3 style="color:#4da6ff; margin-bottom: 1rem;">EDIT ENTRY</h3>
             <div style="text-align:left; margin-bottom: 1rem;">
+                
                 <div style="margin-bottom: 1rem;">
                     <label style="color:#cbd5e1; font-size:0.8rem;">Type</label>
                     <select id="edit-entry-type" class="pd-select">
@@ -231,30 +226,34 @@
                         <option value="Volunteering">Volunteering</option>
                     </select>
                 </div>
+
                 <div class="pd-form-grid">
                     <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Date</label>
                         <input type="date" id="edit-entry-date" class="pd-input">
                     </div>
                     <div>
-                        <label style="color:#cbd5e1; font-size:0.8rem;">Hours</label>
-                        <input type="number" id="edit-entry-hours" class="pd-input" step="1" min="1">
-                    </div>
-                </div>
-                <div class="pd-form-grid">
-                    <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Subtype</label>
                         <select id="edit-entry-subtype" class="pd-select"></select>
+                    </div>
+                </div>
+
+                <div class="pd-form-grid">
+                    <div>
+                        <label style="color:#cbd5e1; font-size:0.8rem;">Hours</label>
+                        <input type="number" id="edit-entry-hours" class="pd-input" step="1" min="1">
                     </div>
                     <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Doctor/Supervisor</label>
                         <input type="text" id="edit-entry-doctor" class="pd-input">
                     </div>
                 </div>
+
                 <div style="margin-bottom: 1rem;">
                     <label style="color:#cbd5e1; font-size:0.8rem;">Location</label>
                     <input type="text" id="edit-entry-loc" class="pd-input">
                 </div>
+
                 <div style="margin-bottom: 1rem;">
                     <label style="color:#cbd5e1; font-size:0.8rem;">Notes</label>
                     <input type="text" id="edit-entry-notes" class="pd-input">
