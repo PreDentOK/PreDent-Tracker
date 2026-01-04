@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
-
     setupHoursInput('entry-hours');
     setupHoursInput('edit-entry-hours');
 
@@ -40,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- HELPER: UPDATE CIRCLES (RESTORED) ---
+// --- HELPER: UPDATE CIRCLES ---
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
     const text = document.getElementById(textId);
@@ -52,7 +51,7 @@ function updateCircleStats(ringId, textId, hours) {
     if(text) text.innerText = hours;
 }
 
-// --- HELPER: UPDATE DELETE BUTTON STATE ---
+// --- HELPER: UPDATE DELETE BUTTON ---
 function updateDeleteButtonState() {
     const count = document.querySelectorAll('.pd-checkbox:checked').length;
     const btn = document.getElementById('btn-delete-selected');
@@ -121,18 +120,8 @@ window.toggleSelectionMode = function() {
     const list = document.getElementById('log-list');
     const delBtn = document.getElementById('btn-delete-selected');
     const selectBtn = document.getElementById('btn-select-mode');
-    if (isSelectionMode) { 
-        list.classList.add('selection-mode'); 
-        delBtn.style.display = 'block'; 
-        selectBtn.textContent = 'Cancel'; 
-        updateDeleteButtonState(); 
-    } 
-    else { 
-        list.classList.remove('selection-mode'); 
-        delBtn.style.display = 'none'; 
-        selectBtn.textContent = 'Select Entries'; 
-        document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); 
-    }
+    if (isSelectionMode) { list.classList.add('selection-mode'); delBtn.style.display = 'block'; selectBtn.textContent = 'Cancel'; updateDeleteButtonState(); } 
+    else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
 };
 
 window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
@@ -178,12 +167,9 @@ async function addEntry() {
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
-        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
-    }
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
-
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
@@ -194,17 +180,13 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
-    } catch (e) { 
-        console.error("Error adding entry:", e); 
-        alert(`Error saving: ${e.message || "Connection failed. Check Firebase Rules."}`);
-    }
+    } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function saveEditEntry() {
     if (!editingEntryId) return;
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
     if(modalWrappers.length > 0) modalWrappers.forEach(el => el.classList.remove('error'));
-
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -212,7 +194,6 @@ async function saveEditEntry() {
     const doctor = document.getElementById('edit-entry-doctor').value.trim();
     const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
-
     let hasError = false;
     const markError = (id) => { const el = document.getElementById(id); if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); } hasError = true; };
     if (!type) markError('edit-entry-type'); if (!subtype) markError('edit-entry-subtype'); if (!date) markError('edit-entry-date'); if (!loc) markError('edit-entry-loc'); if (!doctor) markError('edit-entry-doctor'); if (!hoursInput) markError('edit-entry-hours');
@@ -331,20 +312,9 @@ function switchTab(tabName) {
     document.querySelectorAll('.pd-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`view-${tabName}`).classList.add('active');
     const btns = document.querySelectorAll('.pd-tab-btn');
-    
-    // IF STATS, RENDER GRAPH
-    if (tabName === 'stats') {
-        btns[1].classList.add('active');
-        calculateTrends(); // THIS DRAWS THE CHART
-    } else if (tabName === 'tracker') {
-        btns[0].classList.add('active');
-        handleTypeChange();
-    } else {
-        btns[2].classList.add('active');
-        if(localStorage.getItem('pd_username')) {
-            document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username');
-        }
-    }
+    if(tabName === 'tracker') { btns[0].classList.add('active'); handleTypeChange(); }
+    else if (tabName === 'stats') { btns[1].classList.add('active'); calculateTrends(); }
+    else { btns[2].classList.add('active'); if(localStorage.getItem('pd_username')) { document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username'); } }
 }
 function handleTypeChange() { updateSubtypeOptions('entry-type', 'entry-subtype', 'entry-doctor'); }
 function handleEditTypeChange() { updateSubtypeOptions('edit-entry-type', 'edit-entry-subtype', 'edit-entry-doctor'); }
@@ -419,26 +389,6 @@ function render() {
     }
 }
 
-function calculateTrends() {
-    const uniqueDocs = new Set(entries.filter(e => e.type === 'Shadowing').map(e => e.doctor)).size;
-    document.getElementById('stat-unique-docs').innerText = uniqueDocs;
-    document.getElementById('stat-total-entries').innerText = entries.length;
-    const specialties = {}; entries.filter(e => e.type === 'Shadowing').forEach(e => { specialties[e.subtype] = (specialties[e.subtype] || 0) + e.hours; });
-    const sortedSpecs = Object.entries(specialties).sort((a,b) => b[1] - a[1]);
-    const specList = document.getElementById('list-top-specialties');
-    specList.innerHTML = sortedSpecs.length === 0 ? '<div class="pd-trend-empty">No shadowing data available</div>' : '';
-    sortedSpecs.slice(0, 5).forEach(([name, hours]) => { specList.innerHTML += `<li><span>${name}</span><span>${hours} hrs</span></li>`; });
-    const volEntries = entries.filter(e => e.type === 'Volunteering');
-    let dentalHrs = 0, nonDentalHrs = 0; volEntries.forEach(e => { if(e.subtype === 'Dental Related') dentalHrs += parseInt(e.hours); else nonDentalHrs += parseInt(e.hours); });
-    const volList = document.getElementById('list-vol-mix');
-    if(dentalHrs > 0 || nonDentalHrs > 0) {
-        const total = dentalHrs + nonDentalHrs; const dPct = Math.round((dentalHrs / total) * 100); const nPct = 100 - dPct;
-        volList.innerHTML = `<li><span style="color:#51cf66;">Dental Related</span><span>${dPct}% (${dentalHrs} hrs)</span></li><li><span style="color:#ff6b6b;">Non-Dental</span><span>${nPct}% (${nonDentalHrs} hrs)</span></li><div class="pd-percent-bar"><div class="pd-fill-dental" style="width:${dPct}%;"></div><div class="pd-fill-non" style="width:${nPct}%;"></div></div>`;
-    } else { volList.innerHTML = '<div class="pd-trend-empty">No volunteer data available</div>'; }
-    
-    renderActivityGraph();
-}
-
 // --- CANVAS GRAPH LOGIC ---
 function renderActivityGraph() {
     const canvas = document.getElementById('activity-canvas');
@@ -500,8 +450,6 @@ function renderActivityGraph() {
         const y = getY(m.shadow);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-        ctx.fillStyle = '#4da6ff';
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
     });
     ctx.stroke();
 
@@ -514,10 +462,31 @@ function renderActivityGraph() {
         const y = getY(m.vol);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-        ctx.fillStyle = '#ffd700';
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
     });
     ctx.stroke();
+
+    // DRAW POINTS (With "Bullseye" logic if equal)
+    months.forEach((m, i) => {
+        const x = padding + (i * stepX);
+        const yShadow = getY(m.shadow);
+        const yVol = getY(m.vol);
+
+        // Draw Shadow Dot (Blue Solid)
+        ctx.fillStyle = '#4da6ff';
+        ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
+
+        // Draw Volunteer Dot
+        if (m.vol === m.shadow && m.vol > 0) {
+            // If equal, draw Yellow Ring around Blue Dot
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
+        } else {
+            // Normal Yellow Solid
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath(); ctx.arc(x, yVol, 4, 0, Math.PI*2); ctx.fill();
+        }
+    });
 
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '10px Inter';
@@ -528,7 +497,7 @@ function renderActivityGraph() {
     });
 }
 
-// --- CSV IMPORT LOGIC (RESTORED) ---
+// --- CSV (RESTORED) ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
 window.handleCSVImport = function(input) {
     const file = input.files[0];
