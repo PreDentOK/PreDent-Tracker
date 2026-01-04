@@ -1,15 +1,14 @@
 /* --- 1. DARK THEME LAYOUT (FULL SCREEN APP MODE) --- */
 html {
-    background-color: #030D4A; /* Cover any potential bounce area */
-    overscroll-behavior: none; /* Prevent "bounce" effect at edges */
+    background-color: #030D4A; 
+    overscroll-behavior: none; 
 }
 
 body { 
     margin: 0; 
     padding: 0; 
     background-color: #030D4A; 
-    /* Lock the body size to the dynamic screen size */
-    height: 100dvh; 
+    height: 100dvh; /* Dynamic Viewport Height */
     width: 100vw;
     overflow: hidden; 
     position: fixed; 
@@ -128,7 +127,7 @@ body {
     flex: 1; /* Takes remaining space */
     overflow-y: auto; /* Internal Scroll */
     overflow-x: hidden; 
-    overscroll-behavior-y: contain; /* Prevent parent bounce */
+    overscroll-behavior-y: contain; 
     -webkit-overflow-scrolling: touch; 
 }
 
@@ -208,12 +207,12 @@ body {
 .pd-input-wrapper.error .pd-error-asterisk { display: block; }
 .pd-input-wrapper.error .pd-input, .pd-input-wrapper.error .pd-select { border-color: #ff6b6b; }
 
-/* UNIFIED INPUT STYLES (STRICT MOBILE SIZING) */
+/* UNIFIED INPUT STYLES (iOS FIX) */
 .pd-input, .pd-select, .pd-textarea {
     width: 100%; 
-    height: 50px !important; /* Force Height */
-    min-height: 50px !important; /* Prevent Collapse */
-    max-height: 50px !important; /* Prevent Expansion (iOS Date fix) */
+    height: 50px !important; /* Force strict height */
+    min-height: 50px !important;
+    max-height: 50px !important;
     padding: 0 0.8rem; 
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px; 
@@ -299,15 +298,16 @@ body {
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
     
-    /* Prevent circles from making page scroll sideways */
+    /* FIX FOR CIRCLES: Scale down safely */
     .pd-stats-container { 
         display: flex;
-        flex-wrap: nowrap; /* Force single row */
-        gap: 10px; 
-        width: 100%; /* Stay within container */
+        flex-wrap: nowrap; /* Force one row */
+        gap: 20px; 
         justify-content: center;
-        transform: scale(0.85); /* Zoom out slightly to fit */
-        margin: 0; /* Remove weird margins */
-        margin-bottom: -20px; /* Fix whitespace */
+        width: 100%; 
+        transform: scale(0.65); /* Scale entire container */
+        transform-origin: top center;
+        margin: 0;
+        margin-bottom: -50px; /* Pull content up */
     }
 }
