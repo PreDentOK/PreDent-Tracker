@@ -74,6 +74,45 @@ window.db_deleteEntry = async function(user, entryId) {
     await deleteDoc(ref);
 };
 
+// NEW: Batch delete for checkboxes
+window.db_batchDelete = async function(user, entryIds) {
+    if(!user || !db || entryIds.length === 0) return;
+    
+    const batch = writeBatch(db);
+    entryIds.forEach(id => {
+        const ref = doc(db, 'users', user.uid, 'entries', id);
+        batch.delete(ref);
+    });
+    
+    await batch.commit();
+};
+
+window.db_wipeAllEntries = async function(user) {
+    if(!user || !db) return;
+    try {
+        const colRef = collection(db, 'users', user.uid, 'entries');
+        const snapshot = await getDocs(colRef);
+        
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        
+        // Reset Leaderboard Stat Document directly
+        const lbRef = doc(db, 'leaderboard', user.uid);
+        batch.set(lbRef, {
+            shadow: 0,
+            vol: 0,
+            total: 0
+        }, { merge: true });
+
+        await batch.commit();
+    } catch (e) {
+        console.error("Wipe Error:", e);
+        throw e; 
+    }
+};
+
 window.updateLeaderboardStats = async function(user, shadowTotal, volTotal) {
     if(!user || !db) return;
     try {
