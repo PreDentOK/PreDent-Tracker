@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
 
+    // Setup Strict Hours Inputs
+    setupHoursInput('entry-hours');
+    setupHoursInput('edit-entry-hours');
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.pd-menu-btn') && !e.target.closest('.pd-user-profile')) {
             closeAllMenus();
@@ -35,106 +39,39 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- CSV IMPORT LOGIC ---
-window.triggerImport = function() {
-    document.getElementById('import-file-input').click();
-    closeAllMenus();
-};
+// --- NEW: STRICT HOURS LOGIC ---
+function setupHoursInput(id) {
+    const el = document.getElementById(id);
+    if(!el) return;
 
-window.handleCSVImport = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const text = e.target.result;
-        await processCSV(text);
-        input.value = ''; 
-    };
-    reader.readAsText(file);
-};
-
-async function processCSV(csvText) {
-    const lines = csvText.split(/\r\n|\n/); // Handle Windows/Mac line breaks
-    if (lines.length < 2) {
-        alert("CSV appears empty or missing header.");
-        return;
-    }
-
-    // Skip Row 1 (Header), start at Row 2
-    const dataLines = lines.slice(1);
-    let importedCount = 0;
-
-    for (let line of dataLines) {
-        if (!line.trim()) continue; 
-        
-        // Split by comma, respecting quotes
-        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
-        
-        // MAPPING YOUR TEMPLATE:
-        // Col A [0] = DATE
-        // Col B [1] = DOCTOR(S)
-        // Col C [2] = SPECIALTY (Subtype)
-        // Col D [3] = LOCATION
-        // Col E [4] = HOURS
-        // Col F [5] = COMMENTS
-
-        // 1. Format Date (Attempts to convert MM/DD/YYYY to YYYY-MM-DD)
-        const rawDate = cols[0];
-        let formattedDate = rawDate;
-        // Simple check if date is M/D/YYYY format
-        if(rawDate.includes('/')) {
-            const parts = rawDate.split('/');
-            if(parts.length === 3) {
-                // Pad with 0 (e.g., 1 -> 01)
-                const m = parts[0].padStart(2, '0');
-                const d = parts[1].padStart(2, '0');
-                const y = parts[2];
-                formattedDate = `${y}-${m}-${d}`;
-            }
+    // 1. Prevent invalid chars like 'e', '-', '+'
+    el.addEventListener('keydown', function(e) {
+        if (['e', 'E', '-', '+'].includes(e.key)) {
+            e.preventDefault();
         }
+    });
 
-        // 2. Determine Type based on Specialty (Col C)
-        const rawSubtype = cols[2];
-        let type = "Shadowing"; // Default
-        // If subtype matches a volunteer category OR contains the word "volunteer" (case insensitive)
-        if (SUBTYPES_VOLUNTEER.includes(rawSubtype) || rawSubtype.toLowerCase().includes("volunteer")) {
-            type = "Volunteering";
+    // 2. Round on blur (when user clicks away)
+    el.addEventListener('blur', function() {
+        if (this.value) {
+            this.value = Math.round(parseFloat(this.value));
         }
-
-        // 3. Process Hours (Round to nearest int)
-        let hrs = Math.round(parseFloat(cols[4]));
-        if(isNaN(hrs) || hrs <= 0) hrs = 0;
-
-        const entry = {
-            id: String(Date.now()) + Math.random().toString(16).slice(2),
-            date: formattedDate,
-            type: type,
-            subtype: rawSubtype || (type === "Shadowing" ? "General Dentistry" : "Dental Related"),
-            doctor: cols[1],
-            location: cols[3],
-            hours: hrs,
-            notes: cols[5] || '' 
-        };
-
-        // Basic validation: Needs Date, Hours > 0, and Location
-        if(entry.date && entry.hours > 0 && entry.location) {
-             if (appUser) {
-                await window.db_addEntry(appUser, entry);
-                entries.push(entry);
-            } else {
-                entries.push(entry);
-            }
-            importedCount++;
-        }
-    }
-
-    saveData();
-    render();
-    alert(`Successfully imported ${importedCount} entries.`);
+    });
 }
 
-// --- STANDARD APP LOGIC ---
+// --- NEW: AUTO-SUGGESTIONS ---
+function updateDatalists() {
+    // Extract unique doctors and locations from existing entries
+    const uniqueDocs = [...new Set(entries.map(e => e.doctor).filter(Boolean))].sort();
+    const uniqueLocs = [...new Set(entries.map(e => e.location).filter(Boolean))].sort();
+
+    const docList = document.getElementById('doc-suggestions');
+    const locList = document.getElementById('loc-suggestions');
+
+    // Repopulate Datalists
+    if(docList) docList.innerHTML = uniqueDocs.map(d => `<option value="${d}">`).join('');
+    if(locList) locList.innerHTML = uniqueLocs.map(l => `<option value="${l}">`).join('');
+}
 
 window.refreshApp = async function(user) {
     appUser = user;
@@ -168,8 +105,11 @@ async function saveData() {
     } else {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     }
+    // Update suggestions immediately after save
+    updateDatalists();
 }
 
+// --- ADD ENTRY ---
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
     
@@ -225,6 +165,7 @@ async function addEntry() {
     }
 }
 
+// --- EDIT ENTRY ---
 async function saveEditEntry() {
     if (!editingEntryId) return;
     
@@ -461,6 +402,8 @@ function closeResetModal() { document.getElementById('reset-modal').style.displa
 function confirmReset() { entries = []; saveData(); render(); closeResetModal(); if(window.syncToCloud) window.syncToCloud(); }
 
 function render() {
+    updateDatalists(); // REFRESH SUGGESTIONS ON RENDER
+
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
     let sTotal = 0, vTotal = 0; entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
     updateCircleStats('ring-shadow', 'total-shadow', sTotal); updateCircleStats('ring-volunteer', 'total-volunteer', vTotal);
