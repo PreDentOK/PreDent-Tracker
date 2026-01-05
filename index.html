@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <meta name="theme-color" content="#030D4A">
-    
+    <meta name="theme-color" content="#0f1c5e">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
@@ -120,7 +118,7 @@
 
                 <div class="pd-form-grid">
                     <div class="pd-input-wrapper">
-                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours (Full numbers)" step="1" min="1" required>
+                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours" inputmode="decimal" step="any" min="0" required>
                         <span class="pd-error-asterisk">*</span>
                     </div>
                     <div class="pd-input-group pd-input-wrapper">
@@ -279,7 +277,7 @@
                 <div class="pd-form-grid">
                     <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Hours</label>
-                        <input type="number" id="edit-entry-hours" class="pd-input" step="any" inputmode="decimal">
+                        <input type="number" id="edit-entry-hours" class="pd-input" inputmode="decimal" step="any" min="0">
                     </div>
                     <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Doctor/Supervisor</label>
