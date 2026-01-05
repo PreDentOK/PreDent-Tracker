@@ -121,18 +121,8 @@ window.toggleSelectionMode = function() {
     const list = document.getElementById('log-list');
     const delBtn = document.getElementById('btn-delete-selected');
     const selectBtn = document.getElementById('btn-select-mode');
-    if (isSelectionMode) { 
-        list.classList.add('selection-mode'); 
-        delBtn.style.display = 'block'; 
-        selectBtn.textContent = 'Cancel'; 
-        updateDeleteButtonState(); 
-    } 
-    else { 
-        list.classList.remove('selection-mode'); 
-        delBtn.style.display = 'none'; 
-        selectBtn.textContent = 'Select Entries'; 
-        document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); 
-    }
+    if (isSelectionMode) { list.classList.add('selection-mode'); delBtn.style.display = 'block'; selectBtn.textContent = 'Cancel'; updateDeleteButtonState(); } 
+    else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
 };
 
 window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
@@ -224,7 +214,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
+    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
 async function deleteSelectedEntries() {
@@ -339,7 +329,7 @@ function switchTab(tabName) {
     if(tabName === 'tracker') { btns[0].classList.add('active'); handleTypeChange(); }
     else if (tabName === 'stats') { 
         btns[1].classList.add('active'); 
-        calculateTrends(); // IMPORTANT: Update Graph when clicking tab
+        calculateTrends(); // IMPORTANT: Recalculate and redraw graph
     }
     else { btns[2].classList.add('active'); if(localStorage.getItem('pd_username')) { document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username'); } }
 }
@@ -358,11 +348,13 @@ function openResetModal() { document.getElementById('reset-modal').style.display
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
 
 function render() {
-    // 1. Calculate stats FRESH every render
     let sTotal = 0, vTotal = 0; 
     entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
     updateCircleStats('ring-shadow', 'total-shadow', sTotal); 
     updateCircleStats('ring-volunteer', 'total-volunteer', vTotal);
+    
+    // UPDATE TRENDS & GRAPH ON EVERY RENDER SO IT'S READY
+    calculateTrends();
 
     updateDatalists();
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
@@ -421,13 +413,13 @@ function render() {
 }
 
 function calculateTrends() {
-    // If no entries, 0 out everything
+    // If no entries, 0 out stats but DO NOT crash
     if(entries.length === 0) {
         document.getElementById('stat-unique-docs').innerText = "0";
         document.getElementById('stat-total-entries').innerText = "0";
         document.getElementById('list-top-specialties').innerHTML = '<div class="pd-trend-empty">No data available</div>';
         document.getElementById('list-vol-mix').innerHTML = '<div class="pd-trend-empty">No data available</div>';
-        renderActivityGraph(); // Draws empty graph
+        renderActivityGraph(); // Empty graph
         return;
     }
 
