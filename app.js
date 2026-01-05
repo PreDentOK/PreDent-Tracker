@@ -72,22 +72,18 @@ window.handleSearch = function() {
     render();
 };
 
-// --- STRICT HOURS INPUT (FIXED BUG) ---
 function setupHoursInput(id) {
     const el = document.getElementById(id);
     if(!el) return;
     
-    // Prevent typing bad characters
+    // Prevent typing specific characters
     el.addEventListener('keydown', function(e) {
-        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '.'].includes(e.key)) {
-            return;
-        }
         if (['e', 'E', '-', '+'].includes(e.key)) {
             e.preventDefault();
         }
     });
 
-    // Round ONLY on blur (click away)
+    // Round on blur
     el.addEventListener('blur', function() {
         if (this.value) {
             let val = parseFloat(this.value);
@@ -96,6 +92,69 @@ function setupHoursInput(id) {
         }
     });
 }
+
+// --- SMART EXPORT LOGIC ---
+window.exportData = function() {
+    // 1. Get data based on filter
+    let exportEntries = entries;
+    if (currentFilter !== 'All') {
+        exportEntries = entries.filter(e => e.type === currentFilter);
+    }
+    
+    if(exportEntries.length === 0) { alert("No data to export!"); return; }
+    
+    let csv = "";
+    let filename = "PreDent_Activity_Log.csv";
+    const isVolunteering = (currentFilter === 'Volunteering');
+
+    // 2. Build CSV based on Template
+    if (isVolunteering) {
+        // TEMPLATE: DATE, ORGANIZATION, LOCATION, DENTAL RELATED, HOURS, COMMENTS
+        csv += "DATE,ORGANIZATION,LOCATION,DENTAL RELATED,HOURS,COMMENTS\n";
+        filename = "PreDent_Volunteering_Log.csv";
+        
+        exportEntries.forEach(e => {
+            // Date Format: MM/DD/YYYY
+            let dParts = e.date.split('-'); 
+            let dFormatted = `${dParts[1]}/${dParts[2]}/${dParts[0]}`;
+            
+            const col1 = `"${(e.doctor || '').replace(/"/g, '""')}"`; // Organization
+            const col2 = `"${(e.location || '').replace(/"/g, '""')}"`; // Location
+            const col3 = `"${(e.subtype || '').replace(/"/g, '""')}"`; // Dental Related (Subtype)
+            const col4 = e.hours;
+            const col5 = `"${(e.notes || '').replace(/"/g, '""')}"`; // Comments
+            
+            csv += `${dFormatted},${col1},${col2},${col3},${col4},${col5}\n`;
+        });
+    } else {
+        // TEMPLATE: DATE, DOCTOR(S), SPECIALTY, LOCATION, HOURS, COMMENTS
+        // Used for Shadowing OR All
+        csv += "DATE,DOCTOR(S),SPECIALTY,LOCATION,HOURS,COMMENTS\n";
+        filename = (currentFilter === 'Shadowing') ? "PreDent_Shadowing_Log.csv" : "PreDent_All_Logs.csv";
+        
+        exportEntries.forEach(e => {
+            let dParts = e.date.split('-'); 
+            let dFormatted = `${dParts[1]}/${dParts[2]}/${dParts[0]}`;
+            
+            const col1 = `"${(e.doctor || '').replace(/"/g, '""')}"`; // Doctor(s)
+            const col2 = `"${(e.subtype || '').replace(/"/g, '""')}"`; // Specialty
+            const col3 = `"${(e.location || '').replace(/"/g, '""')}"`; // Location
+            const col4 = e.hours;
+            const col5 = `"${(e.notes || '').replace(/"/g, '""')}"`; // Comments
+            
+            csv += `${dFormatted},${col1},${col2},${col3},${col4},${col5}\n`;
+        });
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a'); 
+    a.href = url; 
+    a.download = filename; 
+    a.click();
+    
+    closeAllMenus();
+};
 
 // --- CSV IMPORT LOGIC ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
