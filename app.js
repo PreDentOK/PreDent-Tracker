@@ -45,33 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- STRICT HOURS INPUT ---
-function setupHoursInput(id) {
-    const el = document.getElementById(id);
-    if(!el) return;
-    
-    // Prevent typing specific characters, allow backspace/tab/arrows
-    el.addEventListener('keydown', function(e) {
-        if (['e', 'E', '-', '+'].includes(e.key)) {
-            e.preventDefault();
-        }
-    });
-
-    // Sanitize input in realtime (allow numbers and ONE dot)
-    el.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9.]/g, '');
-    });
-
-    // Round on blur
-    el.addEventListener('blur', function() {
-        if (this.value) {
-            let val = parseFloat(this.value);
-            if (isNaN(val) || val < 0) this.value = '';
-            else this.value = Math.round(val);
-        }
-    });
-}
-
 // --- HELPER: UPDATE CIRCLES ---
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
@@ -98,6 +71,31 @@ window.handleSearch = function() {
     currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
     render();
 };
+
+// --- STRICT HOURS INPUT (FIXED BUG) ---
+function setupHoursInput(id) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    
+    // Prevent typing bad characters
+    el.addEventListener('keydown', function(e) {
+        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '.'].includes(e.key)) {
+            return;
+        }
+        if (['e', 'E', '-', '+'].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    // Round ONLY on blur (click away)
+    el.addEventListener('blur', function() {
+        if (this.value) {
+            let val = parseFloat(this.value);
+            if (isNaN(val) || val < 0) this.value = '';
+            else this.value = Math.round(val);
+        }
+    });
+}
 
 // --- CSV IMPORT LOGIC ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
@@ -209,7 +207,10 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
-    } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
+    } catch (e) { 
+        console.error("Error adding entry:", e); 
+        alert(`Error saving: ${e.message || "Connection failed. Check Firebase Rules."}`);
+    }
 }
 
 async function saveEditEntry() {
@@ -236,7 +237,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
+    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function deleteSelectedEntries() {
@@ -545,23 +546,3 @@ function renderActivityGraph() {
     ctx.fillStyle = '#cbd5e1'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
     months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
 }
-
-window.openEditNameModal = function() {
-    closeAllMenus();
-    document.getElementById('edit-name-input').value = localStorage.getItem('pd_username') || '';
-    document.getElementById('edit-name-modal').style.display = 'flex';
-};
-window.closeEditNameModal = function() { document.getElementById('edit-name-modal').style.display = 'none'; };
-window.saveNewName = function() {
-    const newName = document.getElementById('edit-name-input').value.trim();
-    if (newName) {
-        const lowerName = newName.toLowerCase();
-        const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
-        if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; document.getElementById('edit-name-modal').style.display = 'none'; return; }
-        localStorage.setItem('pd_username', newName);
-        document.getElementById('dropdown-name').textContent = newName;
-        // FORCE UPDATE ON CLOUD
-        saveData(); 
-    }
-    closeEditNameModal();
-};
