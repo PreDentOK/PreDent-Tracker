@@ -174,7 +174,7 @@ body {
 /* NEW CHART STYLES (CANVAS) */
 .pd-chart-wrapper {
     width: 100%;
-    height: 250px; /* Fixed Height for Graph */
+    height: 250px; 
     position: relative;
     padding-top: 10px;
 }
@@ -288,10 +288,23 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .pd-checkbox { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: #4da6ff; display: none; }
 .pd-list.selection-mode .pd-checkbox { display: block; }
 
-/* CONTROLS */
-.pd-list-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 10px; }
-#search-input { flex: 1; height: 40px !important; min-height: 40px !important; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding-left: 15px; font-size: 0.9rem; }
-#btn-select-mode, #btn-delete-selected { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 0 12px; height: 40px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: 600; white-space: nowrap; }
+/* CONTROLS (Search, Filter, Select) */
+.pd-list-controls { 
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-bottom: 1rem; gap: 10px; 
+}
+#search-input { 
+    flex: 1; height: 40px !important; min-height: 40px !important; 
+    border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); 
+    color: #fff; padding-left: 15px; font-size: 0.9rem; 
+    /* IMPORTANT: Include padding in width calculation */
+    box-sizing: border-box; 
+}
+#btn-select-mode, #btn-delete-selected { 
+    background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; 
+    padding: 0 12px; height: 40px; border-radius: 20px; font-size: 0.8rem; 
+    cursor: pointer; font-weight: 600; white-space: nowrap; 
+}
 #btn-select-mode:hover { color: #fff; border-color: #fff; }
 #btn-delete-selected { display: none; color: #555; border-color: #555; background: rgba(0,0,0,0.2); cursor: not-allowed; }
 #btn-delete-selected.active { color: #ff6b6b; border-color: #ff6b6b; background: transparent; cursor: pointer; }
@@ -331,19 +344,11 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     
     /* FORCE TABS TO NEW ROW UNDERNEATH */
     .pd-tabs-container { 
-        position: static; 
-        transform: none; 
-        order: 3; 
-        width: 100%; 
-        justify-content: flex-start; 
-        margin-top: 0.5rem; 
-        padding-left: 0; 
-        max-width: 100%; 
+        position: static; transform: none; order: 3; width: 100%; justify-content: flex-start; margin-top: 0.5rem; padding-left: 0; max-width: 100%; 
     }
     
     .pd-form-grid { grid-template-columns: 1fr; } 
     .pd-content-body { padding: 1rem; padding-bottom: 6rem; }
-    
     .pd-stats-container { display: flex; flex-wrap: nowrap; justify-content: space-between; gap: 0; padding: 0 10px; margin-top: 0; margin-bottom: 1rem; }
     .pd-circle-card { width: 44vw; height: 44vw; max-width: 180px; max-height: 180px; }
     .pd-stat-number { font-size: 3rem; margin-bottom: 2px; }
@@ -351,7 +356,6 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 
     /* LEADERBOARD MOBILE OVERRIDE */
     .pd-lb-header, .pd-lb-item {
-        /* Rank | Name | Shadow | Volunteer */
         grid-template-columns: 35px 1fr 70px 75px; 
         gap: 2px; 
     }
@@ -362,16 +366,16 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
         flex-wrap: wrap;
     }
     #search-input {
-        width: 100%;
+        width: 100%; /* Force full width on mobile */
         min-width: 100%;
-        order: 1;
+        order: 1; /* Search on Top */
         margin-bottom: 10px;
     }
     /* Buttons wrapper on new line */
     .pd-list-controls > div {
         order: 2;
         width: 100%;
-        justify-content: flex-end; /* OR space-between if you prefer */
+        justify-content: flex-end; 
         gap: 8px;
     }
 }
