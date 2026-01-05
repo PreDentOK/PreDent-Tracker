@@ -16,8 +16,13 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("year").textContent = new Date().getFullYear();
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('entry-date').value = today;
+    
+    // --- DATE FIX: LOCAL TIME ---
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    document.getElementById('entry-date').value = `${year}-${month}-${day}`;
 
     document.querySelectorAll('.pd-progress-ring__circle').forEach(circle => {
         circle.style.strokeDasharray = `${CIRCUMFERENCE} ${CIRCUMFERENCE}`;
@@ -40,7 +45,34 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- HELPER: UPDATE CIRCLES (RESTORED) ---
+// --- STRICT HOURS INPUT ---
+function setupHoursInput(id) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    
+    // Prevent typing specific characters, allow backspace/tab/arrows
+    el.addEventListener('keydown', function(e) {
+        if (['e', 'E', '-', '+'].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    // Sanitize input in realtime (allow numbers and ONE dot)
+    el.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9.]/g, '');
+    });
+
+    // Round on blur
+    el.addEventListener('blur', function() {
+        if (this.value) {
+            let val = parseFloat(this.value);
+            if (isNaN(val) || val < 0) this.value = '';
+            else this.value = Math.round(val);
+        }
+    });
+}
+
+// --- HELPER: UPDATE CIRCLES ---
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
     const text = document.getElementById(textId);
@@ -66,13 +98,6 @@ window.handleSearch = function() {
     currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
     render();
 };
-
-function setupHoursInput(id) {
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.addEventListener('keydown', function(e) { if (['e', 'E', '-', '+'].includes(e.key)) e.preventDefault(); });
-    el.addEventListener('blur', function() { if (this.value) this.value = Math.round(parseFloat(this.value)); });
-}
 
 // --- CSV IMPORT LOGIC ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
@@ -184,10 +209,7 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
-    } catch (e) { 
-        console.error("Error adding entry:", e); 
-        alert(`Error saving: ${e.message || "Connection failed. Check Firebase Rules."}`);
-    }
+    } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function saveEditEntry() {
@@ -329,7 +351,7 @@ function switchTab(tabName) {
     if(tabName === 'tracker') { btns[0].classList.add('active'); handleTypeChange(); }
     else if (tabName === 'stats') { 
         btns[1].classList.add('active'); 
-        calculateTrends(); // IMPORTANT: Recalculate and redraw graph
+        calculateTrends(); 
     }
     else { btns[2].classList.add('active'); if(localStorage.getItem('pd_username')) { document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username'); } }
 }
@@ -353,7 +375,7 @@ function render() {
     updateCircleStats('ring-shadow', 'total-shadow', sTotal); 
     updateCircleStats('ring-volunteer', 'total-volunteer', vTotal);
     
-    // UPDATE TRENDS & GRAPH ON EVERY RENDER SO IT'S READY
+    // UPDATE TRENDS & GRAPH ON EVERY RENDER
     calculateTrends();
 
     updateDatalists();
@@ -413,13 +435,12 @@ function render() {
 }
 
 function calculateTrends() {
-    // If no entries, 0 out stats but DO NOT crash
     if(entries.length === 0) {
         document.getElementById('stat-unique-docs').innerText = "0";
         document.getElementById('stat-total-entries').innerText = "0";
         document.getElementById('list-top-specialties').innerHTML = '<div class="pd-trend-empty">No data available</div>';
         document.getElementById('list-vol-mix').innerHTML = '<div class="pd-trend-empty">No data available</div>';
-        renderActivityGraph(); // Empty graph
+        renderActivityGraph(); 
         return;
     }
 
@@ -446,13 +467,11 @@ function calculateTrends() {
     renderActivityGraph();
 }
 
-// --- CANVAS GRAPH LOGIC ---
 function renderActivityGraph() {
     const canvas = document.getElementById('activity-canvas');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Resize based on container
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.parentElement.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -463,10 +482,8 @@ function renderActivityGraph() {
     const height = rect.height;
     ctx.clearRect(0, 0, width, height);
     
-    // Group Data
     const months = [];
     const today = new Date();
-    // Reverse loop to get order [Oldest -> Newest]
     for (let i = 5; i >= 0; i--) {
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
         months.push({ 
@@ -501,103 +518,32 @@ function renderActivityGraph() {
 
     const getY = (val) => height - padding - ((val / maxY) * chartH);
 
-    // DRAW SHADOWING LINE (BLUE)
-    ctx.beginPath();
-    ctx.strokeStyle = '#4da6ff';
-    ctx.lineWidth = 3;
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        const y = getY(m.shadow);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    });
+    // DRAW LINES
+    ctx.beginPath(); ctx.strokeStyle = '#4da6ff'; ctx.lineWidth = 3;
+    months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.shadow); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
 
-    // DRAW VOLUNTEER LINE (YELLOW)
-    ctx.beginPath();
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 3;
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        const y = getY(m.vol);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    });
+    ctx.beginPath(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
+    months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.vol); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
 
-    // DRAW POINTS
+    // DRAW POINTS (Bullseye)
     months.forEach((m, i) => {
         const x = padding + (i * stepX);
         const yShadow = getY(m.shadow);
         const yVol = getY(m.vol);
 
-        // Shadow Dot (Blue)
-        ctx.fillStyle = '#4da6ff';
-        ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#4da6ff'; ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
 
-        // Volunteer Dot (Yellow)
         if (m.vol === m.shadow && m.vol > 0) {
-            // Overlap: Yellow Ring around Blue Dot
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
         } else {
-            // Normal Yellow Dot
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath(); ctx.arc(x, yVol, 4, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(x, yVol, 4, 0, Math.PI*2); ctx.fill();
         }
     });
 
-    // LABELS
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '10px Inter';
-    ctx.textAlign = 'center';
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        ctx.fillText(m.label, x, height - 10);
-    });
-}
-
-// --- CSV IMPORT LOGIC (RESTORED) ---
-window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
-window.handleCSVImport = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(e) { await processCSV(e.target.result); input.value = ''; };
-    reader.readAsText(file);
-};
-async function processCSV(csvText) {
-    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
-    if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
-    const headerRow = rows[0].toUpperCase();
-    let isShadowingSheet = false, isVolunteeringSheet = false;
-    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
-    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
-    if (!isShadowingSheet && !isVolunteeringSheet) { alert("Could not identify sheet type."); return; }
-    const dataLines = rows.slice(1);
-    let importedCount = 0;
-    for (let line of dataLines) {
-        if (!line.trim()) continue; 
-        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
-        const rawDate = cols[0]; if(!rawDate) continue;
-        let formattedDate = rawDate;
-        if(rawDate.includes('/')) {
-            const parts = rawDate.split('/');
-            if(parts.length === 3) {
-                const m = parts[0].padStart(2, '0'), d = parts[1].padStart(2, '0'); let y = parts[2];
-                if (y.length === 2) y = '20' + y;
-                formattedDate = `${y}-${m}-${d}`;
-            }
-        }
-        let type, subtype, doctor, location;
-        if (isShadowingSheet) { type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General Dentistry"; location = cols[3]; } 
-        else { type = "Volunteering"; doctor = cols[1]; location = cols[2]; const rawRel = (cols[3] || "").toLowerCase(); subtype = (rawRel.includes("yes") || rawRel.includes("true")) ? "Dental Related" : "Non-Dental Related"; }
-        let hrs = Math.round(parseFloat(cols[4])); if(isNaN(hrs) || hrs <= 0) hrs = 0;
-        const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
-        if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
-    }
-    saveData(); render(); alert(`Successfully imported ${importedCount} entries.`);
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+    months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
 }
 
 window.openEditNameModal = function() {
@@ -614,6 +560,7 @@ window.saveNewName = function() {
         if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; document.getElementById('edit-name-modal').style.display = 'none'; return; }
         localStorage.setItem('pd_username', newName);
         document.getElementById('dropdown-name').textContent = newName;
+        // FORCE UPDATE ON CLOUD
         saveData(); 
     }
     closeEditNameModal();
