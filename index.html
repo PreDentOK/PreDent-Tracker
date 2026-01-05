@@ -42,7 +42,6 @@
                     </button>
                     <div id="profile-dropdown" class="pd-dropdown" style="width: 150px;">
                         <div class="pd-menu-item header-item" id="dropdown-name">User</div>
-                        <button class="pd-menu-item" onclick="openEditNameModal()">Edit Name</button>
                         <button class="pd-menu-item pd-menu-danger" onclick="googleLogout()">Sign Out</button>
                     </div>
                 </div>
@@ -118,7 +117,7 @@
 
                 <div class="pd-form-grid">
                     <div class="pd-input-wrapper">
-                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours" inputmode="decimal" step="any" min="0" required>
+                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours (Full numbers)" inputmode="decimal" step="any" min="0" required>
                         <span class="pd-error-asterisk">*</span>
                     </div>
                     <div class="pd-input-group pd-input-wrapper">
@@ -241,18 +240,6 @@
         </div>
     </div>
 
-    <div id="edit-name-modal" class="pd-modal-overlay">
-        <div class="pd-modal">
-            <h3>EDIT DISPLAY NAME</h3>
-            <p style="margin-bottom:1rem;">This is the name others see on the leaderboard.</p>
-            <input type="text" id="edit-name-input" class="pd-input" placeholder="Enter new name" style="margin-bottom:1rem;">
-            <div style="display:flex; justify-content:center; gap:10px;">
-                <button class="pd-btn pd-btn-cancel" onclick="closeEditNameModal()">Cancel</button>
-                <button class="pd-btn pd-btn-primary" onclick="saveNewName()">Save Name</button>
-            </div>
-        </div>
-    </div>
-
     <div id="edit-modal" class="pd-modal-overlay">
         <div class="pd-modal" style="width: 100%; max-width: 500px; padding: 1.5rem;">
             <h3 style="color:#4da6ff; margin-bottom: 1rem;">EDIT ENTRY</h3>
@@ -277,7 +264,7 @@
                 <div class="pd-form-grid">
                     <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Hours</label>
-                        <input type="number" id="edit-entry-hours" class="pd-input" inputmode="decimal" step="any" min="0">
+                        <input type="number" id="edit-entry-hours" class="pd-input" step="any" inputmode="decimal">
                     </div>
                     <div>
                         <label style="color:#cbd5e1; font-size:0.8rem;">Doctor/Supervisor</label>
