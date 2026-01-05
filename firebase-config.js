@@ -44,9 +44,7 @@ try {
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
-// ... (Rest of Database Helpers remain the same as previous correct version) ...
-// Ensure db_loadEntries, db_addEntry, db_deleteEntry, db_batchDelete, db_wipeAllEntries are present
-// (For brevity, assuming you have the previous working config. If not, I can paste the full block again)
+// --- DATABASE HELPERS ---
 
 window.db_loadEntries = async function(user) {
     if(!user || !db) return [];
@@ -118,6 +116,7 @@ async function migrateLocalToCloud(user) {
     }
 }
 
+// --- AUTH ---
 window.googleLogin = async function() {
     const provider = new GoogleAuthProvider();
     try { await signInWithPopup(auth, provider); } catch (error) { console.error(error); alert("Sign in failed."); }
