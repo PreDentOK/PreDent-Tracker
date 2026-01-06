@@ -148,7 +148,6 @@
 
             <div class="pd-list-controls">
                 <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
-                
                 <div style="display:flex; gap:5px; align-items:center;">
                     <div class="pd-menu-container" id="pd-filter-container">
                         <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
@@ -160,7 +159,6 @@
                             <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
                         </div>
                     </div>
-                    
                     <button id="btn-select-mode" onclick="toggleSelectionMode()">Select Entries</button>
                     <button id="btn-delete-selected" onclick="deleteSelectedEntries()" disabled>Delete</button>
                 </div>
@@ -174,9 +172,19 @@
         <div id="view-stats" class="pd-view">
             <h2 class="pd-section-title">Trends & Insights</h2>
             <div id="stats-content">
-                <div class="pd-form-grid">
-                    <div class="pd-trend-card"><h4>Unique Dentists</h4><div class="pd-trend-stat" id="stat-unique-docs">0</div></div>
-                    <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
+                
+                <div class="pd-trend-card">
+                    <div class="pd-split-stat-row">
+                        <div class="pd-split-col">
+                            <h4>Unique Dentists</h4>
+                            <div class="pd-trend-stat" id="stat-unique-docs">0</div>
+                        </div>
+                        <div class="pd-split-divider"></div>
+                        <div class="pd-split-col">
+                            <h4>Unique Orgs</h4>
+                            <div class="pd-trend-stat" id="stat-unique-orgs">0</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="pd-trend-card">
@@ -199,9 +207,11 @@
                 
                 <div class="pd-trend-card">
                     <h4>Shadowing Breakdown</h4>
-                    <div class="pd-chart-wrapper" style="height:220px">
-                        <canvas id="pie-canvas"></canvas>
-                        <div id="pie-legend" class="pd-chart-legend"></div>
+                    <div class="pd-pie-layout">
+                        <div id="pie-legend" class="pd-pie-legend"></div>
+                        <div class="pd-pie-canvas-container">
+                            <canvas id="pie-canvas"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -216,11 +226,13 @@
                     <h4>Consistency (Last 6 Months)</h4>
                     <div id="heatmap-container" class="pd-heatmap-grid"></div>
                     <div class="pd-chart-legend" style="margin-top:5px; justify-content:center;">
-                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#4da6ff"></div>Shadow</div>
-                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#ffd700"></div>Volunteer</div>
-                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#51cf66"></div>Mixed</div>
+                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#4da6ff; border-radius:3px;"></div>Shadow</div>
+                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#ffd700; border-radius:3px;"></div>Volunteer</div>
+                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#51cf66; border-radius:3px;"></div>Mixed</div>
                     </div>
                 </div>
+
+                <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
             </div>
         </div>
 
