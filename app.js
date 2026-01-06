@@ -8,7 +8,8 @@ let editingEntryId = null;
 let appUser = null; 
 let isSelectionMode = false;
 
-const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
+// UPDATED: "General" instead of "General Dentistry"
+const SUBTYPES_SHADOW = ["General", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
 const CIRCLE_RADIUS = 110; 
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
@@ -86,6 +87,7 @@ const GOALS = [
     // Specifics
     { id: 'g17', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs, entries) => {
+        // Matches "General" or "General Dentistry"
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
         return gen >= 50;
       },
@@ -122,7 +124,7 @@ const GOALS = [
 
     { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
       check: (s, v, count, specs, entries) => {
-          const months = new Set(entries.map(e => e.date.substring(0, 7))); // YYYY-MM
+          const months = new Set(entries.map(e => e.date.substring(0, 7))); 
           return months.size >= 6;
       },
       progress: (s, v, count, specs, entries) => {
@@ -311,6 +313,7 @@ async function saveData() {
 }
 
 function updateDatalists() {
+    // --- UPDATED: SPLIT DOCTORS BY COMMA FOR SUGGESTIONS ---
     const uniqueDocs = [...new Set(
         entries.map(e => e.doctor)
                .filter(Boolean)
@@ -565,13 +568,17 @@ function render() {
 }
 
 function calculateTrends() {
+    // If no entries, 0 out stats but DO NOT crash
     if(entries.length === 0) {
         document.getElementById('stat-unique-docs').innerText = "0";
         document.getElementById('stat-total-entries').innerText = "0";
+        document.getElementById('stat-unique-orgs').innerText = "0";
         document.getElementById('stat-avg-session').innerText = "0h";
-        document.getElementById('stat-projection').innerText = "--";
+        document.getElementById('stat-proj-shadow').innerText = "--";
+        document.getElementById('stat-proj-vol').innerText = "--";
         document.getElementById('list-vol-mix').innerHTML = '<div class="pd-trend-empty">No data available</div>';
-        renderActivityGraph(); 
+        
+        // Render Empty Charts
         renderPieChart();
         renderHeatmap();
         return;
@@ -579,13 +586,22 @@ function calculateTrends() {
 
     calculateAdvancedStats();
 
+    // Unique Dentists (Shadowing Doctors)
     const uniqueDocs = new Set(
         entries.filter(e => e.type === 'Shadowing')
                .flatMap(e => e.doctor.split(',').map(s => s.trim()))
                .filter(s => s.length > 0)
     ).size;
 
+    // Unique Orgs (Volunteer Doctors/Orgs)
+    const uniqueOrgs = new Set(
+        entries.filter(e => e.type === 'Volunteering')
+               .flatMap(e => e.doctor.split(',').map(s => s.trim()))
+               .filter(s => s.length > 0)
+    ).size;
+
     document.getElementById('stat-unique-docs').innerText = uniqueDocs;
+    document.getElementById('stat-unique-orgs').innerText = uniqueOrgs;
     document.getElementById('stat-total-entries').innerText = entries.length;
     
     // Vol Mix
@@ -598,7 +614,6 @@ function calculateTrends() {
         volList.innerHTML = `<li><span style="color:#51cf66;">Dental Related</span><span>${dPct}% (${dentalHrs} hrs)</span></li><li><span style="color:#ff6b6b;">Non-Dental</span><span>${nPct}% (${nonDentalHrs} hrs)</span></li><div class="pd-percent-bar"><div class="pd-fill-dental" style="width:${dPct}%;"></div><div class="pd-fill-non" style="width:${nPct}%;"></div></div>`;
     } else { volList.innerHTML = '<div class="pd-trend-empty">No volunteer data available</div>'; }
     
-    renderActivityGraph();
     renderPieChart();
     renderHeatmap();
 }
@@ -679,7 +694,7 @@ function renderPieChart() {
     });
 
     if(total === 0) {
-        legend.innerHTML = '<div class="pd-trend-empty">No data</div>';
+        // legend.innerHTML = '<div class="pd-trend-empty">No data</div>';
         return;
     }
 
@@ -720,8 +735,7 @@ function renderHeatmap() {
     if(!container) return;
     container.innerHTML = '';
     const today = new Date();
-    // Generate ~180 days (6 months)
-    const activeDates = {}; // Key: YYYY-MM-DD, Val: 'shadow' | 'vol' | 'mixed'
+    const activeDates = {}; 
     
     entries.forEach(e => {
         if (!activeDates[e.date]) activeDates[e.date] = new Set();
@@ -745,91 +759,10 @@ function renderHeatmap() {
             } else {
                 cell.style.background = '#ffd700'; // Yellow
             }
-            
-            // Intensity (Opacity) based on hours could be added here if desired
             cell.title = dateStr;
         }
         container.appendChild(cell);
     }
-}
-
-function renderActivityGraph() {
-    const canvas = document.getElementById('activity-canvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    
-    const width = rect.width;
-    const height = rect.height;
-    ctx.clearRect(0, 0, width, height);
-    
-    const months = [];
-    const today = new Date();
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        months.push({ 
-            key: d.toISOString().slice(0, 7), 
-            label: d.toLocaleString('default', { month: 'short' }),
-            shadow: 0,
-            vol: 0
-        });
-    }
-
-    entries.forEach(e => {
-        const key = e.date.slice(0, 7);
-        const m = months.find(x => x.key === key);
-        if (m) {
-            if (e.type === 'Shadowing') m.shadow += parseInt(e.hours);
-            else m.vol += parseInt(e.hours);
-        }
-    });
-
-    let maxVal = 0;
-    months.forEach(m => {
-        if (m.shadow > maxVal) maxVal = m.shadow;
-        if (m.vol > maxVal) maxVal = m.vol;
-    });
-    if (maxVal === 0) maxVal = 10;
-    const maxY = maxVal * 1.2;
-
-    const padding = 30;
-    const chartW = width - (padding * 2);
-    const chartH = height - (padding * 2);
-    const stepX = chartW / (months.length - 1);
-
-    const getY = (val) => height - padding - ((val / maxY) * chartH);
-
-    // DRAW LINES
-    ctx.beginPath(); ctx.strokeStyle = '#4da6ff'; ctx.lineWidth = 3;
-    months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.shadow); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
-    ctx.stroke();
-
-    ctx.beginPath(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
-    months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.vol); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
-    ctx.stroke();
-
-    // DRAW POINTS (Bullseye)
-    months.forEach((m, i) => {
-        const x = padding + (i * stepX);
-        const yShadow = getY(m.shadow);
-        const yVol = getY(m.vol);
-
-        ctx.fillStyle = '#4da6ff'; ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
-
-        if (m.vol === m.shadow && m.vol > 0) {
-            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
-        } else {
-            ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(x, yVol, 4, 0, Math.PI*2); ctx.fill();
-        }
-    });
-
-    ctx.fillStyle = '#cbd5e1'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
-    months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
 }
 
 // --- RENDER GOALS (SPLIT SECTIONS) ---
@@ -839,7 +772,7 @@ function renderGoals() {
     container.innerHTML = '';
     
     let sTotal = 0, vTotal = 0;
-    const specialistTypes = new Set();
+    const specialistTypes = new Set(); 
     entries.forEach(e => {
         const h = parseInt(e.hours) || 0;
         if (e.type === 'Shadowing') { 
@@ -859,7 +792,6 @@ function renderGoals() {
     GOALS.forEach(g => {
         let unlocked = false;
         try { unlocked = g.check(sTotal, vTotal, count, uniqueSpecs, entries); } catch(e){}
-        
         const gObj = { ...g, unlocked };
         if(unlocked) completed.push(gObj);
         else incomplete.push(gObj);
@@ -891,12 +823,9 @@ function renderGoals() {
             card.className = `pd-goal-card ${typeClass} ${g.unlocked ? 'completed' : ''}`;
             
             let starHTML = '';
-            // New Logic: Pink for Special, Yellow for others if unlocked, Grey if locked
-            let starColor = '#555';
-            if (g.unlocked) {
-                starColor = (g.class === 'special') ? '#ec4899' : '#ffd700';
-            }
-
+            // Grey star unless unlocked
+            // If unlocked AND special, use pink stars. Else if unlocked, use yellow.
+            const starColor = g.unlocked ? (g.class === 'special' ? '#ec4899' : '#ffd700') : '#555';
             for(let i=0; i<g.stars; i++) starHTML += `<span style="color:${starColor}">★</span> `;
             
             card.innerHTML = `
