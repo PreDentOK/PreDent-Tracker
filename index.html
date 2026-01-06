@@ -52,7 +52,7 @@
                 </button>
                 <div id="pd-options-dropdown" class="pd-dropdown">
                     <button class="pd-menu-item" onclick="refreshAppPage()">Refresh App</button>
-                    <button class="pd-menu-item" onclick="exportData()">Export CSV</button>
+                    <button class="pd-menu-item" onclick="exportData()">Export Report</button>
                     <button class="pd-menu-item" onclick="triggerImport()">Import CSV</button>
                     <div style="height:1px; background:rgba(255,255,255,0.1); margin:5px 0;"></div>
                     <button class="pd-menu-item pd-menu-danger" onclick="openResetModal()">Clear All Data</button>
@@ -138,7 +138,7 @@
                 </div>
 
                 <div style="margin-bottom: 1rem;">
-                    <input type="text" id="entry-notes" class="pd-input" placeholder="Notes (Optional)...">
+                    <input type="text" id="entry-notes" class="pd-input" placeholder="What did you learn/see today?">
                 </div>
 
                 <div class="pd-form-actions">
@@ -148,7 +148,6 @@
 
             <div class="pd-list-controls">
                 <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
-                
                 <div style="display:flex; gap:5px; align-items:center;">
                     <div class="pd-menu-container" id="pd-filter-container">
                         <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
@@ -160,7 +159,6 @@
                             <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
                         </div>
                     </div>
-                    
                     <button id="btn-select-mode" onclick="toggleSelectionMode()">Select Entries</button>
                     <button id="btn-delete-selected" onclick="deleteSelectedEntries()" disabled>Delete</button>
                 </div>
@@ -346,6 +344,9 @@
     </div>
     
     <input type="file" id="import-file-input" accept=".csv" style="display:none" onchange="handleCSVImport(this)">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 </div>
 
 <script type="module" src="firebase-config.js"></script>
