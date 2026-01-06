@@ -21,31 +21,34 @@ try {
     db = getFirestore(app);
     auth = getAuth(app);
     
-    // ENFORCE PERSISTENCE
-    setPersistence(auth, browserLocalPersistence).then(() => {
-        // Listener
-        onAuthStateChanged(auth, async (user) => {
-            currentUser = user;
-            updateAuthUI(user);
-            
-            if (window.refreshApp) window.refreshApp(user);
+    // FORCE PERSISTENCE IMMEDIATELY
+    (async () => {
+        try {
+            await setPersistence(auth, browserLocalPersistence);
+            onAuthStateChanged(auth, async (user) => {
+                currentUser = user;
+                updateAuthUI(user);
+                
+                if (window.refreshApp) window.refreshApp(user);
 
-            if (user) {
-                await migrateLocalToCloud(user);
-                const savedName = localStorage.getItem('pd_username');
-                if(!savedName && user.displayName) {
-                    localStorage.setItem('pd_username', user.displayName);
+                if (user) {
+                    await migrateLocalToCloud(user);
+                    const savedName = localStorage.getItem('pd_username');
+                    if(!savedName && user.displayName) {
+                        localStorage.setItem('pd_username', user.displayName);
+                    }
+                    window.syncToCloud(); 
                 }
-                window.syncToCloud(); 
-            }
-            window.fetchLeaderboard();
-        });
-    }).catch(console.error);
+                window.fetchLeaderboard();
+            });
+        } catch (e) {
+            console.error("Auth Persistence Error:", e);
+        }
+    })();
 
 } catch(e) { console.error("Firebase Init Error", e); }
 
 // --- DATABASE HELPERS ---
-
 window.db_loadEntries = async function(user) {
     if(!user || !db) return [];
     try {
@@ -85,11 +88,8 @@ window.db_wipeAllEntries = async function(user) {
     const snapshot = await getDocs(colRef);
     const batch = writeBatch(db);
     snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    
-    // Reset Leaderboard Stat
     const lbRef = doc(db, 'leaderboard', user.uid);
     batch.set(lbRef, { shadow: 0, vol: 0, total: 0 }, { merge: true });
-    
     await batch.commit();
 };
 
@@ -129,23 +129,18 @@ window.googleLogout = async function() {
 function updateAuthUI(user) {
     const loginBtn = document.getElementById('btn-google-login');
     const profileSection = document.getElementById('user-profile');
-    const signinPromo = document.getElementById('signin-promo');
-    const lbProfileBox = document.getElementById('lb-profile-box');
-    const lbMain = document.getElementById('lb-card-main');
+    const promptModal = document.getElementById('signin-prompt-modal');
+    
     if (user) {
         loginBtn.classList.add('hidden');
         profileSection.classList.remove('hidden');
         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
         document.getElementById('dropdown-name').textContent = user.displayName || 'User';
-        if(signinPromo) signinPromo.style.display = 'none';
-        if (!localStorage.getItem('pd_profile_setup_done')) { if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden'); } else { if(lbProfileBox) lbProfileBox.classList.add('pd-hidden'); }
-        if(lbMain) lbMain.classList.remove('pd-hidden');
+        if(promptModal) promptModal.style.display = 'none'; // HIDE PROMPT
     } else {
         loginBtn.classList.remove('hidden');
         profileSection.classList.add('hidden');
-        if(signinPromo) signinPromo.style.display = 'block';
-        if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
-        if(lbMain) lbMain.classList.add('pd-hidden');
+        if(promptModal) promptModal.style.display = 'flex'; // SHOW PROMPT
     }
 }
 
