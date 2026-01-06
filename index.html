@@ -117,7 +117,7 @@
 
                 <div class="pd-form-grid">
                     <div class="pd-input-wrapper">
-                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours (Full numbers)" inputmode="decimal" step="any" min="0" required>
+                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours" inputmode="decimal" step="any" min="0" required>
                         <span class="pd-error-asterisk">*</span>
                     </div>
                     <div class="pd-input-group pd-input-wrapper">
@@ -179,10 +179,8 @@
                     <div class="pd-trend-card"><h4>Unique Dentists</h4><div class="pd-trend-stat" id="stat-unique-docs">0</div></div>
                     <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
                 </div>
-                
                 <div class="pd-trend-card"><h4>Top Specialties</h4><ul class="pd-trend-list" id="list-top-specialties"><div class="pd-trend-empty">No data available</div></ul></div>
                 <div class="pd-trend-card"><h4>Volunteer Experience Mix</h4><ul class="pd-trend-list" id="list-vol-mix"><div class="pd-trend-empty">No data available</div></ul></div>
-                
                 <div class="pd-trend-card">
                     <h4>Monthly Activity</h4>
                     <div class="pd-chart-wrapper">
@@ -192,27 +190,10 @@
             </div>
         </div>
 
-        <div id="view-leaderboard" class="pd-view">
-            <h2 class="pd-section-title">Community Leaderboard</h2>
-            <div id="signin-promo" style="text-align:center; padding:2rem; background:rgba(255,255,255,0.05); border-radius:12px;">
-                <p>Sign in with Google to see how you rank against other PreDental students!</p>
-                <button class="pd-btn pd-btn-primary" onclick="googleLogin()">Sign In Now</button>
-            </div>
-            <div class="pd-lb-profile pd-hidden" id="lb-profile-box">
-                <h4>Leaderboard Profile</h4>
-                <p>Your Google name is used by default. Enter a display name below to override it.</p>
-                <div class="pd-lb-input-row">
-                    <input type="text" id="user-display-name" class="pd-input" placeholder="Display Name">
-                    <button class="pd-btn pd-btn-primary" onclick="updateProfileName()" style="width: auto;">Update</button>
-                    <button class="pd-btn pd-btn-cancel" onclick="skipProfileSetup()" style="width: auto; margin-right:0;">Skip</button>
+        <div id="view-goals" class="pd-view">
+            <h2 class="pd-section-title">Achievements & Goals</h2>
+            <div class="pd-goals-grid" id="goals-list">
                 </div>
-            </div>
-            <div class="pd-leaderboard-card pd-hidden" id="lb-card-main">
-                <div class="pd-lb-header"><div>Rank</div><div>Name</div><div>Shadow</div><div>Volunteer</div></div>
-                <div id="leaderboard-list">
-                    <div style="padding:2rem; text-align:center; color:#cbd5e1;">Syncing scores...</div>
-                </div>
-            </div>
         </div>
 
     </div>
@@ -329,12 +310,11 @@
         </div>
     </div>
     
-    <div id="signin-prompt-modal" class="pd-modal-overlay">
+    <div id="signin-prompt-modal" class="pd-modal-overlay" style="display: flex;">
         <div class="pd-modal" style="border: 1px solid #4da6ff;">
-            <h3 style="color:#4da6ff">SAVE YOUR PROGRESS</h3>
-            <p>Sign in with Google to sync your hours across devices and join the leaderboard.</p>
+            <h3 style="color:#4da6ff">LOGIN REQUIRED</h3>
+            <p>You must sign in with Google to access your hours log.</p>
             <div style="display:flex; justify-content:center; gap:10px; margin-top:1rem;">
-                <button class="pd-btn pd-btn-cancel" onclick="closeSignInPrompt()">Later</button>
                 <button class="pd-btn pd-btn-primary" onclick="googleLoginFromPrompt()">Sign In</button>
             </div>
         </div>
