@@ -10,14 +10,29 @@ let isSelectionMode = false;
 
 const SUBTYPES_SHADOW = ["General Dentistry", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
-const BLOCKED_WORDS = ["damn", "hell", "crap", "suck", "sexy", "hot", "xxx", "stupid", "idiot", "ass", "bitch", "shit", "fuck", "dick", "cock", "pussy"];
 const CIRCLE_RADIUS = 110; 
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
+// --- GOAL DEFINITIONS ---
+const GOALS = [
+    { id: 'g1', title: 'OU Standard: Shadow', req: '100 Shadowing Hours', type: 'shadow', check: (s, v, specs) => s >= 100 },
+    { id: 'g2', title: 'OU Standard: Volunteer', req: '100 Volunteer Hours', type: 'vol', check: (s, v, specs) => v >= 100 },
+    { id: 'g3', title: 'Level Up: Shadow', req: '200 Shadowing Hours', type: 'shadow', check: (s, v, specs) => s >= 200 },
+    { id: 'g4', title: 'Level Up: Volunteer', req: '200 Volunteer Hours', type: 'vol', check: (s, v, specs) => v >= 200 },
+    { id: 'g5', title: 'Explorer', req: 'Shadow 3 Different Specialists', type: 'mixed', check: (s, v, specs) => specs >= 3 },
+    { id: 'g6', title: 'Networker', req: 'Shadow 6 Different Specialists', type: 'mixed', check: (s, v, specs) => specs >= 6 },
+    { id: 'g7', title: 'The Generalist', req: '50 Hours General Dentistry', type: 'shadow', check: (s, v, specs, entries) => {
+        const genHours = entries.filter(e => e.type === 'Shadowing' && e.subtype === 'General Dentistry')
+                                .reduce((acc, curr) => acc + parseInt(curr.hours), 0);
+        return genHours >= 50;
+    }},
+    { id: 'g8', title: 'Marathon', req: 'Log an 8+ Hour Session', type: 'mixed', check: (s, v, specs, entries) => {
+        return entries.some(e => parseInt(e.hours) >= 8);
+    }}
+];
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("year").textContent = new Date().getFullYear();
-    
-    // --- DATE FIX: LOCAL TIME ---
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -45,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
     handleTypeChange();
 });
 
-// --- HELPER: UPDATE CIRCLES ---
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
     const text = document.getElementById(textId);
@@ -57,7 +71,6 @@ function updateCircleStats(ringId, textId, hours) {
     if(text) text.innerText = hours;
 }
 
-// --- HELPER: UPDATE DELETE BUTTON STATE ---
 function updateDeleteButtonState() {
     const count = document.querySelectorAll('.pd-checkbox:checked').length;
     const btn = document.getElementById('btn-delete-selected');
@@ -66,7 +79,6 @@ function updateDeleteButtonState() {
     else btn.classList.remove('active');
 }
 
-// --- SEARCH LOGIC ---
 window.handleSearch = function() {
     currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
     render();
@@ -75,15 +87,10 @@ window.handleSearch = function() {
 function setupHoursInput(id) {
     const el = document.getElementById(id);
     if(!el) return;
-    
-    // Prevent typing specific characters
     el.addEventListener('keydown', function(e) {
-        if (['e', 'E', '-', '+'].includes(e.key)) {
-            e.preventDefault();
-        }
+        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '.'].includes(e.key)) return;
+        if (['e', 'E', '-', '+'].includes(e.key)) e.preventDefault();
     });
-
-    // Round on blur
     el.addEventListener('blur', function() {
         if (this.value) {
             let val = parseFloat(this.value);
@@ -93,70 +100,7 @@ function setupHoursInput(id) {
     });
 }
 
-// --- SMART EXPORT LOGIC ---
-window.exportData = function() {
-    // 1. Get data based on filter
-    let exportEntries = entries;
-    if (currentFilter !== 'All') {
-        exportEntries = entries.filter(e => e.type === currentFilter);
-    }
-    
-    if(exportEntries.length === 0) { alert("No data to export!"); return; }
-    
-    let csv = "";
-    let filename = "PreDent_Activity_Log.csv";
-    const isVolunteering = (currentFilter === 'Volunteering');
-
-    // 2. Build CSV based on Template
-    if (isVolunteering) {
-        // TEMPLATE: DATE, ORGANIZATION, LOCATION, DENTAL RELATED, HOURS, COMMENTS
-        csv += "DATE,ORGANIZATION,LOCATION,DENTAL RELATED,HOURS,COMMENTS\n";
-        filename = "PreDent_Volunteering_Log.csv";
-        
-        exportEntries.forEach(e => {
-            // Date Format: MM/DD/YYYY
-            let dParts = e.date.split('-'); 
-            let dFormatted = `${dParts[1]}/${dParts[2]}/${dParts[0]}`;
-            
-            const col1 = `"${(e.doctor || '').replace(/"/g, '""')}"`; // Organization
-            const col2 = `"${(e.location || '').replace(/"/g, '""')}"`; // Location
-            const col3 = `"${(e.subtype || '').replace(/"/g, '""')}"`; // Dental Related (Subtype)
-            const col4 = e.hours;
-            const col5 = `"${(e.notes || '').replace(/"/g, '""')}"`; // Comments
-            
-            csv += `${dFormatted},${col1},${col2},${col3},${col4},${col5}\n`;
-        });
-    } else {
-        // TEMPLATE: DATE, DOCTOR(S), SPECIALTY, LOCATION, HOURS, COMMENTS
-        // Used for Shadowing OR All
-        csv += "DATE,DOCTOR(S),SPECIALTY,LOCATION,HOURS,COMMENTS\n";
-        filename = (currentFilter === 'Shadowing') ? "PreDent_Shadowing_Log.csv" : "PreDent_All_Logs.csv";
-        
-        exportEntries.forEach(e => {
-            let dParts = e.date.split('-'); 
-            let dFormatted = `${dParts[1]}/${dParts[2]}/${dParts[0]}`;
-            
-            const col1 = `"${(e.doctor || '').replace(/"/g, '""')}"`; // Doctor(s)
-            const col2 = `"${(e.subtype || '').replace(/"/g, '""')}"`; // Specialty
-            const col3 = `"${(e.location || '').replace(/"/g, '""')}"`; // Location
-            const col4 = e.hours;
-            const col5 = `"${(e.notes || '').replace(/"/g, '""')}"`; // Comments
-            
-            csv += `${dFormatted},${col1},${col2},${col3},${col4},${col5}\n`;
-        });
-    }
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a'); 
-    a.href = url; 
-    a.download = filename; 
-    a.click();
-    
-    closeAllMenus();
-};
-
-// --- CSV IMPORT LOGIC ---
+// --- CSV IMPORT ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
 window.handleCSVImport = function(input) {
     const file = input.files[0];
@@ -167,7 +111,7 @@ window.handleCSVImport = function(input) {
 };
 async function processCSV(csvText) {
     const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
-    if (!rows || rows.length < 2) { alert("CSV appears empty or unreadable."); return; }
+    if (!rows || rows.length < 2) { alert("CSV appears empty."); return; }
     const headerRow = rows[0].toUpperCase();
     let isShadowingSheet = false, isVolunteeringSheet = false;
     if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
@@ -195,7 +139,7 @@ async function processCSV(csvText) {
         const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
         if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
     }
-    saveData(); render(); alert(`Successfully imported ${importedCount} entries.`);
+    saveData(); render(); alert(`Imported ${importedCount} entries.`);
 }
 
 window.toggleSelectionMode = function() {
@@ -207,8 +151,7 @@ window.toggleSelectionMode = function() {
     else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
 };
 
-window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
-window.googleLoginFromPrompt = function() { window.closeSignInPrompt(); window.googleLogin(); };
+window.googleLoginFromPrompt = function() { window.googleLogin(); };
 window.refreshApp = async function(user) { appUser = user; await loadData(); };
 window.refreshAppPage = function() { window.location.href = 'https://predent.net/#app'; window.location.reload(); };
 
@@ -250,12 +193,9 @@ async function addEntry() {
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
-        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
-    }
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
-
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
@@ -266,17 +206,13 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
-    } catch (e) { 
-        console.error("Error adding entry:", e); 
-        alert(`Error saving: ${e.message || "Connection failed. Check Firebase Rules."}`);
-    }
+    } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function saveEditEntry() {
     if (!editingEntryId) return;
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
     if(modalWrappers.length > 0) modalWrappers.forEach(el => el.classList.remove('error'));
-
     const type = document.getElementById('edit-entry-type').value;
     const subtype = document.getElementById('edit-entry-subtype').value;
     const date = document.getElementById('edit-entry-date').value;
@@ -284,7 +220,6 @@ async function saveEditEntry() {
     const doctor = document.getElementById('edit-entry-doctor').value.trim();
     const hoursInput = document.getElementById('edit-entry-hours').value;
     const notes = document.getElementById('edit-entry-notes').value;
-
     let hasError = false;
     const markError = (id) => { const el = document.getElementById(id); if(el) { el.style.borderColor = "#ff6b6b"; el.addEventListener('input', function() { this.style.borderColor = "rgba(255, 255, 255, 0.2)"; }, {once:true}); } hasError = true; };
     if (!type) markError('edit-entry-type'); if (!subtype) markError('edit-entry-subtype'); if (!date) markError('edit-entry-date'); if (!loc) markError('edit-entry-loc'); if (!doctor) markError('edit-entry-doctor'); if (!hoursInput) markError('edit-entry-hours');
@@ -296,7 +231,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
+    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
 async function deleteSelectedEntries() {
@@ -387,21 +322,7 @@ function closeAllMenus() {
 }
 function skipProfileSetup() { localStorage.setItem('pd_profile_setup_done', 'true'); document.getElementById('lb-profile-box').classList.add('pd-hidden'); }
 function updateProfileName() {
-    const nameInput = document.getElementById('user-display-name');
-    const name = nameInput.value.trim();
-    if(!name && !localStorage.getItem('pd_username')) return; 
-    if(name) {
-        const lowerName = name.toLowerCase();
-        const hasProfanity = BLOCKED_WORDS.some(word => lowerName.includes(word));
-        if (hasProfanity) { document.getElementById('warning-modal').style.display = 'flex'; nameInput.value = ''; return; }
-        localStorage.setItem('pd_username', name);
-    }
-    const savedName = localStorage.getItem('pd_username');
-    if(savedName) document.getElementById('dropdown-name').textContent = savedName;
-    localStorage.setItem('pd_profile_setup_done', 'true');
-    document.getElementById('lb-profile-box').classList.add('pd-hidden');
-    if(window.syncToCloud) window.syncToCloud();
-    if(name) alert("Display name updated!");
+    // Deprecated but kept for safety
 }
 function switchTab(tabName) {
     document.querySelectorAll('.pd-view').forEach(view => view.classList.remove('active'));
@@ -413,7 +334,10 @@ function switchTab(tabName) {
         btns[1].classList.add('active'); 
         calculateTrends(); 
     }
-    else { btns[2].classList.add('active'); if(localStorage.getItem('pd_username')) { document.getElementById('dropdown-name').textContent = localStorage.getItem('pd_username'); } }
+    else if (tabName === 'leaderboard') { // Keep ID as leaderboard but render goals
+        btns[2].classList.add('active');
+        renderGoals(); 
+    }
 }
 function handleTypeChange() { updateSubtypeOptions('entry-type', 'entry-subtype', 'entry-doctor'); }
 function handleEditTypeChange() { updateSubtypeOptions('edit-entry-type', 'edit-entry-subtype', 'edit-entry-doctor'); }
@@ -604,4 +528,43 @@ function renderActivityGraph() {
 
     ctx.fillStyle = '#cbd5e1'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
     months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
+}
+
+function renderGoals() {
+    const grid = document.getElementById('goals-list');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    let sTotal = 0, vTotal = 0;
+    const shadowTypes = new Set();
+    
+    entries.forEach(e => {
+        const h = parseInt(e.hours) || 0;
+        if (e.type === 'Shadowing') { sTotal += h; shadowTypes.add(e.subtype); }
+        else { vTotal += h; }
+    });
+
+    const uniqueSpecs = shadowTypes.size;
+
+    GOALS.forEach(g => {
+        const unlocked = g.check(sTotal, vTotal, uniqueSpecs, entries);
+        let typeClass = '';
+        if (g.type === 'shadow') typeClass = 'type-shadow';
+        else if (g.type === 'vol') typeClass = 'type-vol';
+        else typeClass = 'type-mixed';
+
+        const statusText = unlocked ? "UNLOCKED" : "LOCKED";
+        
+        const card = document.createElement('div');
+        card.className = `pd-goal-card ${typeClass} ${unlocked ? 'unlocked' : ''}`;
+        card.innerHTML = `
+            <svg class="pd-goal-icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <div class="pd-goal-title">${g.title}</div>
+            <div class="pd-goal-req">${g.req}</div>
+            <div class="pd-goal-status">${statusText}</div>
+        `;
+        grid.appendChild(card);
+    });
 }
