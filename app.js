@@ -18,49 +18,72 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
 // --- GOAL DEFINITIONS ---
 const GOALS = [
+    // Shadowing Tiers
     { id: 'g1', title: 'Shadowing I', req: '10 Hours Shadowing', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => s >= 10, progress: (s) => Math.min((s / 10) * 100, 100), label: (s) => `${s} / 10` },
+
     { id: 'g2', title: 'Shadowing II', req: '50 Hours Shadowing', difficulty: 'Medium', class: 'medium', stars: 2, 
       check: (s, v, count, specs) => s >= 50, progress: (s) => Math.min((s / 50) * 100, 100), label: (s) => `${s} / 50` },
+      
     { id: 'g3', title: 'Shadowing III', req: '100 Hours Shadowing', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => s >= 100, progress: (s) => Math.min((s / 100) * 100, 100), label: (s) => `${s} / 100` },
+      
     { id: 'g4', title: 'Shadowing IV', req: '200 Hours Shadowing', difficulty: 'Extreme', class: 'extreme', stars: 4, 
       check: (s, v, count, specs) => s >= 200, progress: (s) => Math.min((s / 200) * 100, 100), label: (s) => `${s} / 200` },
+      
     { id: 'g5', title: 'Shadowing V', req: '300+ Hours Shadowing', difficulty: 'Impossible', class: 'impossible', stars: 5, 
       check: (s, v, count, specs) => s >= 300, progress: (s) => Math.min((s / 300) * 100, 100), label: (s) => `${s} / 300+` },
 
+    // Volunteer Tiers
     { id: 'g6', title: 'Volunteer I', req: '10 Hours Volunteering', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => v >= 10, progress: (s, v) => Math.min((v / 10) * 100, 100), label: (s, v) => `${v} / 10` },
+
     { id: 'g7', title: 'Volunteer II', req: '50 Hours Volunteering', difficulty: 'Medium', class: 'medium', stars: 2, 
       check: (s, v, count, specs) => v >= 50, progress: (s, v) => Math.min((v / 50) * 100, 100), label: (s, v) => `${v} / 50` },
+      
     { id: 'g8', title: 'Volunteer III', req: '100 Hours Volunteering', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => v >= 100, progress: (s, v) => Math.min((v / 100) * 100, 100), label: (s, v) => `${v} / 100` },
+      
     { id: 'g9', title: 'Volunteer IV', req: '200 Hours Volunteering', difficulty: 'Extreme', class: 'extreme', stars: 4, 
       check: (s, v, count, specs) => v >= 200, progress: (s, v) => Math.min((v / 200) * 100, 100), label: (s, v) => `${v} / 200` },
+      
     { id: 'g10', title: 'Volunteer V', req: '300+ Hours Volunteering', difficulty: 'Impossible', class: 'impossible', stars: 5, 
       check: (s, v, count, specs) => v >= 300, progress: (s, v) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300+` },
 
+    // Entry Tiers
     { id: 'g11', title: 'First Step', req: 'Log 1st Entry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => count >= 1, progress: (s, v, count) => Math.min((count / 1) * 100, 100), label: (s, v, count) => `${count} / 1` },
+      
     { id: 'g12', title: 'Momentum', req: 'Log 10 Entries', difficulty: 'Medium', class: 'medium', stars: 2, 
       check: (s, v, count, specs) => count >= 10, progress: (s, v, count) => Math.min((count / 10) * 100, 100), label: (s, v, count) => `${count} / 10` },
+      
     { id: 'g13', title: 'Dedicated', req: 'Log 100 Entries', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => count >= 100, progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
 
+    // Specialist Goals
     { id: 'g14', title: 'Initiate', req: 'Shadow 1 Specialist', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => specs >= 1, progress: (s, v, count, specs) => Math.min((specs / 1) * 100, 100), label: (s, v, count, specs) => `${specs} / 1` },
+
     { id: 'g15', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 2, 
       check: (s, v, count, specs) => specs >= 3, progress: (s, v, count, specs) => Math.min((specs / 3) * 100, 100), label: (s, v, count, specs) => `${specs} / 3` },
+      
     { id: 'g16', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => specs >= 6, progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
+    // Specifics
     { id: 'g17', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs, entries) => {
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
         return gen >= 50;
       },
-      progress: (s, v, count, specs, entries) => Math.min((entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0) / 50) * 100, 100),
-      label: (s, v, count, specs, entries) => `${entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0)} / 50`
+      progress: (s, v, count, specs, entries) => {
+         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
+         return Math.min((gen / 50) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
+         return `${gen} / 50`;
+      }
     },
     
     { id: 'g18', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Medium', class: 'medium', stars: 2,
@@ -70,38 +93,89 @@ const GOALS = [
     },
 
     { id: 'g19', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
-      check: (s, v, count, specs, entries) => new Set(entries.map(e => e.location.trim().toLowerCase())).size >= 5,
-      progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.location.trim().toLowerCase())).size / 5) * 100, 100),
-      label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.location.trim().toLowerCase())).size} / 5`
+      check: (s, v, count, specs, entries) => {
+          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
+          return locs.size >= 5;
+      },
+      progress: (s, v, count, specs, entries) => {
+          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
+          return Math.min((locs.size / 5) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
+          return `${locs.size} / 5`;
+      }
     },
 
     { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
-      check: (s, v, count, specs, entries) => new Set(entries.map(e => e.date.substring(0, 7))).size >= 6,
-      progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.date.substring(0, 7))).size / 6) * 100, 100),
-      label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.date.substring(0, 7))).size} / 6`
+      check: (s, v, count, specs, entries) => {
+          const months = new Set(entries.map(e => e.date.substring(0, 7))); // YYYY-MM
+          return months.size >= 6;
+      },
+      progress: (s, v, count, specs, entries) => {
+          const months = new Set(entries.map(e => e.date.substring(0, 7)));
+          return Math.min((months.size / 6) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+          const months = new Set(entries.map(e => e.date.substring(0, 7)));
+          return `${months.size} / 6`;
+      }
     },
 
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
-          entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
+          entries.forEach(e => {
+              const k = e.date.substring(0, 7);
+              months[k] = (months[k] || 0) + parseInt(e.hours);
+          });
           return Object.values(months).some(val => val >= 40);
       },
       progress: (s, v, count, specs, entries) => {
-          const months = {}; entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
-          return Math.min((Math.max(0, ...Object.values(months)) / 40) * 100, 100);
+          const months = {};
+          entries.forEach(e => {
+              const k = e.date.substring(0, 7);
+              months[k] = (months[k] || 0) + parseInt(e.hours);
+          });
+          const max = Math.max(0, ...Object.values(months));
+          return Math.min((max / 40) * 100, 100);
       },
       label: (s, v, count, specs, entries) => {
-          const months = {}; entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
-          return `${Math.max(0, ...Object.values(months))} / 40`;
+          const months = {};
+          entries.forEach(e => {
+              const k = e.date.substring(0, 7);
+              months[k] = (months[k] || 0) + parseInt(e.hours);
+          });
+          const max = Math.max(0, ...Object.values(months));
+          return `${max} / 40`;
       }
     },
 
-    // RARE GOAL
+    // RARE GOAL (Pink 1 Star)
     { id: 'g14_rare', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
-      check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))),
-      progress: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))) ? 100 : 0,
-      label: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))) ? "Found!" : "Not Found"
+      check: (s, v, count, specs, entries) => {
+          const terms = ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"];
+          return entries.some(e => {
+             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
+             return terms.some(t => txt.includes(t));
+          });
+      },
+      progress: (s, v, count, specs, entries) => {
+          const terms = ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"];
+          const found = entries.some(e => {
+             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
+             return terms.some(t => txt.includes(t));
+          });
+          return found ? 100 : 0;
+      },
+      label: (s, v, count, specs, entries) => {
+          const terms = ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"];
+          const found = entries.some(e => {
+             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
+             return terms.some(t => txt.includes(t));
+          });
+          return found ? "Found!" : "Not Found";
+      }
     }
 ];
 
@@ -133,6 +207,71 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
     handleTypeChange();
 });
+
+// --- POPUP LOGIC ---
+function queueNotification(goal) {
+    notificationQueue.push(goal);
+    processNotificationQueue();
+}
+
+function processNotificationQueue() {
+    if (isShowingNotification || notificationQueue.length === 0) return;
+    
+    isShowingNotification = true;
+    const goal = notificationQueue.shift();
+    showAchievementPopup(goal);
+}
+
+function showAchievementPopup(goal) {
+    const popup = document.getElementById('achievement-popup');
+    const nameEl = document.getElementById('popup-goal-name');
+    if(!popup) return;
+    
+    nameEl.textContent = goal.title;
+    popup.classList.add('active');
+    
+    // Auto hide
+    setTimeout(() => {
+        popup.classList.remove('active');
+        setTimeout(() => {
+            isShowingNotification = false;
+            processNotificationQueue();
+        }, 600); // Wait for transition
+    }, 2500); 
+}
+
+// --- CHECK ACHIEVEMENTS ---
+function checkAchievements(silent = false) {
+    let sTotal = 0, vTotal = 0;
+    const specialistTypes = new Set(); 
+    entries.forEach(e => {
+        const h = parseInt(e.hours) || 0;
+        if (e.type === 'Shadowing') { 
+            sTotal += h; 
+            if (e.subtype && !e.subtype.toLowerCase().includes('general')) {
+                specialistTypes.add(e.subtype); 
+            }
+        }
+        else { vTotal += h; }
+    });
+    const uniqueSpecs = specialistTypes.size;
+    const count = entries.length;
+
+    GOALS.forEach(g => {
+        let unlocked = false;
+        try { unlocked = g.check(sTotal, vTotal, count, uniqueSpecs, entries); } catch(e){}
+        
+        if (unlocked) {
+            // Only notify if newly unlocked (or first load sync)
+            if (!unlockedGoalIds.has(g.id)) {
+                unlockedGoalIds.add(g.id);
+                if (!silent) {
+                    queueNotification(g);
+                }
+            }
+        }
+    });
+}
 
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
@@ -174,83 +313,7 @@ function setupHoursInput(id) {
     });
 }
 
-// --- PDF EXPORT LOGIC ---
-window.exportData = function() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // Sort Entries by Date
-    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // Filter by Type
-    const shadowEntries = entries.filter(e => e.type === 'Shadowing');
-    const volEntries = entries.filter(e => e.type === 'Volunteering');
-
-    // Title
-    doc.setFontSize(18);
-    doc.text("PreDent Connect - Experience Report", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 27);
-
-    let finalY = 35;
-
-    // --- SHADOWING SECTION ---
-    if (shadowEntries.length > 0) {
-        doc.setFontSize(14);
-        doc.text("Shadowing Experiences", 14, finalY);
-        finalY += 5;
-
-        // Prepare Data Table
-        const shadowData = shadowEntries.map(e => [
-            new Date(e.date).toLocaleDateString(),
-            e.doctor,
-            e.subtype,
-            e.location,
-            e.hours,
-            e.notes
-        ]);
-
-        doc.autoTable({
-            startY: finalY,
-            head: [['Date', 'Doctor(s)', 'Specialty', 'Location', 'Hrs', 'Notes']],
-            body: shadowData,
-            theme: 'grid',
-            headStyles: { fillColor: [77, 166, 255] }, // Blue Header
-            styles: { fontSize: 8 }
-        });
-
-        finalY = doc.lastAutoTable.finalY + 15;
-    }
-
-    // --- VOLUNTEERING SECTION ---
-    if (volEntries.length > 0) {
-        doc.setFontSize(14);
-        doc.text("Volunteer Experiences", 14, finalY);
-        finalY += 5;
-
-        const volData = volEntries.map(e => [
-            new Date(e.date).toLocaleDateString(),
-            e.doctor, // "Doctor" field used as Org/Supervisor
-            e.location,
-            e.subtype, // Dental vs Non-Dental
-            e.hours,
-            e.notes
-        ]);
-
-        doc.autoTable({
-            startY: finalY,
-            head: [['Date', 'Organization', 'Location', 'Type', 'Hrs', 'Notes']],
-            body: volData,
-            theme: 'grid',
-            headStyles: { fillColor: [255, 215, 0], textColor: [50, 50, 50] }, // Yellow Header
-            styles: { fontSize: 8 }
-        });
-    }
-
-    doc.save("PreDent_Activity_Report.pdf");
-    closeAllMenus();
-};
-
+// --- CSV IMPORT ---
 window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
 window.handleCSVImport = function(input) {
     const file = input.files[0];
@@ -289,7 +352,10 @@ async function processCSV(csvText) {
         const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
         if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
     }
-    saveData(); render(); checkAchievements(false); alert(`Imported ${importedCount} entries.`);
+    saveData(); 
+    render(); 
+    checkAchievements(false); // Trigger Notification
+    alert(`Imported ${importedCount} entries.`);
 }
 
 window.toggleSelectionMode = function() {
@@ -313,8 +379,7 @@ async function loadData() {
     if (appUser) { entries = await window.db_loadEntries(appUser); } 
     else { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     
-    // Silent check on load
-    checkAchievements(true); 
+    checkAchievements(true); // Silent check on load
     render();
 }
 
@@ -367,9 +432,9 @@ async function addEntry() {
         if (appUser) { await window.db_addEntry(appUser, newEntry); entries.push(newEntry); } 
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
-        saveData(); render();
-        // Check new achievements AUDIBLY
-        checkAchievements(false);
+        saveData(); 
+        render();
+        checkAchievements(false); // Audible Notification
     } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
@@ -395,7 +460,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-        checkAchievements(false);
+        checkAchievements(false); // Audible Notification
     } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
@@ -517,14 +582,12 @@ function updateSubtypeOptions(typeId, subtypeId, docId, notesId) {
     
     docInput.placeholder = mainType === 'Shadowing' ? "Doctor(s) (separate with comma)" : "Organization / Supervisor";
     
-    // UPDATED NOTES PLACEHOLDER
     if(notesInput) {
         notesInput.placeholder = (mainType === 'Shadowing') 
             ? "What did you learn/see today?" 
             : "What did you do today?";
     }
 }
-
 function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; }
 function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; document.getElementById('reset-confirm-input').value = ''; }
 
@@ -773,11 +836,11 @@ function renderHeatmap() {
         if (activeDates[dateStr]) {
             const types = activeDates[dateStr];
             if (types.has('Shadowing') && types.has('Volunteering')) {
-                cell.style.background = '#51cf66'; // Green
+                cell.style.background = '#51cf66'; 
             } else if (types.has('Shadowing')) {
-                cell.style.background = '#4da6ff'; // Blue
+                cell.style.background = '#4da6ff'; 
             } else {
-                cell.style.background = '#ffd700'; // Yellow
+                cell.style.background = '#ffd700'; 
             }
             cell.title = dateStr;
         }
@@ -785,7 +848,7 @@ function renderHeatmap() {
     }
 }
 
-// --- RENDER GOALS ---
+// --- RENDER GOALS (SPLIT SECTIONS) ---
 function renderGoals() {
     const container = document.getElementById('goals-list');
     if (!container) return;
@@ -843,6 +906,7 @@ function renderGoals() {
             card.className = `pd-goal-card ${typeClass} ${g.unlocked ? 'completed' : ''}`;
             
             let starHTML = '';
+            // Pink for special, yellow otherwise
             const starColor = g.unlocked ? (g.class === 'special' ? '#ec4899' : '#ffd700') : '#555';
             for(let i=0; i<g.stars; i++) starHTML += `<span style="color:${starColor}">★</span> `;
             
