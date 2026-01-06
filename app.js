@@ -32,7 +32,7 @@ const GOALS = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById("year").textContent = new Date().getFullYear();
+    // --- DATE FIX: LOCAL TIME ---
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -151,7 +151,8 @@ window.toggleSelectionMode = function() {
     else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
 };
 
-window.googleLoginFromPrompt = function() { window.googleLogin(); };
+window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
+window.googleLoginFromPrompt = function() { window.closeSignInPrompt(); window.googleLogin(); };
 window.refreshApp = async function(user) { appUser = user; await loadData(); };
 window.refreshAppPage = function() { window.location.href = 'https://predent.net/#app'; window.location.reload(); };
 
@@ -193,9 +194,12 @@ async function addEntry() {
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
+        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
+    }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
+
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
@@ -231,7 +235,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
+    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
 async function deleteSelectedEntries() {
@@ -310,7 +314,6 @@ window.editEntry = editEntry;
 window.closeEditModal = closeEditModal;
 window.saveEditEntry = saveEditEntry;
 window.switchTab = switchTab;
-window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('profile-dropdown').classList.toggle('active'); };
 
@@ -322,7 +325,7 @@ function closeAllMenus() {
 }
 function skipProfileSetup() { localStorage.setItem('pd_profile_setup_done', 'true'); document.getElementById('lb-profile-box').classList.add('pd-hidden'); }
 function updateProfileName() {
-    // Deprecated but kept for safety
+    // Deprecated
 }
 function switchTab(tabName) {
     document.querySelectorAll('.pd-view').forEach(view => view.classList.remove('active'));
@@ -334,7 +337,7 @@ function switchTab(tabName) {
         btns[1].classList.add('active'); 
         calculateTrends(); 
     }
-    else if (tabName === 'leaderboard') { // Keep ID as leaderboard but render goals
+    else if (tabName === 'goals') {
         btns[2].classList.add('active');
         renderGoals(); 
     }
