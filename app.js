@@ -54,15 +54,20 @@ const GOALS = [
       check: (s, v, count, specs) => count >= 100, 
       progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
 
-    // Misc
-    { id: 'g10', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Easy', class: 'easy', stars: 1, 
+    // Specialist Goals
+    { id: 'g15', title: 'Initiate', req: 'Shadow 1 Specialist', difficulty: 'Easy', class: 'easy', stars: 1, 
+      check: (s, v, count, specs) => specs >= 1, 
+      progress: (s, v, count, specs) => Math.min((specs / 1) * 100, 100), label: (s, v, count, specs) => `${specs} / 1` },
+
+    { id: 'g10', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 2, 
       check: (s, v, count, specs) => specs >= 3, 
       progress: (s, v, count, specs) => Math.min((specs / 3) * 100, 100), label: (s, v, count, specs) => `${specs} / 3` },
       
-    { id: 'g11', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g11', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => specs >= 6, 
       progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
+    // Specifics
     { id: 'g12', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs, entries) => {
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
@@ -78,7 +83,7 @@ const GOALS = [
       }
     },
     
-    { id: 'g13', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Easy', class: 'easy', stars: 1,
+    { id: 'g13', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8),
       progress: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? 100 : 0,
       label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
@@ -245,7 +250,7 @@ async function loadData() {
 
 async function saveData() {
     if (appUser) {
-        // Cloud Sync Logic Here
+        // Sync Logic
     } else { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
     updateDatalists();
 }
@@ -390,8 +395,6 @@ window.editEntry = editEntry;
 window.closeEditModal = closeEditModal;
 window.saveEditEntry = saveEditEntry;
 window.switchTab = switchTab;
-window.updateProfileName = updateProfileName;
-window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('profile-dropdown').classList.toggle('active'); };
 
 function checkResetInput() { const val = document.getElementById('reset-confirm-input').value.trim().toUpperCase(); document.getElementById('reset-confirm-btn').disabled = (val !== 'DELETE'); }
@@ -400,7 +403,6 @@ function closeAllMenus() {
     document.getElementById('pd-options-dropdown').classList.remove('active');
     document.getElementById('profile-dropdown').classList.remove('active');
 }
-function skipProfileSetup() { localStorage.setItem('pd_profile_setup_done', 'true'); document.getElementById('lb-profile-box').classList.add('pd-hidden'); }
 function updateProfileName() {
     // Deprecated
 }
@@ -439,9 +441,7 @@ function render() {
     updateCircleStats('ring-shadow', 'total-shadow', sTotal); 
     updateCircleStats('ring-volunteer', 'total-volunteer', vTotal);
     
-    // UPDATE TRENDS & GRAPH ON EVERY RENDER
     calculateTrends();
-
     updateDatalists();
     const list = document.getElementById('log-list-ul'); list.innerHTML = '';
     
@@ -535,13 +535,11 @@ function renderActivityGraph() {
     const canvas = document.getElementById('activity-canvas');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
-    
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.parentElement.getBoundingClientRect();
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
-    
     const width = rect.width;
     const height = rect.height;
     ctx.clearRect(0, 0, width, height);
@@ -582,7 +580,6 @@ function renderActivityGraph() {
 
     const getY = (val) => height - padding - ((val / maxY) * chartH);
 
-    // DRAW LINES
     ctx.beginPath(); ctx.strokeStyle = '#4da6ff'; ctx.lineWidth = 3;
     months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.shadow); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
@@ -591,14 +588,11 @@ function renderActivityGraph() {
     months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.vol); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
 
-    // DRAW POINTS (Bullseye)
     months.forEach((m, i) => {
         const x = padding + (i * stepX);
         const yShadow = getY(m.shadow);
         const yVol = getY(m.vol);
-
         ctx.fillStyle = '#4da6ff'; ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
-
         if (m.vol === m.shadow && m.vol > 0) {
             ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
         } else {
@@ -610,54 +604,90 @@ function renderActivityGraph() {
     months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
 }
 
-// --- RENDER GOALS ---
+// --- RENDER GOALS (SPLIT SECTIONS) ---
 function renderGoals() {
-    const grid = document.getElementById('goals-list');
-    if (!grid) return;
-    grid.innerHTML = '';
+    const container = document.getElementById('goals-list');
+    if (!container) return;
+    container.innerHTML = '';
     
     let sTotal = 0, vTotal = 0;
-    const shadowTypes = new Set();
+    const specialistTypes = new Set(); // Changed Set logic
     entries.forEach(e => {
         const h = parseInt(e.hours) || 0;
-        if (e.type === 'Shadowing') { sTotal += h; shadowTypes.add(e.subtype); }
+        if (e.type === 'Shadowing') { 
+            sTotal += h; 
+            // Only add if NOT general dentistry
+            if (!e.subtype.toLowerCase().includes('general')) {
+                specialistTypes.add(e.subtype); 
+            }
+        }
         else { vTotal += h; }
     });
-    const uniqueSpecs = shadowTypes.size;
+    const uniqueSpecs = specialistTypes.size;
     const count = entries.length;
+
+    const completed = [];
+    const incomplete = [];
 
     GOALS.forEach(g => {
         const unlocked = g.check(sTotal, vTotal, count, uniqueSpecs, entries);
-        let progress = 0;
-        if (g.progress) progress = g.progress(sTotal, vTotal, count, uniqueSpecs, entries);
-        
-        let label = "0 / " + g.req;
-        if (g.label) label = g.label(sTotal, vTotal, count, uniqueSpecs, entries);
-        if (unlocked) label = "COMPLETED";
-
-        // MAPPING CLASS BASED ON DIFFICULTY (FOR BORDER COLOR)
-        let typeClass = g.class || 'medium'; 
-        
-        const card = document.createElement('div');
-        card.className = `pd-goal-card ${typeClass} ${unlocked ? 'completed' : ''}`;
-        
-        let starHTML = '';
-        for(let i=0; i<g.stars; i++) starHTML += '★ ';
-        
-        card.innerHTML = `
-            <div class="pd-goal-stars">${starHTML}</div>
-            <div class="pd-goal-title">${g.title}</div>
-            <div class="pd-goal-diff">${g.difficulty}</div>
-            <div class="pd-goal-req">${g.req}</div>
-            
-            ${!unlocked ? `
-            <div class="pd-goal-progress-container">
-                <div class="pd-goal-progress-bar" style="width:${progress}%"></div>
-            </div>
-            ` : ''}
-            
-            <div class="pd-goal-status">${label}</div>
-        `;
-        grid.appendChild(card);
+        const gObj = { ...g, unlocked };
+        if(unlocked) completed.push(gObj);
+        else incomplete.push(gObj);
     });
+
+    const createGrid = (goalsList) => {
+        const gridDiv = document.createElement('div');
+        gridDiv.className = 'pd-goals-grid';
+        goalsList.forEach(g => {
+            let progress = 0;
+            if (g.progress) progress = g.progress(sTotal, vTotal, count, uniqueSpecs, entries);
+            
+            let label = "0 / " + g.req;
+            if (g.label) label = g.label(sTotal, vTotal, count, uniqueSpecs, entries);
+            if (g.unlocked) label = "COMPLETED";
+
+            let typeClass = '';
+            if (g.type === 'shadow') typeClass = 'type-shadow';
+            else if (g.type === 'vol') typeClass = 'type-vol';
+            else typeClass = 'type-mixed';
+            
+            if(g.class) typeClass += ' ' + g.class;
+
+            const card = document.createElement('div');
+            card.className = `pd-goal-card ${typeClass} ${g.unlocked ? 'completed' : ''}`;
+            
+            let starHTML = '';
+            // Grey star unless unlocked
+            const starColor = g.unlocked ? '#ffd700' : '#555';
+            for(let i=0; i<g.stars; i++) starHTML += `<span style="color:${starColor}">★</span> `;
+            
+            card.innerHTML = `
+                <div class="pd-goal-stars">${starHTML}</div>
+                <div class="pd-goal-title">${g.title}</div>
+                <div class="pd-goal-diff">${g.difficulty}</div>
+                <div class="pd-goal-req">${g.req}</div>
+                ${!g.unlocked ? `<div class="pd-goal-progress-container"><div class="pd-goal-progress-bar" style="width:${progress}%"></div></div>` : ''}
+                <div class="pd-goal-status">${label}</div>
+            `;
+            gridDiv.appendChild(card);
+        });
+        return gridDiv;
+    };
+
+    if (incomplete.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'pd-goals-section-title';
+        title.innerText = 'In Progress';
+        container.appendChild(title);
+        container.appendChild(createGrid(incomplete));
+    }
+
+    if (completed.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'pd-goals-section-title';
+        title.innerText = 'Completed';
+        container.appendChild(title);
+        container.appendChild(createGrid(completed));
+    }
 }
