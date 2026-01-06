@@ -15,60 +15,76 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
 // --- GOAL DEFINITIONS ---
 const GOALS = [
-    // Shadowing Tiers
-    { id: 'g1', title: 'Shadowing I', req: '100 Shadowing Hours', difficulty: 'Easy', class: 'easy', stars: 1, 
+    // Shadowing Tiers (Shuffled Up)
+    { id: 'g1', title: 'Shadowing I', req: '10 Hours Shadowing', difficulty: 'Easy', class: 'easy', stars: 1, 
+      check: (s, v, count, specs) => s >= 10, 
+      progress: (s) => Math.min((s / 10) * 100, 100), label: (s) => `${s} / 10` },
+
+    { id: 'g2', title: 'Shadowing II', req: '50 Hours Shadowing', difficulty: 'Medium', class: 'medium', stars: 1, 
+      check: (s, v, count, specs) => s >= 50, 
+      progress: (s) => Math.min((s / 50) * 100, 100), label: (s) => `${s} / 50` },
+      
+    { id: 'g3', title: 'Shadowing III', req: '100 Hours Shadowing', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => s >= 100, 
       progress: (s) => Math.min((s / 100) * 100, 100), label: (s) => `${s} / 100` },
       
-    { id: 'g2', title: 'Shadowing II', req: '200 Shadowing Hours', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g4', title: 'Shadowing IV', req: '200 Hours Shadowing', difficulty: 'Extreme', class: 'extreme', stars: 2, 
       check: (s, v, count, specs) => s >= 200, 
       progress: (s) => Math.min((s / 200) * 100, 100), label: (s) => `${s} / 200` },
       
-    { id: 'g3', title: 'Shadowing III', req: '300 Shadowing Hours', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g5', title: 'Shadowing V', req: '300+ Hours Shadowing', difficulty: 'Impossible', class: 'impossible', stars: 3, 
       check: (s, v, count, specs) => s >= 300, 
-      progress: (s) => Math.min((s / 300) * 100, 100), label: (s) => `${s} / 300` },
+      progress: (s) => Math.min((s / 300) * 100, 100), label: (s) => `${s} / 300+` },
 
-    // Volunteer Tiers
-    { id: 'g4', title: 'Volunteer I', req: '100 Volunteer Hours', difficulty: 'Easy', class: 'easy', stars: 1, 
+    // Volunteer Tiers (Shuffled Up)
+    { id: 'g6', title: 'Volunteer I', req: '10 Hours Volunteering', difficulty: 'Easy', class: 'easy', stars: 1, 
+      check: (s, v, count, specs) => v >= 10, 
+      progress: (s, v) => Math.min((v / 10) * 100, 100), label: (s, v) => `${v} / 10` },
+
+    { id: 'g7', title: 'Volunteer II', req: '50 Hours Volunteering', difficulty: 'Medium', class: 'medium', stars: 1, 
+      check: (s, v, count, specs) => v >= 50, 
+      progress: (s, v) => Math.min((v / 50) * 100, 100), label: (s, v) => `${v} / 50` },
+      
+    { id: 'g8', title: 'Volunteer III', req: '100 Hours Volunteering', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => v >= 100, 
       progress: (s, v) => Math.min((v / 100) * 100, 100), label: (s, v) => `${v} / 100` },
       
-    { id: 'g5', title: 'Volunteer II', req: '200 Volunteer Hours', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g9', title: 'Volunteer IV', req: '200 Hours Volunteering', difficulty: 'Extreme', class: 'extreme', stars: 2, 
       check: (s, v, count, specs) => v >= 200, 
       progress: (s, v) => Math.min((v / 200) * 100, 100), label: (s, v) => `${v} / 200` },
       
-    { id: 'g6', title: 'Volunteer III', req: '300 Volunteer Hours', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g10', title: 'Volunteer V', req: '300+ Hours Volunteering', difficulty: 'Impossible', class: 'impossible', stars: 3, 
       check: (s, v, count, specs) => v >= 300, 
-      progress: (s, v) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300` },
+      progress: (s, v) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300+` },
 
     // Entry Tiers
-    { id: 'g7', title: 'First Step', req: 'Log 1st Entry', difficulty: 'Easy', class: 'easy', stars: 1, 
+    { id: 'g11', title: 'First Step', req: 'Log 1st Entry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => count >= 1, 
       progress: (s, v, count) => Math.min((count / 1) * 100, 100), label: (s, v, count) => `${count} / 1` },
       
-    { id: 'g8', title: 'Momentum', req: 'Log 10 Entries', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g12', title: 'Momentum', req: 'Log 10 Entries', difficulty: 'Medium', class: 'medium', stars: 2, 
       check: (s, v, count, specs) => count >= 10, 
       progress: (s, v, count) => Math.min((count / 10) * 100, 100), label: (s, v, count) => `${count} / 10` },
       
-    { id: 'g9', title: 'Dedicated', req: 'Log 100 Entries', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g13', title: 'Dedicated', req: 'Log 100 Entries', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => count >= 100, 
       progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
 
     // Specialist Goals
-    { id: 'g15', title: 'Initiate', req: 'Shadow 1 Specialist', difficulty: 'Easy', class: 'easy', stars: 1, 
+    { id: 'g14', title: 'Initiate', req: 'Shadow 1 Specialist', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => specs >= 1, 
       progress: (s, v, count, specs) => Math.min((specs / 1) * 100, 100), label: (s, v, count, specs) => `${specs} / 1` },
 
-    { id: 'g10', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g15', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 1, 
       check: (s, v, count, specs) => specs >= 3, 
       progress: (s, v, count, specs) => Math.min((specs / 3) * 100, 100), label: (s, v, count, specs) => `${specs} / 3` },
       
-    { id: 'g11', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g16', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => specs >= 6, 
       progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
     // Specifics
-    { id: 'g12', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
+    { id: 'g17', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs, entries) => {
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
         return gen >= 50;
@@ -83,14 +99,13 @@ const GOALS = [
       }
     },
     
-    { id: 'g13', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Medium', class: 'medium', stars: 2,
+    { id: 'g18', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8),
       progress: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? 100 : 0,
       label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
     },
 
-    // NEW ADDITIONS
-    { id: 'g16', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
+    { id: 'g19', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => {
           const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
           return locs.size >= 5;
@@ -104,7 +119,8 @@ const GOALS = [
           return `${locs.size} / 5`;
       }
     },
-    { id: 'g17', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
+
+    { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
       check: (s, v, count, specs, entries) => {
           const months = new Set(entries.map(e => e.date.substring(0, 7))); // YYYY-MM
           return months.size >= 6;
@@ -118,21 +134,24 @@ const GOALS = [
           return `${months.size} / 6`;
       }
     },
-    { id: 'g18', title: 'Future Surgeon', req: '10 Hours Oral Surgery', difficulty: 'Medium', class: 'medium', stars: 2,
+
+    // CHANGED "Future Surgeon" -> "Surgeon"
+    { id: 'g21', title: 'Surgeon', req: 'Shadow an Oral Surgeon', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => {
-          const os = entries.filter(e => e.subtype === 'Oral Surgery').reduce((a,c) => a+parseInt(c.hours),0);
-          return os >= 10;
+          // Check for at least 1 entry of Oral Surgery
+          return entries.some(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('oral surgery'));
       },
       progress: (s, v, count, specs, entries) => {
-          const os = entries.filter(e => e.subtype === 'Oral Surgery').reduce((a,c) => a+parseInt(c.hours),0);
-          return Math.min((os / 10) * 100, 100);
+          const found = entries.some(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('oral surgery'));
+          return found ? 100 : 0;
       },
       label: (s, v, count, specs, entries) => {
-          const os = entries.filter(e => e.subtype === 'Oral Surgery').reduce((a,c) => a+parseInt(c.hours),0);
-          return `${os} / 10`;
+          const found = entries.some(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('oral surgery'));
+          return found ? "Done" : "0 / 1";
       }
     },
-    { id: 'g19', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 3,
+
+    { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 3,
       check: (s, v, count, specs, entries) => {
           const months = {};
           entries.forEach(e => {
@@ -328,7 +347,6 @@ async function saveData() {
 }
 
 function updateDatalists() {
-    // --- UPDATED: SPLIT DOCTORS BY COMMA FOR SUGGESTIONS ---
     const uniqueDocs = [...new Set(
         entries.map(e => e.doctor)
                .filter(Boolean)
@@ -713,7 +731,7 @@ function renderGoals() {
         if (e.type === 'Shadowing') { 
             sTotal += h; 
             // Only add if NOT general dentistry
-            if (!e.subtype.toLowerCase().includes('general')) {
+            if (e.subtype && !e.subtype.toLowerCase().includes('general')) {
                 specialistTypes.add(e.subtype); 
             }
         }
