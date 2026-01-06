@@ -102,7 +102,7 @@ body {
 .pd-stat-number { font-family: 'Montserrat', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
 .pd-stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: #cbd5e1; }
 
-/* STATS CARDS */
+/* STAT CARDS */
 .pd-trend-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
 .pd-trend-card h4 { margin: 0 0 1rem 0; color: #cbd5e1; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
 .pd-trend-stat { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
@@ -122,8 +122,8 @@ body {
 .pd-heatmap-cell.active-3 { background: #4da6ff; box-shadow: 0 0 5px rgba(77,166,255,0.5); }
 
 /* CHART */
-.pd-chart-wrapper { width: 100%; height: 220px; position: relative; display: flex; flex-direction: column; align-items: center; }
-canvas#pie-canvas { width: 100% !important; height: 100% !important; max-height: 200px; }
+.pd-chart-wrapper { width: 100%; height: 250px; position: relative; padding-top: 10px; display: flex; flex-direction: column; align-items: center; }
+canvas { width: 100% !important; height: 100% !important; }
 .pd-chart-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; width: 100%; }
 .pd-legend-item { display: flex; align-items: center; font-size: 0.75rem; color: #cbd5e1; }
 .pd-legend-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
@@ -179,9 +179,10 @@ canvas#pie-canvas { width: 100% !important; height: 100% !important; max-height:
 .pd-goal-card.extreme .pd-goal-progress-bar { background: #9333ea; }
 .pd-goal-card.impossible .pd-goal-progress-bar { background: #ffd700; }
 .pd-goal-card.special .pd-goal-progress-bar { background: #ec4899; }
-
 .pd-goal-status { font-size: 0.7rem; font-weight: 700; color: #94a3b8; }
 .pd-goal-card.completed .pd-goal-status { color: #ffd700; font-weight: 800; letter-spacing: 0.05em; }
+
+.pd-hidden { display: none !important; }
 
 /* FORMS */
 .pd-form-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; position: relative; }
