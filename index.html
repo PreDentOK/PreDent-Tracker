@@ -148,6 +148,7 @@
 
             <div class="pd-list-controls">
                 <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
+                
                 <div style="display:flex; gap:5px; align-items:center;">
                     <div class="pd-menu-container" id="pd-filter-container">
                         <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
@@ -172,19 +173,21 @@
         <div id="view-stats" class="pd-view">
             <h2 class="pd-section-title">Trends & Insights</h2>
             <div id="stats-content">
-                
-                <div class="pd-trend-card">
-                    <div class="pd-split-stat-row">
-                        <div class="pd-split-col">
-                            <h4>Unique Dentists</h4>
-                            <div class="pd-trend-stat" id="stat-unique-docs">0</div>
-                        </div>
-                        <div class="pd-split-divider"></div>
-                        <div class="pd-split-col">
-                            <h4>Unique Orgs</h4>
-                            <div class="pd-trend-stat" id="stat-unique-orgs">0</div>
+                <div class="pd-form-grid">
+                    <div class="pd-trend-card">
+                        <div class="pd-split-stat-row">
+                            <div class="pd-split-col">
+                                <h4>Unique Dentists</h4>
+                                <div class="pd-trend-stat" id="stat-unique-docs">0</div>
+                            </div>
+                            <div class="pd-split-divider"></div>
+                            <div class="pd-split-col">
+                                <h4>Unique Orgs</h4>
+                                <div class="pd-trend-stat" id="stat-unique-orgs">0</div>
+                            </div>
                         </div>
                     </div>
+                    <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
                 </div>
 
                 <div class="pd-trend-card">
@@ -231,8 +234,6 @@
                         <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#51cf66; border-radius:3px;"></div>Mixed</div>
                     </div>
                 </div>
-
-                <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
             </div>
         </div>
 
@@ -241,6 +242,14 @@
             <div id="goals-list"></div>
         </div>
 
+    </div>
+
+    <div id="achievement-popup" class="pd-achievement-popup">
+        <div class="pd-popup-icon">🏆</div>
+        <div class="pd-popup-text">
+            <span class="pd-popup-header">Achievement Unlocked</span>
+            <span class="pd-popup-name" id="popup-goal-name">--</span>
+        </div>
     </div>
 
     <footer class="pd-footer">© <span id="year"></span> PreDent Connect. All rights reserved.</footer>
