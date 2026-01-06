@@ -128,8 +128,7 @@ canvas#activity-canvas { width: 100% !important; height: 100% !important; }
     border-radius: 12px; padding: 1.2rem 1rem; text-align: center;
     transition: all 0.3s ease; 
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    /* Unlocked by default visual */
-    opacity: 1; 
+    opacity: 1; /* Always visible */
 }
 .pd-goal-card.completed {
     background: rgba(255, 255, 255, 0.1);
@@ -139,6 +138,19 @@ canvas#activity-canvas { width: 100% !important; height: 100% !important; }
 .pd-goal-card.type-shadow.completed { border-color: #4da6ff; box-shadow: 0 0 15px rgba(77, 166, 255, 0.2); }
 .pd-goal-card.type-vol.completed { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
 .pd-goal-card.type-mixed.completed { border-color: #51cf66; }
+
+/* RARE GOAL STYLE (OKMOM) */
+.pd-goal-card.rare {
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(0, 0, 0, 0.2));
+}
+.pd-goal-card.rare.completed {
+    border-color: #9333ea;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.4);
+}
+.pd-goal-card.rare .pd-goal-icon { color: #a855f7; }
+.pd-goal-card.rare.completed .pd-goal-icon { color: #d8b4fe; text-shadow: 0 0 10px #9333ea; }
+.pd-goal-card.rare .pd-goal-progress-bar { background: #9333ea; }
+.pd-goal-card.rare.completed .pd-goal-status { color: #d8b4fe; }
 
 .pd-goal-icon { margin-bottom: 5px; width: 32px; height: 32px; color: #cbd5e1; }
 .pd-goal-card.completed .pd-goal-icon { color: #fff; }
@@ -232,7 +244,6 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .pd-btn-cancel { background: transparent; color: #cbd5e1; border: 1px solid #cbd5e1; margin-right: 10px; }
 .pd-form-actions { display: flex; gap: 10px; }
 .pd-footer { text-align: center; padding: 1rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: auto; flex-shrink: 0; }
-
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* --- MOBILE SPECIFIC FIXES --- */
