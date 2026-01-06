@@ -26,7 +26,7 @@
         <div class="pd-tabs-container">
             <button class="pd-tab-btn active" onclick="switchTab('tracker')">Log</button>
             <button class="pd-tab-btn" onclick="switchTab('stats')">Stats</button>
-            <button class="pd-tab-btn" onclick="switchTab('leaderboard')">Ranking</button>
+            <button class="pd-tab-btn" onclick="switchTab('goals')">Goals</button>
         </div>
 
         <div class="pd-actions-group">
@@ -36,7 +36,6 @@
                     Sign In
                 </button>
                 <div id="user-profile" class="pd-user-profile hidden">
-                    <div class="pd-nav-rank" id="nav-rank-badge">#--</div>
                     <button class="pd-profile-btn" onclick="toggleProfileMenu(event)">
                         <img id="user-avatar" src="" alt="Profile" class="pd-avatar-img">
                     </button>
@@ -179,8 +178,10 @@
                     <div class="pd-trend-card"><h4>Unique Dentists</h4><div class="pd-trend-stat" id="stat-unique-docs">0</div></div>
                     <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
                 </div>
+                
                 <div class="pd-trend-card"><h4>Top Specialties</h4><ul class="pd-trend-list" id="list-top-specialties"><div class="pd-trend-empty">No data available</div></ul></div>
                 <div class="pd-trend-card"><h4>Volunteer Experience Mix</h4><ul class="pd-trend-list" id="list-vol-mix"><div class="pd-trend-empty">No data available</div></ul></div>
+                
                 <div class="pd-trend-card">
                     <h4>Monthly Activity</h4>
                     <div class="pd-chart-wrapper">
@@ -298,22 +299,11 @@
             </div>
         </div>
     </div>
-
-    <div id="warning-modal" class="pd-modal-overlay">
-        <div class="pd-modal" style="border-color: #ffd700;">
-            <h3 style="color: #ffd700;">NAME NOT ALLOWED</h3>
-            <p>We want to keep PreDent Connect professional for everyone.</p>
-            <p style="margin-bottom:1rem;">Please choose a different display name that does not contain suggestive or inappropriate language.</p>
-            <div style="display:flex; justify-content:center;">
-                <button class="pd-btn pd-btn-primary" onclick="document.getElementById('warning-modal').style.display='none'">Understood</button>
-            </div>
-        </div>
-    </div>
     
-    <div id="signin-prompt-modal" class="pd-modal-overlay" style="display: flex;">
+    <div id="signin-prompt-modal" class="pd-modal-overlay">
         <div class="pd-modal" style="border: 1px solid #4da6ff;">
-            <h3 style="color:#4da6ff">LOGIN REQUIRED</h3>
-            <p>You must sign in with Google to access your hours log.</p>
+            <h3 style="color:#4da6ff">SAVE YOUR PROGRESS</h3>
+            <p>Sign in with Google to sync your hours across devices.</p>
             <div style="display:flex; justify-content:center; gap:10px; margin-top:1rem;">
                 <button class="pd-btn pd-btn-primary" onclick="googleLoginFromPrompt()">Sign In</button>
             </div>
