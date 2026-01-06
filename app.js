@@ -17,50 +17,50 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 const GOALS = [
     // Shadowing Tiers
     { id: 'g1', title: 'Shadowing I', req: '100 Shadowing Hours', type: 'shadow', stars: 1, 
-      check: (s, v, count, specs) => s >= 100, 
-      progress: (s, v, count) => Math.min((s / 100) * 100, 100), label: (s, v) => `${s} / 100` },
+      check: (s, v, count, specs, entries) => s >= 100, 
+      progress: (s) => Math.min((s / 100) * 100, 100), label: (s) => `${s} / 100` },
       
     { id: 'g2', title: 'Shadowing II', req: '200 Shadowing Hours', type: 'shadow', stars: 2, 
-      check: (s, v, count, specs) => s >= 200, 
-      progress: (s, v, count) => Math.min((s / 200) * 100, 100), label: (s, v) => `${s} / 200` },
+      check: (s, v, count, specs, entries) => s >= 200, 
+      progress: (s) => Math.min((s / 200) * 100, 100), label: (s) => `${s} / 200` },
       
     { id: 'g3', title: 'Shadowing III', req: '300 Shadowing Hours', type: 'shadow', stars: 3, 
-      check: (s, v, count, specs) => s >= 300, 
-      progress: (s, v, count) => Math.min((s / 300) * 100, 100), label: (s, v) => `${s} / 300` },
+      check: (s, v, count, specs, entries) => s >= 300, 
+      progress: (s) => Math.min((s / 300) * 100, 100), label: (s) => `${s} / 300` },
 
     // Volunteer Tiers
     { id: 'g4', title: 'Volunteer I', req: '100 Volunteer Hours', type: 'vol', stars: 1, 
-      check: (s, v, count, specs) => v >= 100, 
-      progress: (s, v, count) => Math.min((v / 100) * 100, 100), label: (s, v) => `${v} / 100` },
+      check: (s, v, count, specs, entries) => v >= 100, 
+      progress: (s, v) => Math.min((v / 100) * 100, 100), label: (s, v) => `${v} / 100` },
       
     { id: 'g5', title: 'Volunteer II', req: '200 Volunteer Hours', type: 'vol', stars: 2, 
-      check: (s, v, count, specs) => v >= 200, 
-      progress: (s, v, count) => Math.min((v / 200) * 100, 100), label: (s, v) => `${v} / 200` },
+      check: (s, v, count, specs, entries) => v >= 200, 
+      progress: (s, v) => Math.min((v / 200) * 100, 100), label: (s, v) => `${v} / 200` },
       
     { id: 'g6', title: 'Volunteer III', req: '300 Volunteer Hours', type: 'vol', stars: 3, 
-      check: (s, v, count, specs) => v >= 300, 
-      progress: (s, v, count) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300` },
+      check: (s, v, count, specs, entries) => v >= 300, 
+      progress: (s, v) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300` },
 
     // Entry Tiers
     { id: 'g7', title: 'First Step', req: 'Log 1st Entry', type: 'mixed', stars: 1, 
-      check: (s, v, count, specs) => count >= 1, 
+      check: (s, v, count, specs, entries) => count >= 1, 
       progress: (s, v, count) => Math.min((count / 1) * 100, 100), label: (s, v, count) => `${count} / 1` },
       
     { id: 'g8', title: 'Momentum', req: 'Log 10 Entries', type: 'mixed', stars: 2, 
-      check: (s, v, count, specs) => count >= 10, 
+      check: (s, v, count, specs, entries) => count >= 10, 
       progress: (s, v, count) => Math.min((count / 10) * 100, 100), label: (s, v, count) => `${count} / 10` },
       
     { id: 'g9', title: 'Dedicated', req: 'Log 100 Entries', type: 'mixed', stars: 3, 
-      check: (s, v, count, specs) => count >= 100, 
+      check: (s, v, count, specs, entries) => count >= 100, 
       progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
 
     // Misc
     { id: 'g10', title: 'Explorer', req: 'Shadow 3 Specialists', type: 'shadow', stars: 1, 
-      check: (s, v, count, specs) => specs >= 3, 
+      check: (s, v, count, specs, entries) => specs >= 3, 
       progress: (s, v, count, specs) => Math.min((specs / 3) * 100, 100), label: (s, v, count, specs) => `${specs} / 3` },
       
     { id: 'g11', title: 'Networker', req: 'Shadow 6 Specialists', type: 'shadow', stars: 2, 
-      check: (s, v, count, specs) => specs >= 6, 
+      check: (s, v, count, specs, entries) => specs >= 6, 
       progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
     { id: 'g12', title: 'The Generalist', req: '50 Hrs General Dentistry', type: 'shadow', stars: 1, 
@@ -82,6 +82,33 @@ const GOALS = [
       check: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8),
       progress: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? 100 : 0,
       label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
+    },
+
+    // RARE GOAL
+    { id: 'g14', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', type: 'vol', stars: 3,
+      check: (s, v, count, specs, entries) => {
+          const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
+          return entries.some(e => {
+             const txt = (e.location + " " + e.doctor + " " + e.notes).toLowerCase();
+             return terms.some(t => txt.includes(t));
+          });
+      },
+      progress: (s, v, count, specs, entries) => {
+          const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
+          const found = entries.some(e => {
+             const txt = (e.location + " " + e.doctor + " " + e.notes).toLowerCase();
+             return terms.some(t => txt.includes(t));
+          });
+          return found ? 100 : 0;
+      },
+      label: (s, v, count, specs, entries) => {
+          const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
+          const found = entries.some(e => {
+             const txt = (e.location + " " + e.doctor + " " + e.notes).toLowerCase();
+             return terms.some(t => txt.includes(t));
+          });
+          return found ? "Found!" : "Not Found";
+      }
     }
 ];
 
@@ -218,9 +245,7 @@ async function loadData() {
 
 async function saveData() {
     if (appUser) {
-        let sTotal = 0, vTotal = 0;
-        entries.forEach(e => { const h = parseInt(e.hours, 10) || 0; if (e.type === 'Shadowing') sTotal += h; else vTotal += h; });
-        if(window.updateLeaderboardStats) { await window.updateLeaderboardStats(appUser, sTotal, vTotal); }
+        // No LB updates anymore
     } else { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
     updateDatalists();
 }
@@ -365,7 +390,6 @@ window.editEntry = editEntry;
 window.closeEditModal = closeEditModal;
 window.saveEditEntry = saveEditEntry;
 window.switchTab = switchTab;
-window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('profile-dropdown').classList.toggle('active'); };
 
@@ -585,7 +609,6 @@ function renderActivityGraph() {
     months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
 }
 
-// --- RENDER GOALS ---
 function renderGoals() {
     const grid = document.getElementById('goals-list');
     if (!grid) return;
@@ -593,11 +616,13 @@ function renderGoals() {
     
     let sTotal = 0, vTotal = 0;
     const shadowTypes = new Set();
+    
     entries.forEach(e => {
         const h = parseInt(e.hours) || 0;
         if (e.type === 'Shadowing') { sTotal += h; shadowTypes.add(e.subtype); }
         else { vTotal += h; }
     });
+
     const uniqueSpecs = shadowTypes.size;
     const count = entries.length;
 
@@ -615,10 +640,12 @@ function renderGoals() {
         else if (g.type === 'vol') typeClass = 'type-vol';
         else typeClass = 'type-mixed';
         
+        // APPLY RARE CLASS
+        if (g.id === 'g14') typeClass += ' rare';
+
         const card = document.createElement('div');
         card.className = `pd-goal-card ${typeClass} ${unlocked ? 'completed' : ''}`;
         
-        // Star Logic
         let starHTML = '';
         for(let i=0; i<g.stars; i++) starHTML += '★ ';
         
