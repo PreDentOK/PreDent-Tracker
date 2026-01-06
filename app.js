@@ -11,6 +11,7 @@ let unlockedGoalIds = new Set();
 let isShowingNotification = false;
 let notificationQueue = [];
 
+// SUBTYPES
 const SUBTYPES_SHADOW = ["General", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
 const CIRCLE_RADIUS = 110; 
@@ -18,6 +19,7 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
 // --- GOAL DEFINITIONS ---
 const GOALS = [
+    // Shadowing Tiers
     { id: 'g1', title: 'Shadowing I', req: '10 Hours Shadowing', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => s >= 10, progress: (s) => Math.min((s / 10) * 100, 100), label: (s) => `${s} / 10` },
     { id: 'g2', title: 'Shadowing II', req: '50 Hours Shadowing', difficulty: 'Medium', class: 'medium', stars: 1, 
@@ -29,6 +31,7 @@ const GOALS = [
     { id: 'g5', title: 'Shadowing V', req: '300+ Hours Shadowing', difficulty: 'Impossible', class: 'impossible', stars: 5, 
       check: (s, v, count, specs) => s >= 300, progress: (s) => Math.min((s / 300) * 100, 100), label: (s) => `${s} / 300+` },
 
+    // Volunteer Tiers
     { id: 'g6', title: 'Volunteer I', req: '10 Hours Volunteering', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => v >= 10, progress: (s, v) => Math.min((v / 10) * 100, 100), label: (s, v) => `${v} / 10` },
     { id: 'g7', title: 'Volunteer II', req: '50 Hours Volunteering', difficulty: 'Medium', class: 'medium', stars: 1, 
@@ -40,6 +43,7 @@ const GOALS = [
     { id: 'g10', title: 'Volunteer V', req: '300+ Hours Volunteering', difficulty: 'Impossible', class: 'impossible', stars: 5, 
       check: (s, v, count, specs) => v >= 300, progress: (s, v) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300+` },
 
+    // Entry Tiers
     { id: 'g11', title: 'First Step', req: 'Log 1st Entry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => count >= 1, progress: (s, v, count) => Math.min((count / 1) * 100, 100), label: (s, v, count) => `${count} / 1` },
     { id: 'g12', title: 'Momentum', req: 'Log 10 Entries', difficulty: 'Medium', class: 'medium', stars: 2, 
@@ -47,6 +51,7 @@ const GOALS = [
     { id: 'g13', title: 'Dedicated', req: 'Log 100 Entries', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => count >= 100, progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
 
+    // Specialist Goals
     { id: 'g14', title: 'Initiate', req: 'Shadow 1 Specialist', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => specs >= 1, progress: (s, v, count, specs) => Math.min((specs / 1) * 100, 100), label: (s, v, count, specs) => `${specs} / 1` },
     { id: 'g15', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 1, 
@@ -54,29 +59,40 @@ const GOALS = [
     { id: 'g16', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => specs >= 6, progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
+    // Specifics
     { id: 'g17', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs, entries) => {
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
         return gen >= 50;
       },
-      progress: (s, v, count, specs, entries) => Math.min((entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0) / 50) * 100, 100),
-      label: (s, v, count, specs, entries) => `${entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0)} / 50`
+      progress: (s, v, count, specs, entries) => {
+         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
+         return Math.min((gen / 50) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
+         return `${gen} / 50`;
+      }
     },
+    
     { id: 'g18', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8),
       progress: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? 100 : 0,
       label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
     },
+
     { id: 'g19', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => new Set(entries.map(e => e.location.trim().toLowerCase())).size >= 5,
       progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.location.trim().toLowerCase())).size / 5) * 100, 100),
       label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.location.trim().toLowerCase())).size} / 5`
     },
+
     { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
       check: (s, v, count, specs, entries) => new Set(entries.map(e => e.date.substring(0, 7))).size >= 6,
       progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.date.substring(0, 7))).size / 6) * 100, 100),
       label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.date.substring(0, 7))).size} / 6`
     },
+
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
@@ -92,11 +108,12 @@ const GOALS = [
           return `${Math.max(0, ...Object.values(months))} / 40`;
       }
     },
+
     // RARE GOAL
     { id: 'g14_rare', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
-      check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))),
-      progress: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))) ? 100 : 0,
-      label: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))) ? "Found!" : "Not Found"
+      check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))),
+      progress: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))) ? 100 : 0,
+      label: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))) ? "Found!" : "Not Found"
     }
 ];
 
@@ -151,14 +168,14 @@ function showAchievementPopup(goal) {
     nameEl.textContent = goal.title;
     popup.classList.add('active');
     
-    // Play sound if you want, or just wait
+    // Auto-hide
     setTimeout(() => {
         popup.classList.remove('active');
         setTimeout(() => {
             isShowingNotification = false;
             processNotificationQueue();
         }, 600); // Wait for transition
-    }, 3000); 
+    }, 2500); 
 }
 
 function checkAchievements(silent = false) {
@@ -271,7 +288,10 @@ async function processCSV(csvText) {
         const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
         if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
     }
-    saveData(); render(); alert(`Imported ${importedCount} entries.`);
+    saveData(); 
+    render(); 
+    checkAchievements(false); // TRIGGER NOTIFICATIONS
+    alert(`Imported ${importedCount} entries.`);
 }
 
 window.toggleSelectionMode = function() {
@@ -295,6 +315,7 @@ async function loadData() {
     if (appUser) { entries = await window.db_loadEntries(appUser); } 
     else { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     
+    // Check initial achievements SILENTLY
     checkAchievements(true); 
     render();
 }
@@ -349,6 +370,7 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
+        // Check new achievements AUDIBLY
         checkAchievements(false);
     } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
@@ -688,7 +710,7 @@ function renderPieChart() {
     });
 
     if(total === 0) {
-        legend.innerHTML = '<div class="pd-trend-empty">No data</div>';
+        // legend.innerHTML = '<div class="pd-trend-empty">No data</div>';
         return;
     }
 
