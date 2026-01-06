@@ -134,7 +134,7 @@ const GOALS = [
           return `${months.size} / 6`;
       }
     },
-
+    
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
@@ -585,22 +585,19 @@ function render() {
 }
 
 function calculateTrends() {
-    // If no entries, 0 out stats but DO NOT crash
     if(entries.length === 0) {
         document.getElementById('stat-unique-docs').innerText = "0";
         document.getElementById('stat-total-entries').innerText = "0";
         document.getElementById('stat-avg-session').innerText = "0h";
         document.getElementById('stat-projection').innerText = "--";
-        renderActivityGraph(); // Empty graph
+        renderActivityGraph(); 
         renderPieChart();
         renderHeatmap();
         return;
     }
 
-    // --- ADVANCED STATS ---
     calculateAdvancedStats();
 
-    // --- STANDARD STATS ---
     const uniqueDocs = new Set(
         entries.filter(e => e.type === 'Shadowing')
                .flatMap(e => e.doctor.split(',').map(s => s.trim()))
@@ -610,7 +607,6 @@ function calculateTrends() {
     document.getElementById('stat-unique-docs').innerText = uniqueDocs;
     document.getElementById('stat-total-entries').innerText = entries.length;
     
-    // RENDER VISUALS
     renderActivityGraph();
     renderPieChart();
     renderHeatmap();
@@ -619,12 +615,9 @@ function calculateTrends() {
 function calculateAdvancedStats() {
     let totalHours = 0;
     entries.forEach(e => totalHours += parseInt(e.hours));
-    
-    // Avg Session
     const avg = entries.length > 0 ? (totalHours / entries.length).toFixed(1) : 0;
     document.getElementById('stat-avg-session').innerText = avg + "h";
     
-    // Projection (Simple: Avg per day since first entry)
     if(entries.length > 0 && totalHours < 100) {
         const dates = entries.map(e => new Date(e.date));
         const minDate = new Date(Math.min.apply(null, dates));
@@ -636,7 +629,6 @@ function calculateAdvancedStats() {
             const hoursPerDay = totalHours / diffDays;
             const hoursNeeded = 100 - totalHours;
             const daysNeeded = Math.ceil(hoursNeeded / hoursPerDay);
-            
             const projectedDate = new Date();
             projectedDate.setDate(projectedDate.getDate() + daysNeeded);
             const options = { month: 'short', year: 'numeric' };
@@ -685,18 +677,15 @@ function renderPieChart() {
 
     Object.entries(counts).forEach(([label, value]) => {
         const sliceAngle = (value / total) * 2 * Math.PI;
-        
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
         ctx.fillStyle = colors[colorIdx % colors.length];
         ctx.fill();
-        
         startAngle += sliceAngle;
         colorIdx++;
     });
     
-    // Donut Hole
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
     ctx.fillStyle = '#030D4A'; 
@@ -707,9 +696,7 @@ function renderHeatmap() {
     const container = document.getElementById('heatmap-container');
     if(!container) return;
     container.innerHTML = '';
-
     const today = new Date();
-    // Generate ~180 days (6 months)
     const activeDates = new Set();
     entries.forEach(e => activeDates.add(e.date));
 
@@ -717,7 +704,6 @@ function renderHeatmap() {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
-        
         const cell = document.createElement('div');
         cell.className = 'pd-heatmap-cell';
         if (activeDates.has(dateStr)) {
@@ -725,7 +711,6 @@ function renderHeatmap() {
             if(hours > 6) cell.classList.add('active-3');
             else if (hours > 3) cell.classList.add('active-2');
             else cell.classList.add('active-1');
-            
             cell.title = `${dateStr}: ${hours} hrs`;
         }
         container.appendChild(cell);
@@ -783,7 +768,6 @@ function renderActivityGraph() {
 
     const getY = (val) => height - padding - ((val / maxY) * chartH);
 
-    // DRAW LINES
     ctx.beginPath(); ctx.strokeStyle = '#4da6ff'; ctx.lineWidth = 3;
     months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.shadow); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
@@ -792,14 +776,11 @@ function renderActivityGraph() {
     months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.vol); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
 
-    // DRAW POINTS (Bullseye)
     months.forEach((m, i) => {
         const x = padding + (i * stepX);
         const yShadow = getY(m.shadow);
         const yVol = getY(m.vol);
-
         ctx.fillStyle = '#4da6ff'; ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
-
         if (m.vol === m.shadow && m.vol > 0) {
             ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
         } else {
