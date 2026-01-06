@@ -180,36 +180,45 @@
                 </div>
 
                 <div class="pd-trend-card">
-                    <h4>Projections & Averages</h4>
+                    <h4>Projections (To 100 Hours)</h4>
                     <div class="pd-stats-row">
-                        <div class="pd-stat-box">
-                            <span class="pd-stat-small-label">Avg Session</span>
-                            <span class="pd-stat-large-value" id="stat-avg-session">0h</span>
+                        <div class="pd-stat-box" style="border-bottom: 2px solid #4da6ff;">
+                            <span class="pd-stat-small-label" style="color:#4da6ff">Shadowing</span>
+                            <span class="pd-stat-large-value" id="stat-proj-shadow">--</span>
                         </div>
-                        <div class="pd-stat-box">
-                            <span class="pd-stat-small-label">100h Estimate</span>
-                            <span class="pd-stat-large-value" id="stat-projection">--</span>
+                        <div class="pd-stat-box" style="border-bottom: 2px solid #ffd700;">
+                            <span class="pd-stat-small-label" style="color:#ffd700">Volunteering</span>
+                            <span class="pd-stat-large-value" id="stat-proj-vol">--</span>
                         </div>
+                    </div>
+                    <div style="text-align:center; margin-top:10px;">
+                        <span class="pd-stat-small-label">Avg Session Duration:</span>
+                        <span style="font-weight:700; color:#fff;" id="stat-avg-session">0h</span>
                     </div>
                 </div>
                 
                 <div class="pd-trend-card">
-                    <h4>Specialty Distribution</h4>
-                    <div class="pd-chart-wrapper" style="height:200px">
+                    <h4>Shadowing Breakdown</h4>
+                    <div class="pd-chart-wrapper" style="height:220px">
                         <canvas id="pie-canvas"></canvas>
                         <div id="pie-legend" class="pd-chart-legend"></div>
                     </div>
                 </div>
 
                 <div class="pd-trend-card">
-                    <h4>Consistency (Last 6 Months)</h4>
-                    <div id="heatmap-container" class="pd-heatmap-grid"></div>
+                    <h4>Volunteer Experience Mix</h4>
+                    <ul class="pd-trend-list" id="list-vol-mix">
+                        <div class="pd-trend-empty">No data available</div>
+                    </ul>
                 </div>
 
                 <div class="pd-trend-card">
-                    <h4>Monthly Activity</h4>
-                    <div class="pd-chart-wrapper">
-                        <canvas id="activity-canvas"></canvas>
+                    <h4>Consistency (Last 6 Months)</h4>
+                    <div id="heatmap-container" class="pd-heatmap-grid"></div>
+                    <div class="pd-chart-legend" style="margin-top:5px; justify-content:center;">
+                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#4da6ff"></div>Shadow</div>
+                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#ffd700"></div>Volunteer</div>
+                        <div class="pd-legend-item"><div class="pd-legend-dot" style="background:#51cf66"></div>Mixed</div>
                     </div>
                 </div>
             </div>
