@@ -116,7 +116,7 @@
 
                 <div class="pd-form-grid">
                     <div class="pd-input-wrapper">
-                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours" inputmode="decimal" step="any" min="0" required>
+                        <input type="number" id="entry-hours" class="pd-input" placeholder="Hours (Full numbers)" step="any" inputmode="decimal" min="0" required>
                         <span class="pd-error-asterisk">*</span>
                     </div>
                     <div class="pd-input-group pd-input-wrapper">
@@ -148,6 +148,7 @@
 
             <div class="pd-list-controls">
                 <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
+                
                 <div style="display:flex; gap:5px; align-items:center;">
                     <div class="pd-menu-container" id="pd-filter-container">
                         <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
@@ -159,6 +160,7 @@
                             <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
                         </div>
                     </div>
+                    
                     <button id="btn-select-mode" onclick="toggleSelectionMode()">Select Entries</button>
                     <button id="btn-delete-selected" onclick="deleteSelectedEntries()" disabled>Delete</button>
                 </div>
@@ -172,33 +174,14 @@
         <div id="view-stats" class="pd-view">
             <h2 class="pd-section-title">Trends & Insights</h2>
             <div id="stats-content">
-                <div class="pd-trend-card">
-                    <h4>Projections & Averages</h4>
-                    <div class="pd-stats-row">
-                        <div class="pd-stat-box">
-                            <span class="pd-stat-small-label">Avg Session</span>
-                            <span class="pd-stat-large-value" id="stat-avg-session">0h</span>
-                        </div>
-                        <div class="pd-stat-box">
-                            <span class="pd-stat-small-label">100h Estimate</span>
-                            <span class="pd-stat-large-value" id="stat-projection">--</span>
-                        </div>
-                    </div>
+                <div class="pd-form-grid">
+                    <div class="pd-trend-card"><h4>Unique Dentists</h4><div class="pd-trend-stat" id="stat-unique-docs">0</div></div>
+                    <div class="pd-trend-card"><h4>Total Entries</h4><div class="pd-trend-stat" id="stat-total-entries">0</div></div>
                 </div>
-
-                <div class="pd-trend-card">
-                    <h4>Specialty Distribution</h4>
-                    <div class="pd-chart-wrapper" style="height:200px">
-                        <canvas id="pie-canvas"></canvas>
-                    </div>
-                </div>
-
-                <div class="pd-trend-card">
-                    <h4>Consistency (Last 6 Months)</h4>
-                    <div id="heatmap-container" class="pd-heatmap-grid"></div>
-                </div>
-
-                <div class="pd-trend-card"><h4>Unique Dentists</h4><div class="pd-trend-stat" id="stat-unique-docs">0</div></div>
+                
+                <div class="pd-trend-card"><h4>Top Specialties</h4><ul class="pd-trend-list" id="list-top-specialties"><div class="pd-trend-empty">No data available</div></ul></div>
+                <div class="pd-trend-card"><h4>Volunteer Experience Mix</h4><ul class="pd-trend-list" id="list-vol-mix"><div class="pd-trend-empty">No data available</div></ul></div>
+                
                 <div class="pd-trend-card">
                     <h4>Monthly Activity</h4>
                     <div class="pd-chart-wrapper">
@@ -226,6 +209,7 @@
             <div style="display:flex; justify-content:center;"><button class="pd-btn pd-btn-cancel" onclick="closeResetModal()">Cancel</button><button id="reset-confirm-btn" class="pd-btn pd-btn-danger" onclick="confirmReset()" disabled>Wipe Data</button></div>
         </div>
     </div>
+
     <div id="delete-modal" class="pd-modal-overlay">
         <div class="pd-modal pd-modal-danger">
             <h3>DELETE ENTRY?</h3>
@@ -236,6 +220,7 @@
             </div>
         </div>
     </div>
+
     <div id="edit-modal" class="pd-modal-overlay">
         <div class="pd-modal" style="width: 100%; max-width: 500px; padding: 1.5rem;">
             <h3 style="color:#4da6ff; margin-bottom: 1rem;">EDIT ENTRY</h3>
@@ -282,15 +267,32 @@
             </div>
         </div>
     </div>
+
     <div id="view-modal" class="pd-modal-overlay">
         <div class="pd-modal" id="view-modal-content" style="width: 100%; max-width: 450px; padding: 2rem;">
             <h3 id="view-type-title" style="color:#4da6ff; margin-bottom: 0.5rem; text-transform:uppercase;">ENTRY DETAILS</h3>
             <p id="view-subtype" style="margin-bottom:1.5rem; opacity:0.8;"></p>
-            <div class="pd-view-row"><span class="pd-view-label">Date</span><span class="pd-view-val" id="view-date">--</span></div>
-            <div class="pd-view-row"><span class="pd-view-label">Hours</span><span class="pd-view-val" id="view-hours">--</span></div>
-            <div class="pd-view-row"><span class="pd-view-label">Doctor/Supervisor</span><span class="pd-view-val" id="view-doc">--</span></div>
-            <div class="pd-view-row"><span class="pd-view-label">Location</span><span class="pd-view-val" id="view-loc">--</span></div>
-            <div id="view-notes-container" class="pd-view-notes"></div>
+            
+            <div class="pd-view-row">
+                <span class="pd-view-label">Date</span>
+                <span class="pd-view-val" id="view-date">--</span>
+            </div>
+            <div class="pd-view-row">
+                <span class="pd-view-label">Hours</span>
+                <span class="pd-view-val" id="view-hours">--</span>
+            </div>
+            <div class="pd-view-row">
+                <span class="pd-view-label">Doctor/Supervisor</span>
+                <span class="pd-view-val" id="view-doc">--</span>
+            </div>
+            <div class="pd-view-row">
+                <span class="pd-view-label">Location</span>
+                <span class="pd-view-val" id="view-loc">--</span>
+            </div>
+            
+            <div id="view-notes-container" class="pd-view-notes">
+                </div>
+
             <div style="display:flex; justify-content:center; margin-top:2rem;">
                 <button class="pd-btn pd-btn-primary" onclick="document.getElementById('view-modal').style.display='none'">Close</button>
             </div>
