@@ -105,8 +105,67 @@ const GOALS = [
       label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
     },
 
+    { id: 'g19', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
+      check: (s, v, count, specs, entries) => {
+          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
+          return locs.size >= 5;
+      },
+      progress: (s, v, count, specs, entries) => {
+          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
+          return Math.min((locs.size / 5) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
+          return `${locs.size} / 5`;
+      }
+    },
+
+    { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
+      check: (s, v, count, specs, entries) => {
+          const months = new Set(entries.map(e => e.date.substring(0, 7))); // YYYY-MM
+          return months.size >= 6;
+      },
+      progress: (s, v, count, specs, entries) => {
+          const months = new Set(entries.map(e => e.date.substring(0, 7)));
+          return Math.min((months.size / 6) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+          const months = new Set(entries.map(e => e.date.substring(0, 7)));
+          return `${months.size} / 6`;
+      }
+    },
+
+    { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
+      check: (s, v, count, specs, entries) => {
+          const months = {};
+          entries.forEach(e => {
+              const k = e.date.substring(0, 7);
+              months[k] = (months[k] || 0) + parseInt(e.hours);
+          });
+          return Object.values(months).some(val => val >= 40);
+      },
+      progress: (s, v, count, specs, entries) => {
+          const months = {};
+          entries.forEach(e => {
+              const k = e.date.substring(0, 7);
+              months[k] = (months[k] || 0) + parseInt(e.hours);
+          });
+          const max = Math.max(0, ...Object.values(months));
+          return Math.min((max / 40) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+          const months = {};
+          entries.forEach(e => {
+              const k = e.date.substring(0, 7);
+              months[k] = (months[k] || 0) + parseInt(e.hours);
+          });
+          const max = Math.max(0, ...Object.values(months));
+          return `${max} / 40`;
+      }
+    },
+
     // RARE GOAL
-    { id: 'g19', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
+    { id: 'g14', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
       check: (s, v, count, specs, entries) => {
           const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
           return entries.some(e => {
@@ -266,7 +325,7 @@ async function loadData() {
 
 async function saveData() {
     if (appUser) {
-        // Cloud Sync handled in adding functions
+        // Sync Logic
     } else { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
     updateDatalists();
 }
@@ -526,15 +585,22 @@ function render() {
 }
 
 function calculateTrends() {
+    // If no entries, 0 out stats but DO NOT crash
     if(entries.length === 0) {
         document.getElementById('stat-unique-docs').innerText = "0";
         document.getElementById('stat-total-entries').innerText = "0";
-        document.getElementById('list-top-specialties').innerHTML = '<div class="pd-trend-empty">No data available</div>';
-        document.getElementById('list-vol-mix').innerHTML = '<div class="pd-trend-empty">No data available</div>';
-        renderActivityGraph(); 
+        document.getElementById('stat-avg-session').innerText = "0h";
+        document.getElementById('stat-projection').innerText = "--";
+        renderActivityGraph(); // Empty graph
+        renderPieChart();
+        renderHeatmap();
         return;
     }
 
+    // --- ADVANCED STATS ---
+    calculateAdvancedStats();
+
+    // --- STANDARD STATS ---
     const uniqueDocs = new Set(
         entries.filter(e => e.type === 'Shadowing')
                .flatMap(e => e.doctor.split(',').map(s => s.trim()))
@@ -544,23 +610,126 @@ function calculateTrends() {
     document.getElementById('stat-unique-docs').innerText = uniqueDocs;
     document.getElementById('stat-total-entries').innerText = entries.length;
     
-    const specialties = {}; 
-    entries.filter(e => e.type === 'Shadowing').forEach(e => { specialties[e.subtype] = (specialties[e.subtype] || 0) + e.hours; });
-    const sortedSpecs = Object.entries(specialties).sort((a,b) => b[1] - a[1]);
-    const specList = document.getElementById('list-top-specialties');
-    specList.innerHTML = sortedSpecs.length === 0 ? '<div class="pd-trend-empty">No shadowing data available</div>' : '';
-    sortedSpecs.slice(0, 5).forEach(([name, hours]) => { specList.innerHTML += `<li><span>${name}</span><span>${hours} hrs</span></li>`; });
-    
-    const volEntries = entries.filter(e => e.type === 'Volunteering');
-    let dentalHrs = 0, nonDentalHrs = 0; 
-    volEntries.forEach(e => { if(e.subtype === 'Dental Related') dentalHrs += parseInt(e.hours); else nonDentalHrs += parseInt(e.hours); });
-    const volList = document.getElementById('list-vol-mix');
-    if(dentalHrs > 0 || nonDentalHrs > 0) {
-        const total = dentalHrs + nonDentalHrs; const dPct = Math.round((dentalHrs / total) * 100); const nPct = 100 - dPct;
-        volList.innerHTML = `<li><span style="color:#51cf66;">Dental Related</span><span>${dPct}% (${dentalHrs} hrs)</span></li><li><span style="color:#ff6b6b;">Non-Dental</span><span>${nPct}% (${nonDentalHrs} hrs)</span></li><div class="pd-percent-bar"><div class="pd-fill-dental" style="width:${dPct}%;"></div><div class="pd-fill-non" style="width:${nPct}%;"></div></div>`;
-    } else { volList.innerHTML = '<div class="pd-trend-empty">No volunteer data available</div>'; }
-    
+    // RENDER VISUALS
     renderActivityGraph();
+    renderPieChart();
+    renderHeatmap();
+}
+
+function calculateAdvancedStats() {
+    let totalHours = 0;
+    entries.forEach(e => totalHours += parseInt(e.hours));
+    
+    // Avg Session
+    const avg = entries.length > 0 ? (totalHours / entries.length).toFixed(1) : 0;
+    document.getElementById('stat-avg-session').innerText = avg + "h";
+    
+    // Projection (Simple: Avg per day since first entry)
+    if(entries.length > 0 && totalHours < 100) {
+        const dates = entries.map(e => new Date(e.date));
+        const minDate = new Date(Math.min.apply(null, dates));
+        const now = new Date();
+        const diffTime = Math.abs(now - minDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        if(diffDays > 0) {
+            const hoursPerDay = totalHours / diffDays;
+            const hoursNeeded = 100 - totalHours;
+            const daysNeeded = Math.ceil(hoursNeeded / hoursPerDay);
+            
+            const projectedDate = new Date();
+            projectedDate.setDate(projectedDate.getDate() + daysNeeded);
+            const options = { month: 'short', year: 'numeric' };
+            document.getElementById('stat-projection').innerText = projectedDate.toLocaleDateString('en-US', options);
+        } else {
+            document.getElementById('stat-projection').innerText = "Soon";
+        }
+    } else if (totalHours >= 100) {
+        document.getElementById('stat-projection').innerText = "Achieved!";
+    } else {
+        document.getElementById('stat-projection').innerText = "--";
+    }
+}
+
+function renderPieChart() {
+    const canvas = document.getElementById('pie-canvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const width = rect.width;
+    const height = rect.height;
+    const radius = Math.min(width, height) / 2.5;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const counts = {};
+    let total = 0;
+    entries.forEach(e => {
+        const key = e.subtype; 
+        counts[key] = (counts[key] || 0) + parseInt(e.hours);
+        total += parseInt(e.hours);
+    });
+
+    if(total === 0) return;
+
+    const colors = ['#4da6ff', '#ffd700', '#51cf66', '#ff6b6b', '#9333ea', '#ec4899', '#f97316'];
+    let startAngle = 0;
+    let colorIdx = 0;
+
+    Object.entries(counts).forEach(([label, value]) => {
+        const sliceAngle = (value / total) * 2 * Math.PI;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.fillStyle = colors[colorIdx % colors.length];
+        ctx.fill();
+        
+        startAngle += sliceAngle;
+        colorIdx++;
+    });
+    
+    // Donut Hole
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
+    ctx.fillStyle = '#030D4A'; 
+    ctx.fill();
+}
+
+function renderHeatmap() {
+    const container = document.getElementById('heatmap-container');
+    if(!container) return;
+    container.innerHTML = '';
+
+    const today = new Date();
+    // Generate ~180 days (6 months)
+    const activeDates = new Set();
+    entries.forEach(e => activeDates.add(e.date));
+
+    for (let i = 180; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        const cell = document.createElement('div');
+        cell.className = 'pd-heatmap-cell';
+        if (activeDates.has(dateStr)) {
+            const hours = entries.filter(e => e.date === dateStr).reduce((a,c) => a + parseInt(c.hours), 0);
+            if(hours > 6) cell.classList.add('active-3');
+            else if (hours > 3) cell.classList.add('active-2');
+            else cell.classList.add('active-1');
+            
+            cell.title = `${dateStr}: ${hours} hrs`;
+        }
+        container.appendChild(cell);
+    }
 }
 
 function renderActivityGraph() {
@@ -704,6 +873,7 @@ function renderGoals() {
             
             let starHTML = '';
             // Grey star unless unlocked
+            // If unlocked AND special, use pink stars. Else if unlocked, use yellow.
             const starColor = g.unlocked ? (g.class === 'special' ? '#ec4899' : '#ffd700') : '#555';
             for(let i=0; i<g.stars; i++) starHTML += `<span style="color:${starColor}">★</span> `;
             
