@@ -93,7 +93,7 @@ body {
 .pd-view { display: none; animation: fadeIn 0.3s ease; }
 .pd-view.active { display: block; }
 
-/* STATS CIRCLES */
+/* STATS */
 .pd-stats-container { display: flex; justify-content: center; gap: 4rem; margin-bottom: 3rem; flex-wrap: wrap; margin-top: 1rem; }
 .pd-circle-card { position: relative; width: 260px; height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .pd-progress-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -102,7 +102,6 @@ body {
 .pd-stat-number { font-family: 'Montserrat', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
 .pd-stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: #cbd5e1; }
 
-/* STAT CARDS */
 .pd-trend-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
 .pd-trend-card h4 { margin: 0 0 1rem 0; color: #cbd5e1; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
 .pd-trend-stat { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
@@ -110,6 +109,9 @@ body {
 .pd-trend-list li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: #F0F4F8; font-size: 0.9rem; }
 .pd-trend-list li span:last-child { font-weight: 700; color: #4da6ff; }
 .pd-trend-empty { color: #64748b; font-style: italic; font-size: 0.9rem; margin-top: 0.5rem; }
+.pd-percent-bar { height: 12px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-top: 12px; display: flex; }
+.pd-fill-dental { background: #51cf66; height: 100%; transition: width 0.5s ease; } 
+.pd-fill-non { background: #ff6b6b; height: 100%; transition: width 0.5s ease; } 
 
 /* SPLIT STATS ROW */
 .pd-split-stat-row { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 10px; align-items: center; }
@@ -138,12 +140,12 @@ canvas#pie-canvas { width: 100% !important; height: 100% !important; }
 .pd-legend-item { display: flex; align-items: center; font-size: 0.75rem; color: #cbd5e1; }
 .pd-legend-dot { width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
 
-/* VOLUNTEER BAR */
-.pd-percent-bar { height: 12px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-top: 12px; display: flex; }
-.pd-fill-dental { background: #51cf66; height: 100%; transition: width 0.5s ease; } 
-.pd-fill-non { background: #ff6b6b; height: 100%; transition: width 0.5s ease; } 
+/* CHART */
+.pd-chart-wrapper { width: 100%; height: 250px; position: relative; padding-top: 10px; display: flex; flex-direction: column; align-items: center; }
+canvas#activity-canvas { width: 100% !important; height: 100% !important; }
+.pd-chart-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; width: 100%; }
 
-/* GOALS / BADGES */
+/* --- GOALS / BADGES --- */
 .pd-goals-section-title { color: #cbd5e1; font-size: 0.85rem; font-weight: 700; margin: 1.5rem 0 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 .pd-goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 1rem; }
 .pd-goal-card { background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.2rem 1rem; text-align: center; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: space-between; opacity: 1; min-height: 180px; }
@@ -163,6 +165,7 @@ canvas#pie-canvas { width: 100% !important; height: 100% !important; }
 .pd-goal-card.completed.hard { box-shadow: 0 0 15px rgba(255, 107, 107, 0.3); }
 .pd-goal-card.completed.extreme { box-shadow: 0 0 20px rgba(147, 51, 234, 0.5); }
 .pd-goal-card.completed.special { box-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
+
 /* IMPOSSIBLE STYLING */
 .pd-goal-card.impossible { background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(0, 0, 0, 0.2)); }
 .pd-goal-card.completed.impossible { background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(0, 0, 0, 0.4)); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); border-color: #ffd700; }
@@ -182,6 +185,7 @@ canvas#pie-canvas { width: 100% !important; height: 100% !important; }
 .pd-goal-card.extreme .pd-goal-diff { color: #9333ea; }
 .pd-goal-card.impossible .pd-goal-diff { color: #ffd700; }
 .pd-goal-card.special .pd-goal-diff { color: #ec4899; }
+
 .pd-goal-req { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.3; }
 
 /* Stars */
