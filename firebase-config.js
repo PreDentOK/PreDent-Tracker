@@ -49,6 +49,7 @@ try {
 } catch(e) { console.error("Firebase Init Error", e); }
 
 // --- DATABASE HELPERS ---
+
 window.db_loadEntries = async function(user) {
     if(!user || !db) return [];
     try {
@@ -88,8 +89,11 @@ window.db_wipeAllEntries = async function(user) {
     const snapshot = await getDocs(colRef);
     const batch = writeBatch(db);
     snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    
+    // Reset Leaderboard Stat
     const lbRef = doc(db, 'leaderboard', user.uid);
     batch.set(lbRef, { shadow: 0, vol: 0, total: 0 }, { merge: true });
+    
     await batch.commit();
 };
 
@@ -129,18 +133,23 @@ window.googleLogout = async function() {
 function updateAuthUI(user) {
     const loginBtn = document.getElementById('btn-google-login');
     const profileSection = document.getElementById('user-profile');
-    const promptModal = document.getElementById('signin-prompt-modal');
-    
+    const signinPromo = document.getElementById('signin-promo');
+    const lbProfileBox = document.getElementById('lb-profile-box');
+    const lbMain = document.getElementById('lb-card-main');
     if (user) {
         loginBtn.classList.add('hidden');
         profileSection.classList.remove('hidden');
         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
         document.getElementById('dropdown-name').textContent = user.displayName || 'User';
-        if(promptModal) promptModal.style.display = 'none'; // HIDE PROMPT
+        if(signinPromo) signinPromo.style.display = 'none';
+        if (!localStorage.getItem('pd_profile_setup_done')) { if(lbProfileBox) lbProfileBox.classList.remove('pd-hidden'); } else { if(lbProfileBox) lbProfileBox.classList.add('pd-hidden'); }
+        if(lbMain) lbMain.classList.remove('pd-hidden');
     } else {
         loginBtn.classList.remove('hidden');
         profileSection.classList.add('hidden');
-        if(promptModal) promptModal.style.display = 'flex'; // SHOW PROMPT
+        if(signinPromo) signinPromo.style.display = 'block';
+        if(lbProfileBox) lbProfileBox.classList.add('pd-hidden');
+        if(lbMain) lbMain.classList.add('pd-hidden');
     }
 }
 
