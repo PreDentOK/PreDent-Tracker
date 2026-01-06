@@ -134,7 +134,7 @@ const GOALS = [
           return `${months.size} / 6`;
       }
     },
-    
+
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
@@ -165,30 +165,10 @@ const GOALS = [
     },
 
     // RARE GOAL
-    { id: 'g14', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
-      check: (s, v, count, specs, entries) => {
-          const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
-          return entries.some(e => {
-             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
-             return terms.some(t => txt.includes(t));
-          });
-      },
-      progress: (s, v, count, specs, entries) => {
-          const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
-          const found = entries.some(e => {
-             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
-             return terms.some(t => txt.includes(t));
-          });
-          return found ? 100 : 0;
-      },
-      label: (s, v, count, specs, entries) => {
-          const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
-          const found = entries.some(e => {
-             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
-             return terms.some(t => txt.includes(t));
-          });
-          return found ? "Found!" : "Not Found";
-      }
+    { id: 'g14_rare', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
+      check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))),
+      progress: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))) ? 100 : 0,
+      label: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))) ? "Found!" : "Not Found"
     }
 ];
 
@@ -590,6 +570,7 @@ function calculateTrends() {
         document.getElementById('stat-total-entries').innerText = "0";
         document.getElementById('stat-avg-session').innerText = "0h";
         document.getElementById('stat-projection').innerText = "--";
+        document.getElementById('list-vol-mix').innerHTML = '<div class="pd-trend-empty">No data available</div>';
         renderActivityGraph(); 
         renderPieChart();
         renderHeatmap();
@@ -607,6 +588,16 @@ function calculateTrends() {
     document.getElementById('stat-unique-docs').innerText = uniqueDocs;
     document.getElementById('stat-total-entries').innerText = entries.length;
     
+    // Vol Mix
+    const volEntries = entries.filter(e => e.type === 'Volunteering');
+    let dentalHrs = 0, nonDentalHrs = 0; 
+    volEntries.forEach(e => { if(e.subtype === 'Dental Related') dentalHrs += parseInt(e.hours); else nonDentalHrs += parseInt(e.hours); });
+    const volList = document.getElementById('list-vol-mix');
+    if(dentalHrs > 0 || nonDentalHrs > 0) {
+        const total = dentalHrs + nonDentalHrs; const dPct = Math.round((dentalHrs / total) * 100); const nPct = 100 - dPct;
+        volList.innerHTML = `<li><span style="color:#51cf66;">Dental Related</span><span>${dPct}% (${dentalHrs} hrs)</span></li><li><span style="color:#ff6b6b;">Non-Dental</span><span>${nPct}% (${nonDentalHrs} hrs)</span></li><div class="pd-percent-bar"><div class="pd-fill-dental" style="width:${dPct}%;"></div><div class="pd-fill-non" style="width:${nPct}%;"></div></div>`;
+    } else { volList.innerHTML = '<div class="pd-trend-empty">No volunteer data available</div>'; }
+    
     renderActivityGraph();
     renderPieChart();
     renderHeatmap();
@@ -614,39 +605,57 @@ function calculateTrends() {
 
 function calculateAdvancedStats() {
     let totalHours = 0;
-    entries.forEach(e => totalHours += parseInt(e.hours));
+    let sTotal = 0;
+    let vTotal = 0;
+    let firstDate = null;
+    
+    entries.forEach(e => {
+        const h = parseInt(e.hours);
+        totalHours += h;
+        if(e.type === 'Shadowing') sTotal += h;
+        else vTotal += h;
+        
+        const d = new Date(e.date);
+        if(!firstDate || d < firstDate) firstDate = d;
+    });
+    
+    // Avg Session
     const avg = entries.length > 0 ? (totalHours / entries.length).toFixed(1) : 0;
     document.getElementById('stat-avg-session').innerText = avg + "h";
     
-    if(entries.length > 0 && totalHours < 100) {
-        const dates = entries.map(e => new Date(e.date));
-        const minDate = new Date(Math.min.apply(null, dates));
-        const now = new Date();
-        const diffTime = Math.abs(now - minDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
-        if(diffDays > 0) {
-            const hoursPerDay = totalHours / diffDays;
-            const hoursNeeded = 100 - totalHours;
-            const daysNeeded = Math.ceil(hoursNeeded / hoursPerDay);
-            const projectedDate = new Date();
-            projectedDate.setDate(projectedDate.getDate() + daysNeeded);
-            const options = { month: 'short', year: 'numeric' };
-            document.getElementById('stat-projection').innerText = projectedDate.toLocaleDateString('en-US', options);
-        } else {
-            document.getElementById('stat-projection').innerText = "Soon";
-        }
-    } else if (totalHours >= 100) {
-        document.getElementById('stat-projection').innerText = "Achieved!";
-    } else {
-        document.getElementById('stat-projection').innerText = "--";
-    }
+    // Split Projections
+    // Shadowing
+    if(sTotal >= 100) document.getElementById('stat-proj-shadow').innerText = "Done!";
+    else if (firstDate) {
+        const days = Math.max(1, Math.ceil((new Date() - firstDate)/(1000*60*60*24)));
+        const rate = sTotal / days; 
+        if(rate > 0) {
+            const need = 100 - sTotal;
+            const moreDays = Math.ceil(need / rate);
+            const d = new Date(); d.setDate(d.getDate() + moreDays);
+            document.getElementById('stat-proj-shadow').innerText = d.toLocaleDateString('en-US', {month:'short', year:'numeric'});
+        } else { document.getElementById('stat-proj-shadow').innerText = "--"; }
+    } else { document.getElementById('stat-proj-shadow').innerText = "--"; }
+
+    // Volunteering
+    if(vTotal >= 100) document.getElementById('stat-proj-vol').innerText = "Done!";
+    else if (firstDate) {
+        const days = Math.max(1, Math.ceil((new Date() - firstDate)/(1000*60*60*24)));
+        const rate = vTotal / days; 
+        if(rate > 0) {
+            const need = 100 - vTotal;
+            const moreDays = Math.ceil(need / rate);
+            const d = new Date(); d.setDate(d.getDate() + moreDays);
+            document.getElementById('stat-proj-vol').innerText = d.toLocaleDateString('en-US', {month:'short', year:'numeric'});
+        } else { document.getElementById('stat-proj-vol').innerText = "--"; }
+    } else { document.getElementById('stat-proj-vol').innerText = "--"; }
 }
 
 function renderPieChart() {
     const canvas = document.getElementById('pie-canvas');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
+    const legend = document.getElementById('pie-legend');
     
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -663,29 +672,43 @@ function renderPieChart() {
 
     const counts = {};
     let total = 0;
-    entries.forEach(e => {
+    entries.filter(e => e.type === 'Shadowing').forEach(e => {
         const key = e.subtype; 
         counts[key] = (counts[key] || 0) + parseInt(e.hours);
         total += parseInt(e.hours);
     });
 
-    if(total === 0) return;
+    if(total === 0) {
+        legend.innerHTML = '<div class="pd-trend-empty">No data</div>';
+        return;
+    }
 
     const colors = ['#4da6ff', '#ffd700', '#51cf66', '#ff6b6b', '#9333ea', '#ec4899', '#f97316'];
     let startAngle = 0;
     let colorIdx = 0;
+    legend.innerHTML = '';
 
     Object.entries(counts).forEach(([label, value]) => {
         const sliceAngle = (value / total) * 2 * Math.PI;
+        const color = colors[colorIdx % colors.length];
+        
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
-        ctx.fillStyle = colors[colorIdx % colors.length];
+        ctx.fillStyle = color;
         ctx.fill();
+        
+        // Legend Item
+        const item = document.createElement('div');
+        item.className = 'pd-legend-item';
+        item.innerHTML = `<div class="pd-legend-dot" style="background:${color}"></div>${label}`;
+        legend.appendChild(item);
+
         startAngle += sliceAngle;
         colorIdx++;
     });
     
+    // Donut Hole
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
     ctx.fillStyle = '#030D4A'; 
@@ -697,21 +720,34 @@ function renderHeatmap() {
     if(!container) return;
     container.innerHTML = '';
     const today = new Date();
-    const activeDates = new Set();
-    entries.forEach(e => activeDates.add(e.date));
+    // Generate ~180 days (6 months)
+    const activeDates = {}; // Key: YYYY-MM-DD, Val: 'shadow' | 'vol' | 'mixed'
+    
+    entries.forEach(e => {
+        if (!activeDates[e.date]) activeDates[e.date] = new Set();
+        activeDates[e.date].add(e.type);
+    });
 
     for (let i = 180; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
+        
         const cell = document.createElement('div');
         cell.className = 'pd-heatmap-cell';
-        if (activeDates.has(dateStr)) {
-            const hours = entries.filter(e => e.date === dateStr).reduce((a,c) => a + parseInt(c.hours), 0);
-            if(hours > 6) cell.classList.add('active-3');
-            else if (hours > 3) cell.classList.add('active-2');
-            else cell.classList.add('active-1');
-            cell.title = `${dateStr}: ${hours} hrs`;
+        
+        if (activeDates[dateStr]) {
+            const types = activeDates[dateStr];
+            if (types.has('Shadowing') && types.has('Volunteering')) {
+                cell.style.background = '#51cf66'; // Green
+            } else if (types.has('Shadowing')) {
+                cell.style.background = '#4da6ff'; // Blue
+            } else {
+                cell.style.background = '#ffd700'; // Yellow
+            }
+            
+            // Intensity (Opacity) based on hours could be added here if desired
+            cell.title = dateStr;
         }
         container.appendChild(cell);
     }
@@ -768,6 +804,7 @@ function renderActivityGraph() {
 
     const getY = (val) => height - padding - ((val / maxY) * chartH);
 
+    // DRAW LINES
     ctx.beginPath(); ctx.strokeStyle = '#4da6ff'; ctx.lineWidth = 3;
     months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.shadow); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
@@ -776,11 +813,14 @@ function renderActivityGraph() {
     months.forEach((m, i) => { const x = padding + (i * stepX); const y = getY(m.vol); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.stroke();
 
+    // DRAW POINTS (Bullseye)
     months.forEach((m, i) => {
         const x = padding + (i * stepX);
         const yShadow = getY(m.shadow);
         const yVol = getY(m.vol);
+
         ctx.fillStyle = '#4da6ff'; ctx.beginPath(); ctx.arc(x, yShadow, 4, 0, Math.PI*2); ctx.fill();
+
         if (m.vol === m.shadow && m.vol > 0) {
             ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yVol, 7, 0, Math.PI*2); ctx.stroke();
         } else {
@@ -799,12 +839,11 @@ function renderGoals() {
     container.innerHTML = '';
     
     let sTotal = 0, vTotal = 0;
-    const specialistTypes = new Set(); // Changed Set logic
+    const specialistTypes = new Set();
     entries.forEach(e => {
         const h = parseInt(e.hours) || 0;
         if (e.type === 'Shadowing') { 
             sTotal += h; 
-            // Only add if NOT general dentistry
             if (e.subtype && !e.subtype.toLowerCase().includes('general')) {
                 specialistTypes.add(e.subtype); 
             }
@@ -818,7 +857,6 @@ function renderGoals() {
     const incomplete = [];
 
     GOALS.forEach(g => {
-        // SAFETY WRAP for goal check
         let unlocked = false;
         try { unlocked = g.check(sTotal, vTotal, count, uniqueSpecs, entries); } catch(e){}
         
@@ -853,9 +891,12 @@ function renderGoals() {
             card.className = `pd-goal-card ${typeClass} ${g.unlocked ? 'completed' : ''}`;
             
             let starHTML = '';
-            // Grey star unless unlocked
-            // If unlocked AND special, use pink stars. Else if unlocked, use yellow.
-            const starColor = g.unlocked ? (g.class === 'special' ? '#ec4899' : '#ffd700') : '#555';
+            // New Logic: Pink for Special, Yellow for others if unlocked, Grey if locked
+            let starColor = '#555';
+            if (g.unlocked) {
+                starColor = (g.class === 'special') ? '#ec4899' : '#ffd700';
+            }
+
             for(let i=0; i<g.stars; i++) starHTML += `<span style="color:${starColor}">★</span> `;
             
             card.innerHTML = `
