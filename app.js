@@ -15,24 +15,78 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
 // --- GOAL DEFINITIONS ---
 const GOALS = [
-    { id: 'g1', title: 'OU Standard: Shadow', req: '100 Shadowing Hours', type: 'shadow', check: (s, v, specs) => s >= 100 },
-    { id: 'g2', title: 'OU Standard: Volunteer', req: '100 Volunteer Hours', type: 'vol', check: (s, v, specs) => v >= 100 },
-    { id: 'g3', title: 'Level Up: Shadow', req: '200 Shadowing Hours', type: 'shadow', check: (s, v, specs) => s >= 200 },
-    { id: 'g4', title: 'Level Up: Volunteer', req: '200 Volunteer Hours', type: 'vol', check: (s, v, specs) => v >= 200 },
-    { id: 'g5', title: 'Explorer', req: 'Shadow 3 Different Specialists', type: 'mixed', check: (s, v, specs) => specs >= 3 },
-    { id: 'g6', title: 'Networker', req: 'Shadow 6 Different Specialists', type: 'mixed', check: (s, v, specs) => specs >= 6 },
-    { id: 'g7', title: 'The Generalist', req: '50 Hours General Dentistry', type: 'shadow', check: (s, v, specs, entries) => {
-        const genHours = entries.filter(e => e.type === 'Shadowing' && e.subtype === 'General Dentistry')
-                                .reduce((acc, curr) => acc + parseInt(curr.hours), 0);
-        return genHours >= 50;
-    }},
-    { id: 'g8', title: 'Marathon', req: 'Log an 8+ Hour Session', type: 'mixed', check: (s, v, specs, entries) => {
-        return entries.some(e => parseInt(e.hours) >= 8);
-    }}
+    // Shadowing Tiers
+    { id: 'g1', title: 'Shadowing I', req: '100 Shadowing Hours', type: 'shadow', stars: 1, 
+      check: (s, v, count, specs) => s >= 100, 
+      progress: (s, v, count) => Math.min((s / 100) * 100, 100), label: (s, v) => `${s} / 100` },
+      
+    { id: 'g2', title: 'Shadowing II', req: '200 Shadowing Hours', type: 'shadow', stars: 2, 
+      check: (s, v, count, specs) => s >= 200, 
+      progress: (s, v, count) => Math.min((s / 200) * 100, 100), label: (s, v) => `${s} / 200` },
+      
+    { id: 'g3', title: 'Shadowing III', req: '300 Shadowing Hours', type: 'shadow', stars: 3, 
+      check: (s, v, count, specs) => s >= 300, 
+      progress: (s, v, count) => Math.min((s / 300) * 100, 100), label: (s, v) => `${s} / 300` },
+
+    // Volunteer Tiers
+    { id: 'g4', title: 'Volunteer I', req: '100 Volunteer Hours', type: 'vol', stars: 1, 
+      check: (s, v, count, specs) => v >= 100, 
+      progress: (s, v, count) => Math.min((v / 100) * 100, 100), label: (s, v) => `${v} / 100` },
+      
+    { id: 'g5', title: 'Volunteer II', req: '200 Volunteer Hours', type: 'vol', stars: 2, 
+      check: (s, v, count, specs) => v >= 200, 
+      progress: (s, v, count) => Math.min((v / 200) * 100, 100), label: (s, v) => `${v} / 200` },
+      
+    { id: 'g6', title: 'Volunteer III', req: '300 Volunteer Hours', type: 'vol', stars: 3, 
+      check: (s, v, count, specs) => v >= 300, 
+      progress: (s, v, count) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300` },
+
+    // Entry Tiers
+    { id: 'g7', title: 'First Step', req: 'Log 1st Entry', type: 'mixed', stars: 1, 
+      check: (s, v, count, specs) => count >= 1, 
+      progress: (s, v, count) => Math.min((count / 1) * 100, 100), label: (s, v, count) => `${count} / 1` },
+      
+    { id: 'g8', title: 'Momentum', req: 'Log 10 Entries', type: 'mixed', stars: 2, 
+      check: (s, v, count, specs) => count >= 10, 
+      progress: (s, v, count) => Math.min((count / 10) * 100, 100), label: (s, v, count) => `${count} / 10` },
+      
+    { id: 'g9', title: 'Dedicated', req: 'Log 100 Entries', type: 'mixed', stars: 3, 
+      check: (s, v, count, specs) => count >= 100, 
+      progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
+
+    // Misc
+    { id: 'g10', title: 'Explorer', req: 'Shadow 3 Specialists', type: 'shadow', stars: 1, 
+      check: (s, v, count, specs) => specs >= 3, 
+      progress: (s, v, count, specs) => Math.min((specs / 3) * 100, 100), label: (s, v, count, specs) => `${specs} / 3` },
+      
+    { id: 'g11', title: 'Networker', req: 'Shadow 6 Specialists', type: 'shadow', stars: 2, 
+      check: (s, v, count, specs) => specs >= 6, 
+      progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
+      
+    { id: 'g12', title: 'The Generalist', req: '50 Hrs General Dentistry', type: 'shadow', stars: 1, 
+      check: (s, v, count, specs, entries) => {
+        const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype === 'General Dentistry').reduce((a,c) => a+parseInt(c.hours),0);
+        return gen >= 50;
+      },
+      progress: (s, v, count, specs, entries) => {
+         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype === 'General Dentistry').reduce((a,c) => a+parseInt(c.hours),0);
+         return Math.min((gen / 50) * 100, 100);
+      },
+      label: (s, v, count, specs, entries) => {
+         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype === 'General Dentistry').reduce((a,c) => a+parseInt(c.hours),0);
+         return `${gen} / 50`;
+      }
+    },
+    
+    { id: 'g13', title: 'Marathon', req: 'Log an 8+ Hour Session', type: 'mixed', stars: 1,
+      check: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8),
+      progress: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? 100 : 0,
+      label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
+    }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DATE FIX: LOCAL TIME ---
+    document.getElementById("year").textContent = new Date().getFullYear();
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -194,12 +248,9 @@ async function addEntry() {
     if (!type) { document.getElementById('entry-type').parentNode.classList.add('error'); hasError = true; }
     if (!date) { document.getElementById('entry-date').parentNode.classList.add('error'); hasError = true; }
     if (!subtype) { document.getElementById('entry-subtype').parentNode.classList.add('error'); hasError = true; }
-    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { 
-        document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; 
-    }
+    if (!hoursInput || isNaN(parseFloat(hoursInput)) || parseFloat(hoursInput) <= 0) { document.getElementById('entry-hours').parentNode.classList.add('error'); hasError = true; }
     if (!doctor) { document.getElementById('entry-doctor').parentNode.classList.add('error'); hasError = true; }
     if (!loc) { document.getElementById('entry-loc').parentNode.classList.add('error'); hasError = true; }
-
     if (hasError) return;
     
     let hours = Math.round(parseFloat(hoursInput));
@@ -235,7 +286,7 @@ async function saveEditEntry() {
         if (appUser) { await window.db_addEntry(appUser, updatedEntry); const idx = entries.findIndex(e => e.id === editingEntryId); if(idx !== -1) entries[idx] = updatedEntry; } 
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
-    } catch (e) { console.error("Error editing entry:", e); alert(`Error saving: ${e.message}`); }
+    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
 }
 
 async function deleteSelectedEntries() {
@@ -314,6 +365,7 @@ window.editEntry = editEntry;
 window.closeEditModal = closeEditModal;
 window.saveEditEntry = saveEditEntry;
 window.switchTab = switchTab;
+window.updateProfileName = updateProfileName;
 window.skipProfileSetup = skipProfileSetup; 
 window.toggleProfileMenu = (e) => { if(e) e.stopPropagation(); document.getElementById('profile-dropdown').classList.toggle('active'); };
 
@@ -533,6 +585,7 @@ function renderActivityGraph() {
     months.forEach((m, i) => { ctx.fillText(m.label, padding + (i * stepX), height - 10); });
 }
 
+// --- RENDER GOALS ---
 function renderGoals() {
     const grid = document.getElementById('goals-list');
     if (!grid) return;
@@ -540,33 +593,50 @@ function renderGoals() {
     
     let sTotal = 0, vTotal = 0;
     const shadowTypes = new Set();
-    
     entries.forEach(e => {
         const h = parseInt(e.hours) || 0;
         if (e.type === 'Shadowing') { sTotal += h; shadowTypes.add(e.subtype); }
         else { vTotal += h; }
     });
-
     const uniqueSpecs = shadowTypes.size;
+    const count = entries.length;
 
     GOALS.forEach(g => {
-        const unlocked = g.check(sTotal, vTotal, uniqueSpecs, entries);
+        const unlocked = g.check(sTotal, vTotal, count, uniqueSpecs, entries);
+        let progress = 0;
+        if (g.progress) progress = g.progress(sTotal, vTotal, count, uniqueSpecs, entries);
+        
+        let label = "0 / " + g.req;
+        if (g.label) label = g.label(sTotal, vTotal, count, uniqueSpecs, entries);
+        if (unlocked) label = "COMPLETED";
+
         let typeClass = '';
         if (g.type === 'shadow') typeClass = 'type-shadow';
         else if (g.type === 'vol') typeClass = 'type-vol';
         else typeClass = 'type-mixed';
-
-        const statusText = unlocked ? "UNLOCKED" : "LOCKED";
         
         const card = document.createElement('div');
-        card.className = `pd-goal-card ${typeClass} ${unlocked ? 'unlocked' : ''}`;
+        card.className = `pd-goal-card ${typeClass} ${unlocked ? 'completed' : ''}`;
+        
+        // Star Logic
+        let starHTML = '';
+        for(let i=0; i<g.stars; i++) starHTML += '★ ';
+        
         card.innerHTML = `
             <svg class="pd-goal-icon" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
             <div class="pd-goal-title">${g.title}</div>
+            <div class="pd-goal-stars">${starHTML}</div>
             <div class="pd-goal-req">${g.req}</div>
-            <div class="pd-goal-status">${statusText}</div>
+            
+            ${!unlocked ? `
+            <div class="pd-goal-progress-container">
+                <div class="pd-goal-progress-bar" style="width:${progress}%"></div>
+            </div>
+            ` : ''}
+            
+            <div class="pd-goal-status">${label}</div>
         `;
         grid.appendChild(card);
     });
