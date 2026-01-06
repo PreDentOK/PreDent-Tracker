@@ -148,6 +148,7 @@
 
             <div class="pd-list-controls">
                 <input type="text" id="search-input" placeholder="Search entries..." onkeyup="handleSearch()">
+                
                 <div style="display:flex; gap:5px; align-items:center;">
                     <div class="pd-menu-container" id="pd-filter-container">
                         <button class="pd-menu-btn" onclick="toggleFilterMenu(event)" aria-label="Filter" id="btn-filter-toggle" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
@@ -159,6 +160,7 @@
                             <button class="pd-menu-item" onclick="setFilter('Volunteering')">Volunteering</button>
                         </div>
                     </div>
+                    
                     <button id="btn-select-mode" onclick="toggleSelectionMode()">Select Entries</button>
                     <button id="btn-delete-selected" onclick="deleteSelectedEntries()" disabled>Delete</button>
                 </div>
@@ -204,9 +206,13 @@
                     <div id="heatmap-container" class="pd-heatmap-grid"></div>
                 </div>
 
-                <div id="list-top-specialties" class="pd-hidden"></div>
-                <div id="list-vol-mix" class="pd-hidden"></div>
-                <div id="activity-canvas" class="pd-hidden"></div> </div>
+                <div class="pd-trend-card">
+                    <h4>Monthly Activity</h4>
+                    <div class="pd-chart-wrapper">
+                        <canvas id="activity-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="view-goals" class="pd-view">
