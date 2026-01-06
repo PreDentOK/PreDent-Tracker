@@ -106,9 +106,18 @@ body {
 .pd-trend-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
 .pd-trend-card h4 { margin: 0 0 1rem 0; color: #cbd5e1; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
 .pd-trend-stat { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+.pd-trend-list { list-style: none; padding: 0; margin: 0; }
+.pd-trend-list li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: #F0F4F8; font-size: 0.9rem; }
+.pd-trend-list li span:last-child { font-weight: 700; color: #4da6ff; }
 .pd-trend-empty { color: #64748b; font-style: italic; font-size: 0.9rem; margin-top: 0.5rem; }
 
-/* NEW: STATS GRID & BOXES */
+/* SPLIT STATS ROW (DENTISTS / ORGS) */
+.pd-split-stat-row { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 10px; align-items: center; }
+.pd-split-col { text-align: center; }
+.pd-split-col h4 { border-bottom: none; margin-bottom: 0.5rem; padding-bottom: 0; }
+.pd-split-divider { width: 1px; height: 80%; background: rgba(255,255,255,0.1); }
+
+/* STATS GRID & BOXES */
 .pd-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0; }
 .pd-stat-box { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .pd-stat-small-label { font-size: 0.65rem; color: #cbd5e1; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.05em; }
@@ -121,12 +130,24 @@ body {
 .pd-heatmap-cell.active-2 { background: rgba(77, 166, 255, 0.7); }
 .pd-heatmap-cell.active-3 { background: #4da6ff; box-shadow: 0 0 5px rgba(77,166,255,0.5); }
 
-/* CHART */
-.pd-chart-wrapper { width: 100%; height: 250px; position: relative; padding-top: 10px; display: flex; flex-direction: column; align-items: center; }
-canvas { width: 100% !important; height: 100% !important; }
-.pd-chart-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; width: 100%; }
+/* PIE CHART SIDE-BY-SIDE LAYOUT */
+.pd-pie-layout { display: flex; align-items: center; justify-content: space-between; height: 160px; }
+.pd-pie-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; padding-right: 10px; }
+.pd-pie-canvas-container { width: 160px; height: 160px; position: relative; }
+canvas#pie-canvas { width: 100% !important; height: 100% !important; }
+
 .pd-legend-item { display: flex; align-items: center; font-size: 0.75rem; color: #cbd5e1; }
-.pd-legend-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.pd-legend-dot { width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; flex-shrink: 0; }
+
+/* VOLUNTEER BAR */
+.pd-percent-bar { height: 12px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-top: 12px; display: flex; }
+.pd-fill-dental { background: #51cf66; height: 100%; transition: width 0.5s ease; } 
+.pd-fill-non { background: #ff6b6b; height: 100%; transition: width 0.5s ease; } 
+
+/* ACTIVITY LINE CHART */
+.pd-chart-wrapper { width: 100%; height: 250px; position: relative; padding-top: 10px; display: flex; flex-direction: column; align-items: center; }
+canvas#activity-canvas { width: 100% !important; height: 100% !important; }
+.pd-chart-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; width: 100%; }
 
 /* --- GOALS / BADGES --- */
 .pd-goals-section-title { color: #cbd5e1; font-size: 0.85rem; font-weight: 700; margin: 1.5rem 0 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
@@ -153,8 +174,16 @@ canvas { width: 100% !important; height: 100% !important; }
 .pd-goal-card.impossible { background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(0, 0, 0, 0.2)); }
 .pd-goal-card.completed.impossible { background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(0, 0, 0, 0.4)); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); border-color: #ffd700; }
 
+.pd-goal-icon { margin-bottom: 5px; width: 32px; height: 32px; color: #cbd5e1; }
+.pd-goal-card.completed .pd-goal-icon { color: #fff; }
+.pd-goal-card.type-shadow.completed .pd-goal-icon { color: #4da6ff; }
+.pd-goal-card.type-vol.completed .pd-goal-icon { color: #ffd700; }
+.pd-goal-card.completed.impossible .pd-goal-icon { color: #ffd700; filter: drop-shadow(0 0 5px #ffd700); }
+.pd-goal-card.completed.special .pd-goal-icon { color: #ec4899; filter: drop-shadow(0 0 5px #ec4899); }
+
 .pd-goal-title { font-size: 0.8rem; font-weight: 800; color: #fff; margin-bottom: 2px; text-transform: uppercase; }
 .pd-goal-diff { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8; }
+
 .pd-goal-card.easy .pd-goal-diff { color: #51cf66; }
 .pd-goal-card.medium .pd-goal-diff { color: #4da6ff; }
 .pd-goal-card.hard .pd-goal-diff { color: #ff6b6b; }
@@ -167,7 +196,6 @@ canvas { width: 100% !important; height: 100% !important; }
 /* Stars */
 .pd-goal-stars { font-size: 1rem; letter-spacing: 2px; color: #555; margin-bottom: 8px; }
 .pd-goal-card.completed .pd-goal-stars { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
-/* Pink Stars for Special */
 .pd-goal-card.completed.special .pd-goal-stars { color: #ec4899; text-shadow: 0 0 8px rgba(236, 72, 153, 0.6); }
 
 /* Progress Bar */
@@ -181,8 +209,6 @@ canvas { width: 100% !important; height: 100% !important; }
 .pd-goal-card.special .pd-goal-progress-bar { background: #ec4899; }
 .pd-goal-status { font-size: 0.7rem; font-weight: 700; color: #94a3b8; }
 .pd-goal-card.completed .pd-goal-status { color: #ffd700; font-weight: 800; letter-spacing: 0.05em; }
-
-.pd-hidden { display: none !important; }
 
 /* FORMS */
 .pd-form-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; position: relative; }
