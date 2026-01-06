@@ -8,11 +8,9 @@ let editingEntryId = null;
 let appUser = null; 
 let isSelectionMode = false;
 let unlockedGoalIds = new Set();
-let isFirstRender = true;
-let notificationQueue = [];
 let isShowingNotification = false;
+let notificationQueue = [];
 
-// CHANGED: "General"
 const SUBTYPES_SHADOW = ["General", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
 const CIRCLE_RADIUS = 110; 
@@ -61,63 +59,39 @@ const GOALS = [
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
         return gen >= 50;
       },
-      progress: (s, v, count, specs, entries) => {
-         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
-         return Math.min((gen / 50) * 100, 100);
-      },
-      label: (s, v, count, specs, entries) => {
-         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
-         return `${gen} / 50`;
-      }
+      progress: (s, v, count, specs, entries) => Math.min((entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0) / 50) * 100, 100),
+      label: (s, v, count, specs, entries) => `${entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0)} / 50`
     },
-    
     { id: 'g18', title: 'Marathon', req: 'Log an 8+ Hour Session', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8),
       progress: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? 100 : 0,
       label: (s, v, count, specs, entries) => entries.some(e => parseInt(e.hours) >= 8) ? "Done" : "0 / 1"
     },
-
     { id: 'g19', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
       check: (s, v, count, specs, entries) => new Set(entries.map(e => e.location.trim().toLowerCase())).size >= 5,
       progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.location.trim().toLowerCase())).size / 5) * 100, 100),
       label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.location.trim().toLowerCase())).size} / 5`
     },
-
     { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
       check: (s, v, count, specs, entries) => new Set(entries.map(e => e.date.substring(0, 7))).size >= 6,
       progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.date.substring(0, 7))).size / 6) * 100, 100),
       label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.date.substring(0, 7))).size} / 6`
     },
-
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
-          entries.forEach(e => {
-              const k = e.date.substring(0, 7);
-              months[k] = (months[k] || 0) + parseInt(e.hours);
-          });
+          entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
           return Object.values(months).some(val => val >= 40);
       },
       progress: (s, v, count, specs, entries) => {
-          const months = {};
-          entries.forEach(e => {
-              const k = e.date.substring(0, 7);
-              months[k] = (months[k] || 0) + parseInt(e.hours);
-          });
-          const max = Math.max(0, ...Object.values(months));
-          return Math.min((max / 40) * 100, 100);
+          const months = {}; entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
+          return Math.min((Math.max(0, ...Object.values(months)) / 40) * 100, 100);
       },
       label: (s, v, count, specs, entries) => {
-          const months = {};
-          entries.forEach(e => {
-              const k = e.date.substring(0, 7);
-              months[k] = (months[k] || 0) + parseInt(e.hours);
-          });
-          const max = Math.max(0, ...Object.values(months));
-          return `${max} / 40`;
+          const months = {}; entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
+          return `${Math.max(0, ...Object.values(months))} / 40`;
       }
     },
-
     // RARE GOAL
     { id: 'g14_rare', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
       check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy"].some(t => (e.location + " " + e.doctor + " " + e.notes).toLowerCase().includes(t))),
@@ -177,12 +151,13 @@ function showAchievementPopup(goal) {
     nameEl.textContent = goal.title;
     popup.classList.add('active');
     
+    // Play sound if you want, or just wait
     setTimeout(() => {
         popup.classList.remove('active');
         setTimeout(() => {
             isShowingNotification = false;
             processNotificationQueue();
-        }, 600); 
+        }, 600); // Wait for transition
     }, 3000); 
 }
 
@@ -320,7 +295,6 @@ async function loadData() {
     if (appUser) { entries = await window.db_loadEntries(appUser); } 
     else { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     
-    // Check initial achievements SILENTLY
     checkAchievements(true); 
     render();
 }
@@ -375,7 +349,6 @@ async function addEntry() {
         else { entries.push(newEntry); }
         document.getElementById('entry-loc').value = ''; document.getElementById('entry-doctor').value = ''; document.getElementById('entry-hours').value = ''; document.getElementById('entry-notes').value = ''; 
         saveData(); render();
-        // Check new achievements AUDIBLY
         checkAchievements(false);
     } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
@@ -413,8 +386,6 @@ async function deleteSelectedEntries() {
     if(appUser) { await window.db_batchDelete(appUser, idsToDelete); }
     entries = entries.filter(e => !idsToDelete.includes(e.id));
     saveData(); render(); toggleSelectionMode();
-    // Re-check goals (might lose some)
-    // We typically don't re-lock goals, but we could re-eval unlocked list if needed
 }
 
 async function confirmReset() {
