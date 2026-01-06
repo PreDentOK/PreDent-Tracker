@@ -20,11 +20,11 @@ const GOALS = [
       check: (s, v, count, specs) => s >= 10, 
       progress: (s) => Math.min((s / 10) * 100, 100), label: (s) => `${s} / 10` },
 
-    { id: 'g2', title: 'Shadowing II', req: '50 Hours Shadowing', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g2', title: 'Shadowing II', req: '50 Hours Shadowing', difficulty: 'Medium', class: 'medium', stars: 1, 
       check: (s, v, count, specs) => s >= 50, 
       progress: (s) => Math.min((s / 50) * 100, 100), label: (s) => `${s} / 50` },
       
-    { id: 'g3', title: 'Shadowing III', req: '100 Hours Shadowing', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g3', title: 'Shadowing III', req: '100 Hours Shadowing', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => s >= 100, 
       progress: (s) => Math.min((s / 100) * 100, 100), label: (s) => `${s} / 100` },
       
@@ -41,11 +41,11 @@ const GOALS = [
       check: (s, v, count, specs) => v >= 10, 
       progress: (s, v) => Math.min((v / 10) * 100, 100), label: (s, v) => `${v} / 10` },
 
-    { id: 'g7', title: 'Volunteer II', req: '50 Hours Volunteering', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g7', title: 'Volunteer II', req: '50 Hours Volunteering', difficulty: 'Medium', class: 'medium', stars: 1, 
       check: (s, v, count, specs) => v >= 50, 
       progress: (s, v) => Math.min((v / 50) * 100, 100), label: (s, v) => `${v} / 50` },
       
-    { id: 'g8', title: 'Volunteer III', req: '100 Hours Volunteering', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g8', title: 'Volunteer III', req: '100 Hours Volunteering', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => v >= 100, 
       progress: (s, v) => Math.min((v / 100) * 100, 100), label: (s, v) => `${v} / 100` },
       
@@ -75,11 +75,11 @@ const GOALS = [
       check: (s, v, count, specs) => specs >= 1, 
       progress: (s, v, count, specs) => Math.min((specs / 1) * 100, 100), label: (s, v, count, specs) => `${specs} / 1` },
 
-    { id: 'g15', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 2, 
+    { id: 'g15', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 1, 
       check: (s, v, count, specs) => specs >= 3, 
       progress: (s, v, count, specs) => Math.min((specs / 3) * 100, 100), label: (s, v, count, specs) => `${specs} / 3` },
       
-    { id: 'g16', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 3, 
+    { id: 'g16', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 2, 
       check: (s, v, count, specs) => specs >= 6, 
       progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
@@ -135,22 +135,6 @@ const GOALS = [
       }
     },
 
-    // CHANGED "Surgeon"
-    { id: 'g21', title: 'Surgeon', req: 'Shadow an Oral Surgeon', difficulty: 'Medium', class: 'medium', stars: 2,
-      check: (s, v, count, specs, entries) => {
-          // Robust check for oral surg...
-          return entries.some(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('oral surg'));
-      },
-      progress: (s, v, count, specs, entries) => {
-          const found = entries.some(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('oral surg'));
-          return found ? 100 : 0;
-      },
-      label: (s, v, count, specs, entries) => {
-          const found = entries.some(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('oral surg'));
-          return found ? "Done" : "0 / 1";
-      }
-    },
-
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
@@ -181,7 +165,7 @@ const GOALS = [
     },
 
     // RARE GOAL
-    { id: 'g23', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 3,
+    { id: 'g14', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 3,
       check: (s, v, count, specs, entries) => {
           const terms = ["okmom", "ok mom", "oklahoma mission of mercy"];
           return entries.some(e => {
