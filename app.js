@@ -462,6 +462,21 @@ async function addEntry() {
     } catch (e) { console.error("Error adding entry:", e); alert(`Error saving: ${e.message}`); }
 }
 
+function editEntry(id) {
+    const entry = entries.find(e => e.id === String(id));
+    if(!entry) return;
+    editingEntryId = entry.id;
+    document.getElementById('edit-entry-type').value = entry.type;
+    handleEditTypeChange(); // Ensure subtypes are correct for the type
+    document.getElementById('edit-entry-subtype').value = entry.subtype;
+    document.getElementById('edit-entry-date').value = entry.date;
+    document.getElementById('edit-entry-loc').value = entry.location;
+    document.getElementById('edit-entry-doctor').value = entry.doctor;
+    document.getElementById('edit-entry-hours').value = entry.hours;
+    document.getElementById('edit-entry-notes').value = entry.notes || '';
+    document.getElementById('edit-modal').style.display = 'flex';
+}
+
 async function saveEditEntry() {
     if (!editingEntryId) return;
     const modalWrappers = document.querySelectorAll('#edit-modal .pd-input-wrapper');
