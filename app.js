@@ -11,7 +11,6 @@ let unlockedGoalIds = new Set();
 let isShowingNotification = false;
 let notificationQueue = [];
 
-// SUBTYPES (Updated "General")
 const SUBTYPES_SHADOW = ["General", "Orthodontics", "Pediatric Dentistry", "Oral Surgery", "Endodontics", "Periodontics", "Prosthodontics", "Dental Public Health", "Other"];
 const SUBTYPES_VOLUNTEER = ["Dental Related", "Non-Dental Related"];
 const CIRCLE_RADIUS = 110; 
@@ -92,7 +91,7 @@ const GOALS = [
 
     { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
       check: (s, v, count, specs, entries) => {
-          const months = new Set(entries.map(e => e.date.substring(0, 7))); // YYYY-MM
+          const months = new Set(entries.map(e => e.date.substring(0, 7))); 
           return months.size >= 6;
       },
       progress: (s, v, count, specs, entries) => {
@@ -136,30 +135,9 @@ const GOALS = [
 
     // RARE GOAL
     { id: 'g14_rare', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
-      check: (s, v, count, specs, entries) => {
-          const terms = ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"];
-          return entries.some(e => {
-             // Check location, doctor, notes fields
-             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
-             return terms.some(t => txt.includes(t));
-          });
-      },
-      progress: (s, v, count, specs, entries) => {
-          const terms = ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"];
-          const found = entries.some(e => {
-             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
-             return terms.some(t => txt.includes(t));
-          });
-          return found ? 100 : 0;
-      },
-      label: (s, v, count, specs, entries) => {
-          const terms = ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"];
-          const found = entries.some(e => {
-             const txt = ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase();
-             return terms.some(t => txt.includes(t));
-          });
-          return found ? "Found!" : "Not Found";
-      }
+      check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))),
+      progress: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))) ? 100 : 0,
+      label: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))) ? "Found!" : "Not Found"
     }
 ];
 
@@ -200,7 +178,6 @@ function queueNotification(goal) {
 
 function processNotificationQueue() {
     if (isShowingNotification || notificationQueue.length === 0) return;
-    
     isShowingNotification = true;
     const goal = notificationQueue.shift();
     showAchievementPopup(goal);
@@ -244,7 +221,6 @@ function checkAchievements(silent = false) {
         try { unlocked = g.check(sTotal, vTotal, count, uniqueSpecs, entries); } catch(e){}
         
         if (unlocked) {
-            // Only notify if newly unlocked (or first load sync)
             if (!unlockedGoalIds.has(g.id)) {
                 unlockedGoalIds.add(g.id);
                 if (!silent) {
@@ -254,6 +230,80 @@ function checkAchievements(silent = false) {
         }
     });
 }
+
+// --- PDF EXPORT (UPDATED) ---
+window.exportData = function() {
+    if (!window.jspdf) { alert("PDF Library not loaded. Please refresh."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const shadowEntries = entries.filter(e => e.type === 'Shadowing');
+    const volEntries = entries.filter(e => e.type === 'Volunteering');
+
+    doc.setFontSize(18);
+    doc.text("PreDent Connect - Experience Report", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 27);
+
+    let finalY = 35;
+
+    // SHADOWING TABLE (Template Columns)
+    if (shadowEntries.length > 0) {
+        doc.setFontSize(14);
+        doc.text("Shadowing Experiences", 14, finalY);
+        finalY += 5;
+
+        const shadowData = shadowEntries.map(e => [
+            new Date(e.date).toLocaleDateString(),
+            e.doctor,
+            e.subtype, // SPECIALTY
+            e.location,
+            e.hours,
+            e.notes // COMMENTS
+        ]);
+
+        doc.autoTable({
+            startY: finalY,
+            head: [['DATE', 'DOCTOR(S)', 'SPECIALTY', 'LOCATION', 'HOURS', 'COMMENTS']],
+            body: shadowData,
+            theme: 'grid',
+            headStyles: { fillColor: [77, 166, 255] },
+            styles: { fontSize: 8 }
+        });
+
+        finalY = doc.lastAutoTable.finalY + 15;
+    }
+
+    // VOLUNTEERING TABLE (Template Columns)
+    if (volEntries.length > 0) {
+        doc.setFontSize(14);
+        doc.text("Volunteer Experiences", 14, finalY);
+        finalY += 5;
+
+        const volData = volEntries.map(e => [
+            new Date(e.date).toLocaleDateString(),
+            e.doctor, // ORGANIZATION
+            e.location,
+            e.subtype, // DENTAL RELATED
+            e.hours,
+            e.notes // COMMENTS
+        ]);
+
+        doc.autoTable({
+            startY: finalY,
+            head: [['DATE', 'ORGANIZATION', 'LOCATION', 'DENTAL RELATED', 'HOURS', 'COMMENTS']],
+            body: volData,
+            theme: 'grid',
+            headStyles: { fillColor: [255, 215, 0], textColor: [50, 50, 50] },
+            styles: { fontSize: 8 }
+        });
+    }
+
+    doc.save("PreDent_Activity_Report.pdf");
+    closeAllMenus();
+};
 
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
@@ -295,24 +345,64 @@ function setupHoursInput(id) {
     });
 }
 
-// --- CLOSE SIGN IN PROMPT ---
-window.closeSignInPrompt = function() {
-    const modal = document.getElementById('signin-prompt-modal');
-    if(modal) modal.style.display = 'none';
-    sessionStorage.setItem('pd_signin_dismissed', 'true');
+window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
+window.handleCSVImport = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) { await processCSV(e.target.result); input.value = ''; };
+    reader.readAsText(file);
+};
+async function processCSV(csvText) {
+    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
+    if (!rows || rows.length < 2) { alert("CSV appears empty."); return; }
+    const headerRow = rows[0].toUpperCase();
+    let isShadowingSheet = false, isVolunteeringSheet = false;
+    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
+    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
+    if (!isShadowingSheet && !isVolunteeringSheet) { alert("Could not identify sheet type."); return; }
+    const dataLines = rows.slice(1);
+    let importedCount = 0;
+    for (let line of dataLines) {
+        if (!line.trim()) continue; 
+        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
+        const rawDate = cols[0]; if(!rawDate) continue;
+        let formattedDate = rawDate;
+        if(rawDate.includes('/')) {
+            const parts = rawDate.split('/');
+            if(parts.length === 3) {
+                const m = parts[0].padStart(2, '0'), d = parts[1].padStart(2, '0'); let y = parts[2];
+                if (y.length === 2) y = '20' + y;
+                formattedDate = `${y}-${m}-${d}`;
+            }
+        }
+        let type, subtype, doctor, location;
+        if (isShadowingSheet) { type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General"; location = cols[3]; } 
+        else { type = "Volunteering"; doctor = cols[1]; location = cols[2]; const rawRel = (cols[3] || "").toLowerCase(); subtype = (rawRel.includes("yes") || rawRel.includes("true")) ? "Dental Related" : "Non-Dental Related"; }
+        let hrs = Math.round(parseFloat(cols[4])); if(isNaN(hrs) || hrs <= 0) hrs = 0;
+        const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
+        if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
+    }
+    saveData(); render(); checkAchievements(false); alert(`Imported ${importedCount} entries.`);
+}
+
+window.toggleSelectionMode = function() {
+    isSelectionMode = !isSelectionMode;
+    const list = document.getElementById('log-list');
+    const delBtn = document.getElementById('btn-delete-selected');
+    const selectBtn = document.getElementById('btn-select-mode');
+    if (isSelectionMode) { list.classList.add('selection-mode'); delBtn.style.display = 'block'; selectBtn.textContent = 'Cancel'; updateDeleteButtonState(); } 
+    else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
 };
 
+window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
 window.googleLoginFromPrompt = function() { window.closeSignInPrompt(); window.googleLogin(); };
-window.refreshApp = async function(user) { 
-    appUser = user; 
-    await loadData(); 
-};
+window.refreshApp = async function(user) { appUser = user; await loadData(); };
 window.refreshAppPage = function() { window.location.href = 'https://predent.net/#app'; window.location.reload(); };
 
 async function loadData() {
     if (appUser) { entries = await window.db_loadEntries(appUser); } 
     else { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    
     checkAchievements(true); 
     render();
 }
@@ -339,29 +429,6 @@ function updateDatalists() {
     if(docList) docList.innerHTML = uniqueDocs.map(d => `<option value="${d}">`).join('');
     if(locList) locList.innerHTML = uniqueLocs.map(l => `<option value="${l}">`).join('');
 }
-
-// --- AUTH UI UPDATE ---
-window.updateAuthUI = function(user) {
-    const loginBtn = document.getElementById('btn-google-login');
-    const profileSection = document.getElementById('user-profile');
-    const promptModal = document.getElementById('signin-prompt-modal');
-    
-    if (user) {
-        if(loginBtn) loginBtn.classList.add('hidden');
-        if(profileSection) profileSection.classList.remove('hidden');
-        if(document.getElementById('user-avatar')) document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
-        if(document.getElementById('dropdown-name')) document.getElementById('dropdown-name').textContent = user.displayName || 'User';
-        if(promptModal) promptModal.style.display = 'none'; 
-    } else {
-        if(loginBtn) loginBtn.classList.remove('hidden');
-        if(profileSection) profileSection.classList.add('hidden');
-        
-        // Show modal if not dismissed
-        if(promptModal && !sessionStorage.getItem('pd_signin_dismissed')) {
-            promptModal.style.display = 'flex';
-        }
-    }
-};
 
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
@@ -721,8 +788,11 @@ function renderPieChart() {
     const width = rect.width;
     const height = rect.height;
     
+    // ADJUST LAYOUT FOR SIDE-BY-SIDE
+    // Canvas on right (so center is shifted right)
+    // Legend is handled by HTML, canvas just draws
     const radius = Math.min(width, height) / 2.2;
-    const centerX = width / 2; 
+    const centerX = width / 2; // Centered within its container
     const centerY = height / 2;
 
     ctx.clearRect(0, 0, width, height);
@@ -755,6 +825,7 @@ function renderPieChart() {
         ctx.fillStyle = color;
         ctx.fill();
         
+        // Legend Item (Rounded Square)
         const item = document.createElement('div');
         item.className = 'pd-legend-item';
         item.innerHTML = `<div class="pd-legend-dot" style="background:${color}"></div>${label}`;
@@ -764,6 +835,7 @@ function renderPieChart() {
         colorIdx++;
     });
     
+    // Donut Hole
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
     ctx.fillStyle = '#030D4A'; 
