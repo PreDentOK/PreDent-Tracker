@@ -52,7 +52,7 @@
                 </button>
                 <div id="pd-options-dropdown" class="pd-dropdown">
                     <button class="pd-menu-item" onclick="refreshAppPage()">Refresh App</button>
-                    <button class="pd-menu-item" onclick="exportData()">Export Report</button>
+                    <button class="pd-menu-item" onclick="exportData()">Export CSV</button>
                     <button class="pd-menu-item" onclick="triggerImport()">Import CSV</button>
                     <div style="height:1px; background:rgba(255,255,255,0.1); margin:5px 0;"></div>
                     <button class="pd-menu-item pd-menu-danger" onclick="openResetModal()">Clear All Data</button>
@@ -138,7 +138,7 @@
                 </div>
 
                 <div style="margin-bottom: 1rem;">
-                    <input type="text" id="entry-notes" class="pd-input" placeholder="What did you learn/see today?">
+                    <input type="text" id="entry-notes" class="pd-input" placeholder="Notes (Optional)...">
                 </div>
 
                 <div class="pd-form-actions">
@@ -335,6 +335,7 @@
     
     <div id="signin-prompt-modal" class="pd-modal-overlay">
         <div class="pd-modal" style="border: 1px solid #4da6ff;">
+            <button class="pd-modal-close" onclick="closeSignInPrompt()">×</button>
             <h3 style="color:#4da6ff">SAVE YOUR PROGRESS</h3>
             <p>Sign in with Google to sync your hours across devices.</p>
             <div style="display:flex; justify-content:center; gap:10px; margin-top:1rem;">
