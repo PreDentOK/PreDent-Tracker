@@ -18,7 +18,6 @@ const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
 // --- GOAL DEFINITIONS ---
 const GOALS = [
-    // Shadowing Tiers
     { id: 'g1', title: 'Shadowing I', req: '10 Hours Shadowing', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => s >= 10, progress: (s) => Math.min((s / 10) * 100, 100), label: (s) => `${s} / 10` },
     { id: 'g2', title: 'Shadowing II', req: '50 Hours Shadowing', difficulty: 'Medium', class: 'medium', stars: 2, 
@@ -30,7 +29,6 @@ const GOALS = [
     { id: 'g5', title: 'Shadowing V', req: '300+ Hours Shadowing', difficulty: 'Impossible', class: 'impossible', stars: 5, 
       check: (s, v, count, specs) => s >= 300, progress: (s) => Math.min((s / 300) * 100, 100), label: (s) => `${s} / 300+` },
 
-    // Volunteer Tiers
     { id: 'g6', title: 'Volunteer I', req: '10 Hours Volunteering', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => v >= 10, progress: (s, v) => Math.min((v / 10) * 100, 100), label: (s, v) => `${v} / 10` },
     { id: 'g7', title: 'Volunteer II', req: '50 Hours Volunteering', difficulty: 'Medium', class: 'medium', stars: 2, 
@@ -42,7 +40,6 @@ const GOALS = [
     { id: 'g10', title: 'Volunteer V', req: '300+ Hours Volunteering', difficulty: 'Impossible', class: 'impossible', stars: 5, 
       check: (s, v, count, specs) => v >= 300, progress: (s, v) => Math.min((v / 300) * 100, 100), label: (s, v) => `${v} / 300+` },
 
-    // Entry Tiers
     { id: 'g11', title: 'First Step', req: 'Log 1st Entry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => count >= 1, progress: (s, v, count) => Math.min((count / 1) * 100, 100), label: (s, v, count) => `${count} / 1` },
     { id: 'g12', title: 'Momentum', req: 'Log 10 Entries', difficulty: 'Medium', class: 'medium', stars: 2, 
@@ -50,7 +47,6 @@ const GOALS = [
     { id: 'g13', title: 'Dedicated', req: 'Log 100 Entries', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => count >= 100, progress: (s, v, count) => Math.min((count / 100) * 100, 100), label: (s, v, count) => `${count} / 100` },
 
-    // Specialist Goals
     { id: 'g14', title: 'Initiate', req: 'Shadow 1 Specialist', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs) => specs >= 1, progress: (s, v, count, specs) => Math.min((specs / 1) * 100, 100), label: (s, v, count, specs) => `${specs} / 1` },
     { id: 'g15', title: 'Explorer', req: 'Shadow 3 Specialists', difficulty: 'Medium', class: 'medium', stars: 2, 
@@ -58,7 +54,6 @@ const GOALS = [
     { id: 'g16', title: 'Networker', req: 'Shadow 6 Specialists', difficulty: 'Hard', class: 'hard', stars: 3, 
       check: (s, v, count, specs) => specs >= 6, progress: (s, v, count, specs) => Math.min((specs / 6) * 100, 100), label: (s, v, count, specs) => `${specs} / 6` },
       
-    // Specifics
     { id: 'g17', title: 'The Generalist', req: '50 Hrs General Dentistry', difficulty: 'Easy', class: 'easy', stars: 1, 
       check: (s, v, count, specs, entries) => {
         const gen = entries.filter(e => e.type === 'Shadowing' && e.subtype && e.subtype.toLowerCase().includes('general')).reduce((a,c) => a+parseInt(c.hours),0);
@@ -75,64 +70,32 @@ const GOALS = [
     },
 
     { id: 'g19', title: 'The Tour Guide', req: 'Visit 5 Different Locations', difficulty: 'Medium', class: 'medium', stars: 2,
-      check: (s, v, count, specs, entries) => {
-          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
-          return locs.size >= 5;
-      },
-      progress: (s, v, count, specs, entries) => {
-          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
-          return Math.min((locs.size / 5) * 100, 100);
-      },
-      label: (s, v, count, specs, entries) => {
-          const locs = new Set(entries.map(e => e.location.trim().toLowerCase()));
-          return `${locs.size} / 5`;
-      }
+      check: (s, v, count, specs, entries) => new Set(entries.map(e => e.location.trim().toLowerCase())).size >= 5,
+      progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.location.trim().toLowerCase())).size / 5) * 100, 100),
+      label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.location.trim().toLowerCase())).size} / 5`
     },
 
     { id: 'g20', title: 'Consistency is Key', req: 'Log hours in 6 different months', difficulty: 'Hard', class: 'hard', stars: 3,
-      check: (s, v, count, specs, entries) => {
-          const months = new Set(entries.map(e => e.date.substring(0, 7))); 
-          return months.size >= 6;
-      },
-      progress: (s, v, count, specs, entries) => {
-          const months = new Set(entries.map(e => e.date.substring(0, 7)));
-          return Math.min((months.size / 6) * 100, 100);
-      },
-      label: (s, v, count, specs, entries) => {
-          const months = new Set(entries.map(e => e.date.substring(0, 7)));
-          return `${months.size} / 6`;
-      }
+      check: (s, v, count, specs, entries) => new Set(entries.map(e => e.date.substring(0, 7))).size >= 6,
+      progress: (s, v, count, specs, entries) => Math.min((new Set(entries.map(e => e.date.substring(0, 7))).size / 6) * 100, 100),
+      label: (s, v, count, specs, entries) => `${new Set(entries.map(e => e.date.substring(0, 7))).size} / 6`
     },
 
     { id: 'g22', title: 'Heavy Hitter', req: '40+ Hours in 1 Month', difficulty: 'Extreme', class: 'extreme', stars: 4,
       check: (s, v, count, specs, entries) => {
           const months = {};
-          entries.forEach(e => {
-              const k = e.date.substring(0, 7);
-              months[k] = (months[k] || 0) + parseInt(e.hours);
-          });
+          entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
           return Object.values(months).some(val => val >= 40);
       },
       progress: (s, v, count, specs, entries) => {
-          const months = {};
-          entries.forEach(e => {
-              const k = e.date.substring(0, 7);
-              months[k] = (months[k] || 0) + parseInt(e.hours);
-          });
-          const max = Math.max(0, ...Object.values(months));
-          return Math.min((max / 40) * 100, 100);
+          const months = {}; entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
+          return Math.min((Math.max(0, ...Object.values(months)) / 40) * 100, 100);
       },
       label: (s, v, count, specs, entries) => {
-          const months = {};
-          entries.forEach(e => {
-              const k = e.date.substring(0, 7);
-              months[k] = (months[k] || 0) + parseInt(e.hours);
-          });
-          const max = Math.max(0, ...Object.values(months));
-          return `${max} / 40`;
+          const months = {}; entries.forEach(e => { const k = e.date.substring(0, 7); months[k] = (months[k] || 0) + parseInt(e.hours); });
+          return `${Math.max(0, ...Object.values(months))} / 40`;
       }
     },
-
     // RARE GOAL
     { id: 'g14_rare', title: 'Mission of Mercy', req: 'Volunteer at OKMOM', difficulty: 'Special', class: 'special', stars: 1,
       check: (s, v, count, specs, entries) => entries.some(e => ["okmom", "ok mom", "oklahoma mission of mercy", "mission of mercy"].some(t => ((e.location||"") + " " + (e.doctor||"") + " " + (e.notes||"")).toLowerCase().includes(t))),
@@ -156,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('entry-type').addEventListener('change', handleTypeChange);
     document.getElementById('edit-entry-type').addEventListener('change', handleEditTypeChange);
-
     setupHoursInput('entry-hours');
     setupHoursInput('edit-entry-hours');
 
@@ -231,80 +193,6 @@ function checkAchievements(silent = false) {
     });
 }
 
-// --- PDF EXPORT (UPDATED) ---
-window.exportData = function() {
-    if (!window.jspdf) { alert("PDF Library not loaded. Please refresh."); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    const shadowEntries = entries.filter(e => e.type === 'Shadowing');
-    const volEntries = entries.filter(e => e.type === 'Volunteering');
-
-    doc.setFontSize(18);
-    doc.text("PreDent Connect - Experience Report", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 27);
-
-    let finalY = 35;
-
-    // SHADOWING TABLE (Template Columns)
-    if (shadowEntries.length > 0) {
-        doc.setFontSize(14);
-        doc.text("Shadowing Experiences", 14, finalY);
-        finalY += 5;
-
-        const shadowData = shadowEntries.map(e => [
-            new Date(e.date).toLocaleDateString(),
-            e.doctor,
-            e.subtype, // SPECIALTY
-            e.location,
-            e.hours,
-            e.notes // COMMENTS
-        ]);
-
-        doc.autoTable({
-            startY: finalY,
-            head: [['DATE', 'DOCTOR(S)', 'SPECIALTY', 'LOCATION', 'HOURS', 'COMMENTS']],
-            body: shadowData,
-            theme: 'grid',
-            headStyles: { fillColor: [77, 166, 255] },
-            styles: { fontSize: 8 }
-        });
-
-        finalY = doc.lastAutoTable.finalY + 15;
-    }
-
-    // VOLUNTEERING TABLE (Template Columns)
-    if (volEntries.length > 0) {
-        doc.setFontSize(14);
-        doc.text("Volunteer Experiences", 14, finalY);
-        finalY += 5;
-
-        const volData = volEntries.map(e => [
-            new Date(e.date).toLocaleDateString(),
-            e.doctor, // ORGANIZATION
-            e.location,
-            e.subtype, // DENTAL RELATED
-            e.hours,
-            e.notes // COMMENTS
-        ]);
-
-        doc.autoTable({
-            startY: finalY,
-            head: [['DATE', 'ORGANIZATION', 'LOCATION', 'DENTAL RELATED', 'HOURS', 'COMMENTS']],
-            body: volData,
-            theme: 'grid',
-            headStyles: { fillColor: [255, 215, 0], textColor: [50, 50, 50] },
-            styles: { fontSize: 8 }
-        });
-    }
-
-    doc.save("PreDent_Activity_Report.pdf");
-    closeAllMenus();
-};
-
 function updateCircleStats(ringId, textId, hours) {
     const circle = document.getElementById(ringId); 
     const text = document.getElementById(textId);
@@ -345,64 +233,24 @@ function setupHoursInput(id) {
     });
 }
 
-window.triggerImport = function() { document.getElementById('import-file-input').click(); closeAllMenus(); };
-window.handleCSVImport = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(e) { await processCSV(e.target.result); input.value = ''; };
-    reader.readAsText(file);
-};
-async function processCSV(csvText) {
-    const rows = csvText.match(/(?:[^\n"]+|"[^"]*")+/g); 
-    if (!rows || rows.length < 2) { alert("CSV appears empty."); return; }
-    const headerRow = rows[0].toUpperCase();
-    let isShadowingSheet = false, isVolunteeringSheet = false;
-    if (headerRow.includes("SPECIALTY")) isShadowingSheet = true;
-    else if (headerRow.includes("DENTAL RELATED") || headerRow.includes("ORGANIZATION")) isVolunteeringSheet = true;
-    if (!isShadowingSheet && !isVolunteeringSheet) { alert("Could not identify sheet type."); return; }
-    const dataLines = rows.slice(1);
-    let importedCount = 0;
-    for (let line of dataLines) {
-        if (!line.trim()) continue; 
-        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim().replace(/^"|"$/g, ''));
-        const rawDate = cols[0]; if(!rawDate) continue;
-        let formattedDate = rawDate;
-        if(rawDate.includes('/')) {
-            const parts = rawDate.split('/');
-            if(parts.length === 3) {
-                const m = parts[0].padStart(2, '0'), d = parts[1].padStart(2, '0'); let y = parts[2];
-                if (y.length === 2) y = '20' + y;
-                formattedDate = `${y}-${m}-${d}`;
-            }
-        }
-        let type, subtype, doctor, location;
-        if (isShadowingSheet) { type = "Shadowing"; doctor = cols[1]; subtype = cols[2] || "General"; location = cols[3]; } 
-        else { type = "Volunteering"; doctor = cols[1]; location = cols[2]; const rawRel = (cols[3] || "").toLowerCase(); subtype = (rawRel.includes("yes") || rawRel.includes("true")) ? "Dental Related" : "Non-Dental Related"; }
-        let hrs = Math.round(parseFloat(cols[4])); if(isNaN(hrs) || hrs <= 0) hrs = 0;
-        const entry = { id: String(Date.now()) + Math.random().toString(16).slice(2), date: formattedDate, type, subtype, doctor: doctor || "Unknown", location: location || "Unknown", hours: hrs, notes: cols[5] || '' };
-        if(entry.date && entry.hours > 0) { if (appUser) { await window.db_addEntry(appUser, entry); entries.push(entry); } else { entries.push(entry); } importedCount++; }
-    }
-    saveData(); render(); checkAchievements(false); alert(`Imported ${importedCount} entries.`);
-}
-
-window.toggleSelectionMode = function() {
-    isSelectionMode = !isSelectionMode;
-    const list = document.getElementById('log-list');
-    const delBtn = document.getElementById('btn-delete-selected');
-    const selectBtn = document.getElementById('btn-select-mode');
-    if (isSelectionMode) { list.classList.add('selection-mode'); delBtn.style.display = 'block'; selectBtn.textContent = 'Cancel'; updateDeleteButtonState(); } 
-    else { list.classList.remove('selection-mode'); delBtn.style.display = 'none'; selectBtn.textContent = 'Select Entries'; document.querySelectorAll('.pd-checkbox').forEach(cb => cb.checked = false); }
+// --- CLOSE SIGN IN PROMPT ---
+window.closeSignInPrompt = function() {
+    const modal = document.getElementById('signin-prompt-modal');
+    if(modal) modal.style.display = 'none';
+    sessionStorage.setItem('pd_signin_dismissed', 'true');
 };
 
-window.closeSignInPrompt = function() { localStorage.setItem('pd_signin_prompt_seen', 'true'); document.getElementById('signin-prompt-modal').style.display = 'none'; };
 window.googleLoginFromPrompt = function() { window.closeSignInPrompt(); window.googleLogin(); };
-window.refreshApp = async function(user) { appUser = user; await loadData(); };
+window.refreshApp = async function(user) { 
+    appUser = user; 
+    await loadData(); 
+};
 window.refreshAppPage = function() { window.location.href = 'https://predent.net/#app'; window.location.reload(); };
 
 async function loadData() {
     if (appUser) { entries = await window.db_loadEntries(appUser); } 
     else { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    
     checkAchievements(true); 
     render();
 }
@@ -429,6 +277,29 @@ function updateDatalists() {
     if(docList) docList.innerHTML = uniqueDocs.map(d => `<option value="${d}">`).join('');
     if(locList) locList.innerHTML = uniqueLocs.map(l => `<option value="${l}">`).join('');
 }
+
+// --- AUTH UI UPDATE ---
+window.updateAuthUI = function(user) {
+    const loginBtn = document.getElementById('btn-google-login');
+    const profileSection = document.getElementById('user-profile');
+    const promptModal = document.getElementById('signin-prompt-modal');
+    
+    if (user) {
+        if(loginBtn) loginBtn.classList.add('hidden');
+        if(profileSection) profileSection.classList.remove('hidden');
+        if(document.getElementById('user-avatar')) document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
+        if(document.getElementById('dropdown-name')) document.getElementById('dropdown-name').textContent = user.displayName || 'User';
+        if(promptModal) promptModal.style.display = 'none'; 
+    } else {
+        if(loginBtn) loginBtn.classList.remove('hidden');
+        if(profileSection) profileSection.classList.add('hidden');
+        
+        // Show modal if not dismissed
+        if(promptModal && !sessionStorage.getItem('pd_signin_dismissed')) {
+            promptModal.style.display = 'flex';
+        }
+    }
+};
 
 async function addEntry() {
     document.querySelectorAll('#input-form-card .pd-input-wrapper').forEach(el => el.classList.remove('error'));
