@@ -500,7 +500,15 @@ async function saveEditEntry() {
         else { const idx = entries.findIndex(e => e.id === editingEntryId); if (idx !== -1) entries[idx] = updatedEntry; }
         saveData(); render(); closeEditModal();
         checkAchievements(false); // AUDIBLE POPUP
-    } catch (e) { console.error("Error editing entry:", e); alert("Error saving changes."); }
+    } catch (e) { 
+        console.error("Error editing entry:", e); 
+        alert("Error saving changes: " + e.message); 
+    }
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+    editingEntryId = null;
 }
 
 async function deleteSelectedEntries() {
@@ -982,4 +990,9 @@ function renderGoals() {
         container.appendChild(title);
         container.appendChild(createGrid(completed));
     }
+}
+
+window.closeDeleteModal = function() {
+    document.getElementById('delete-modal').style.display = 'none';
+    entryToDeleteId = null;
 }
